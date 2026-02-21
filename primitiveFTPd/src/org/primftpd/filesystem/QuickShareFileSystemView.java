@@ -9,11 +9,12 @@ public abstract class QuickShareFileSystemView<TFile extends QuickShareFile<TMin
     protected final static String ROOT_PATH = "/";
     protected final static String CURRENT_PATH = ".";
     protected final static String CURRENT_ROOT_PATH = "/.";
+    protected final static String CURRENT_PATH_ROOT = "./";
 
     protected final File tmpDir;
 
     public QuickShareFileSystemView(PftpdService pftpdService, File tmpDir) {
-		super(pftpdService);
+        super(pftpdService);
         this.tmpDir = tmpDir;
     }
 
@@ -28,7 +29,11 @@ public abstract class QuickShareFileSystemView<TFile extends QuickShareFile<TMin
         logger.trace("getFile({})", file);
 
         TFile result;
-        if (ROOT_PATH.equals(file) || CURRENT_PATH.equals(file) || CURRENT_ROOT_PATH.equals(file)) {
+        if (ROOT_PATH.equals(file)
+                || CURRENT_PATH.equals(file)
+                || CURRENT_ROOT_PATH.equals(file)
+                || CURRENT_PATH_ROOT.equals(file)
+                || tmpDir.getName().equals(file)) {
             result = createFile();
         } else {
             String filename = file.substring(file.lastIndexOf('/')+1);
