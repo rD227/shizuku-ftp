@@ -81,14 +81,14 @@ def doRemoteGithubThings(tagName, tagNameGooglePlay, apkPath, apkPathGoogleplay)
             tagName
         ], stdout=subprocess.PIPE, check=True)
 
-        print()
-        print("pushing tag google play")
-        subprocess.run([
-            "git",
-            "push",
-            "origin",
-            tagNameGooglePlay
-        ], stdout=subprocess.PIPE, check=True)
+#        print()
+#        print("pushing tag google play")
+#        subprocess.run([
+#            "git",
+#            "push",
+#            "origin",
+#            tagNameGooglePlay
+#        ], stdout=subprocess.PIPE, check=True)
 
         # close milestone
         print()
@@ -137,7 +137,7 @@ def doRemoteGithubThings(tagName, tagNameGooglePlay, apkPath, apkPathGoogleplay)
         print("using upload url: " + uploadUrl)
         print()
         doGithubUpload(githubToken, uploadUrl, apkPath, releaseVersion)
-        doGithubUpload(githubToken, uploadUrl, apkPathGoogleplay, releaseVersion + "-googleplay")
+        #doGithubUpload(githubToken, uploadUrl, apkPathGoogleplay, releaseVersion + "-googleplay")
         print()
         print("done")
         print()
@@ -329,11 +329,11 @@ if fullBuild:
     print()
 
     # write release version in file
-    oldVersionCodeLine = "versionCode " + oldVersionCode
-    newVersionCodeLine = "versionCode " + newVersionCode
-    oldVersionLine = "versionName \"" + oldSnapshotVersion + "\""
-    releaseVersionLine = "versionName \"" + releaseVersion + "\""
-    newSnapshotVersionLine = "versionName \"" + newSnapshotVersion + "\""
+    oldVersionCodeLine = "versionCode = " + oldVersionCode
+    newVersionCodeLine = "versionCode = " + newVersionCode
+    oldVersionLine = "versionName = \"" + oldSnapshotVersion + "\""
+    releaseVersionLine = "versionName = \"" + releaseVersion + "\""
+    newSnapshotVersionLine = "versionName = \"" + newSnapshotVersion + "\""
 
     content = content.replace(oldVersionLine, releaseVersionLine)
     print("writing release version in file")
@@ -355,8 +355,8 @@ if fullBuild:
 
     # google play version
     apkPath = copyToReleasesDir(False)
-    gitTagNameGooglePlay = handleGooglePlayVersion(fullBuild, releaseVersion)
-    apkPathGoogleplay = copyToReleasesDir(True)
+    #gitTagNameGooglePlay = handleGooglePlayVersion(fullBuild, releaseVersion)
+    #apkPathGoogleplay = copyToReleasesDir(True)
 
     # write new snapshot version in file
     content = content.replace(oldVersionCodeLine, newVersionCodeLine)
@@ -372,9 +372,11 @@ if fullBuild:
     commit(msg, pathBuildFile)
 else:
     apkPath = copyToReleasesDir(False)
-    gitTagNameGooglePlay = handleGooglePlayVersion(False, 'SNAPSHOT')
-    apkPathGoogleplay= copyToReleasesDir(True)
+    #gitTagNameGooglePlay = handleGooglePlayVersion(False, 'SNAPSHOT')
+    #apkPathGoogleplay= copyToReleasesDir(True)
 
 
 if fullBuild:
+    gitTagNameGooglePlay = "dummy"
+    apkPathGoogleplay = "dummy.apk"
     doRemoteGithubThings(gitTagName, gitTagNameGooglePlay, apkPath, apkPathGoogleplay)
