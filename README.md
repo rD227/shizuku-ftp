@@ -1,3 +1,6 @@
+#Just fork it without any change
+#I have never made app before...Maybe it will cost me a few month
+
 # Primitive FTPd
 
 FTP and SFTP server app for Android with external SD-card access.
