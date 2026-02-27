@@ -1,4 +1,4 @@
-# Just fork it without any change
+# Just fork it without any change（I've now detached myself from the fork, which is more convenient.）
 
 # I have never made app before...Maybe it will cost me a few month
 
