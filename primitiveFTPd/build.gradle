@@ -1,5 +1,6 @@
 plugins {
     alias libs.plugins.android.application
+    alias libs.plugins.kotlin.android
     alias libs.plugins.maven.publish
 }
 
@@ -34,22 +35,22 @@ android {
             manifest {
                 srcFile 'AndroidManifest.xml'
             }
-
             java {
-                srcDir 'src'
+                srcDirs = ['src']
+            }
+            kotlin {
+                srcDirs = ['src']
             }
             res {
                 srcDir 'res'
             }
-
             assets {
                 srcDirs = ['assets']
             }
         }
     }
-    packagingOptions {
+    packaging {
         resources {
-            // required due to jars
             excludes += ['META-INF/LICENSE',
                          'META-INF/NOTICE',
                          'META-INF/DEPENDENCIES',
@@ -59,42 +60,45 @@ android {
     }
 
     lint {
-        // we cannot be sure that all translations are present
         abortOnError = false
     }
 
-    // https://developer.android.com/build/dependencies#dependency-info-play
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11//In fact I compile it with Java 21
-        targetCompatibility = JavaVersion.VERSION_11//In fact I compile it with Java 21
-
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
         coreLibraryDesugaringEnabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
 dependencies {
-    // print dependency tree:
-    // ./gradlew primitiveFTPd:dependencies --configuration releaseCompileClasspath
     implementation project(':pftpd-pojo-lib')
     implementation project(':sshd-core-0.14.0')
 
+    // --- 删除下面这几行错误的 ---
+    // implementation(libs.androidx.activity:activity-ktx)  <-- 删掉
+    // implementation(libs.androidx.activity)              <-- 删掉
+
+    // --- 统一使用这种写法 ---
+    implementation libs.androidx.activity
+    implementation libs.androidx.activity.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.coordinatorlayout
+    implementation libs.androidx.documentfile
+    implementation libs.androidx.fragment
+    implementation libs.androidx.preference
+    implementation libs.androidx.recyclerview
+
     coreLibraryDesugaring(libs.google.desugar)
-
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.coordinatorlayout)
-    implementation(libs.androidx.documentfile)
-    implementation(libs.androidx.fragment)
-    implementation(libs.androidx.preference)
-    implementation(libs.androidx.recyclerview)
-
-    implementation(libs.google.material)
+    implementation libs.google.material
 
     implementation(libs.ftpserver.api)
     implementation(libs.ftpserver.core) {
@@ -125,18 +129,9 @@ publishing {
             groupId = 'org.primftpd'
             artifactId = 'app'
             version = 'latest-SNAPSHOT'
-
             artifact file('build/outputs/apk/debug/primitiveFTPd-debug.apk')
         }
     }
-/*
-    //to debug publishing
-    repositories {
-        maven {
-            url = "file://$projectDir/deploy"
-        }
-    }
-*/
     repositories {
         maven {
             name = "GitHubPackages"
