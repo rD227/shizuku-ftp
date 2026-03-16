@@ -29,7 +29,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard.cfg'
         }
     }
-
+    buildFeatures {
+        compose = true
+    }
     sourceSets {
         main {
             manifest {
@@ -73,8 +75,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         coreLibraryDesugaringEnabled = true
         //kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+        //kotlinCompilerExtensionVersion = "1.5.10"
     }
-
+    composeOptions{
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
     kotlinOptions {
         jvmTarget = "11"
     }
