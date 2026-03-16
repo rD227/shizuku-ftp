@@ -10,7 +10,7 @@ compileSdk = "36"
 java-toolchain = "21"
 
 androidGradlePlugin = "8.13.2"
-kotlin = "1.9.22"
+kotlin = "2.0.21"
 
 androidxActivity = "1.9.3"
 androidxAppcompat = "1.7.1"
@@ -38,7 +38,6 @@ minaCore = "2.2.5"
 foundation = "1.10.5"
 runtime = "1.10.5"
 composeBom = "2024.10.01"
-composeCompiler = "1.5.10"
 
 [libraries]
 # 明确命名以避免路径冲突
@@ -88,5 +87,6 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 java = { id = "java" }
 maven-publish = { id = "maven-publish" }

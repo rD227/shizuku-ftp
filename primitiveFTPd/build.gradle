@@ -2,6 +2,7 @@ plugins {
     alias libs.plugins.android.application
     alias libs.plugins.kotlin.android
     alias libs.plugins.maven.publish
+    alias libs.plugins.kotlin.compose
 }
 
 java {
@@ -71,17 +72,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         coreLibraryDesugaringEnabled = true
-        //kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
-        //kotlinCompilerExtensionVersion = "1.5.10"
     }
-    composeOptions{
-        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
-    }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
 }
 
@@ -89,11 +86,6 @@ dependencies {
     implementation project(':pftpd-pojo-lib')
     implementation project(':sshd-core-0.14.0')
 
-    // --- 删除下面这几行错误的 ---
-    // implementation(libs.androidx.activity:activity-ktx)  <-- 删掉
-    // implementation(libs.androidx.activity)              <-- 删掉
-
-    // --- 统一使用这种写法 ---
     implementation libs.androidx.activity
     implementation libs.androidx.activity.ktx
     implementation libs.androidx.appcompat
@@ -102,11 +94,11 @@ dependencies {
     implementation libs.androidx.fragment
     implementation libs.androidx.preference
     implementation libs.androidx.recyclerview
-    implementation libs.androidx.foundation
-    implementation libs.androidx.runtime
-    // ... 其他依赖
+    
     implementation platform(libs.androidx.compose.bom)
     implementation libs.androidx.ui
+    implementation libs.androidx.foundation
+    implementation libs.androidx.runtime
     implementation libs.androidx.material3
     implementation libs.androidx.ui.tooling.preview
 
