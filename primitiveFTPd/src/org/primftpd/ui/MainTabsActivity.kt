@@ -44,6 +44,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
 
 open class MainTabsActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -305,6 +306,7 @@ open class MainTabsActivity : AppCompatActivity(), SharedPreferences.OnSharedPre
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+@Preview
 fun MainTabsScreen() {
     // 1. 定义选项卡页面
     val tabs = listOf("服务器控制", "设置", "关于")
