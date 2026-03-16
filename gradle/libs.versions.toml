@@ -35,6 +35,10 @@ zxing = "1.9.8"
 # Don't upgrade these any higher without migrating away from sshd-core 0.14
 ftpserver = "1.2.1"
 minaCore = "2.2.5"
+foundation = "1.10.5"
+runtime = "1.10.5"
+composeBom = "2024.10.01"
+composeCompiler = "1.5.10"
 
 [libraries]
 # 明确命名以避免路径冲突
@@ -68,7 +72,18 @@ logback-android = { group = "com.github.tony19", name = "logback-android", versi
 mina-core = { group = "org.apache.mina", name = "mina-core", version.ref = "minaCore" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4jApi" }
 zxing = { group = "me.dm7.barcodescanner", name = "zxing", version.ref = "zxing" }
+#androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+#androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+# 添加 Compose 相关库定义
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 
+# 你原有的 foundation 和 runtime 建议也改用 BOM 管理（去掉 version.ref）
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
