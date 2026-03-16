@@ -9,6 +9,14 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.NonNull
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi//Import experimental library
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+//There is HorizontalPager and rememberPagerState
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -32,6 +40,11 @@ import org.primftpd.util.ServicesStartStopUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.ArrayList
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import kotlinx.coroutines.launch
 
 open class MainTabsActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -282,5 +295,58 @@ open class MainTabsActivity : AppCompatActivity(), SharedPreferences.OnSharedPre
         @JvmField protected var INDEX_FINGERPRINTS = 0
         protected const val TAB_NAME_MAIN_UI = "pftpd"
         protected const val TAB_NAME_QR = "QR"
+    }
+}
+/*
+* debug function
+*
+*
+* */
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MainTabsScreen() {
+    // 1. 定义选项卡页面
+    val tabs = listOf("服务器控制", "设置", "关于")
+    // 2. 记住当前选中的页面状态，以及配置 Pager
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // 3. 顶部的选项卡栏 (替代了 TabLayout)
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        // 点击 Tab 时，让下方的内容平滑滚动过去
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = { Text(title) }
+                )
+            }
+        }
+/*
+*
+*或者这种种方法
+        // 4. 下方可以滑动的内容区域 (替代了 ViewPager 和 Fragment)
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            // 根据当前页码，显示不同的 Compose 界面
+            when (page) {
+                0 -> FtpServerControlScreen() //  FTP 启停、Shizuku 授权等核心界面
+                1 -> SettingsScreen()         // 设置界面
+                2 -> AboutScreen()            // 关于界面
+            }
+        }
+        8？
+ */
     }
 }
