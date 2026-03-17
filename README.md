@@ -1,6 +1,7 @@
-# Just fork it without any change（I've now detached myself from the fork, which is more convenient.）
+# Just fork it （I've now detached myself from the fork, which is more convenient.）
 
 # I have never made app before...Maybe it will cost me a few month
+#Why they didn't use newer version of platform(?
 
 # Primitive FTPd
 
