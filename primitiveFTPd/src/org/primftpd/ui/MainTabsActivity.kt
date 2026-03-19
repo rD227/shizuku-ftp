@@ -344,7 +344,7 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
 }
 
 // --- Previews ---
-
+/*
 @Preview(showBackground = true, name = "Server Stopped")
 @Composable
 fun MainScreenStoppedPreview() {
@@ -360,7 +360,7 @@ fun MainScreenRunningPreview() {
         MainScreen(isServerRunning = true, onStartServer = {}, onStopServer = {})
     }
 }
-
+*/
 @Preview(showBackground = true, name = "Left Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {

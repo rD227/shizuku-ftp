@@ -95,6 +95,9 @@ dependencies {
     implementation libs.androidx.fragment
     implementation libs.androidx.preference
     implementation libs.androidx.recyclerview
+    debugImplementation libs.androidx.ui.tooling
+    debugImplementation libs.androidx.ui.test.manifest
+    implementation libs.androidx.ui.tooling.preview
     
     implementation platform(libs.androidx.compose.bom)
     implementation libs.androidx.ui
