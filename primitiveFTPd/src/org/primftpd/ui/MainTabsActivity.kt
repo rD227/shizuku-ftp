@@ -65,7 +65,7 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         isServerRunning = ServicesStartStopUtil.checkServicesRunning(this).atLeastOneRunning()
 
         setContent {
-            ShizukuFtpTheme{
+            ShizukuFtpTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -87,8 +87,6 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
     protected open fun createPftpdFragment(): PftpdFragment? = null
     protected open fun isLeanback(): Boolean = false
 
-    // ComponentActivity 默认已有 onCreateOptionsMenu，但如果你之前的基类显式定义了它，
-    // 这里也可以保持默认实现
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         return super.onCreateOptionsMenu(menu)
     }
@@ -126,8 +124,6 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         }
     }
 }
-
-// --- 以下 Composable 组件保持不变 ---
 
 @Composable
 fun MainScreen(
@@ -253,7 +249,8 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
             .size(56.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable { onClick() },
+            //.clickable { onClick() }
+            .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -323,18 +320,19 @@ fun SideMenu(
 }
 
 @Composable
-fun RowClick(icon: ImageVector, text:String,onClick: () -> Unit){
+fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 13.dp)
-    ){
-        Box(                modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -345,10 +343,8 @@ fun RowClick(icon: ImageVector, text:String,onClick: () -> Unit){
             )
         }
 
-
         Spacer(modifier = Modifier.width(16.dp))
 
-        // 右侧文字
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
@@ -356,13 +352,27 @@ fun RowClick(icon: ImageVector, text:String,onClick: () -> Unit){
         )
     }
 }
-
-// --- Previews ---
 /*
+*
+*
+* Preview Function
+*
+* */
+@Preview(showBackground = true, name = "Left Menu Open")
+@Composable
+fun LeftMenuOpenPreview() {
+    ShizukuFtpTheme {
+        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
+    }
+}
+
+
+
+/*不要删掉这段注释
 @Preview(showBackground = true, name = "Server Stopped")
 @Composable
 fun MainScreenStoppedPreview() {
-    MaterialTheme {
+    MaterialThem {
         MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {})
     }
 }
@@ -375,22 +385,18 @@ fun MainScreenRunningPreview() {
     }
 }
 */
-@Preview(showBackground = true, name = "Left Menu Open")
-@Composable
-fun LeftMenuOpenPreview() {
-    ShizukuFtpTheme() {
-        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
-    }
-}
-/**
- *
- *Change theme
- */
 
+
+/*
+*
+*
+*
+*
+* */
 @Composable
 fun ShizukuFtpTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true, // Android 12+ 开启动态配色
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -398,8 +404,8 @@ fun ShizukuFtpTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> darkColorScheme() // 默认深色
-        else -> lightColorScheme() // 默认浅色
+        darkTheme -> darkColorScheme()
+        else -> lightColorScheme()
     }
 
     MaterialTheme(
