@@ -65,7 +65,7 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         isServerRunning = ServicesStartStopUtil.checkServicesRunning(this).atLeastOneRunning()
 
         setContent {
-            MaterialTheme {
+            ShizukuFtpTheme{
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -378,7 +378,7 @@ fun MainScreenRunningPreview() {
 @Preview(showBackground = true, name = "Left Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {
-    MaterialTheme {
+    ShizukuFtpTheme() {
         MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
     }
 }
