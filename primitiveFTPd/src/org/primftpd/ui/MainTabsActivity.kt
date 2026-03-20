@@ -244,15 +244,14 @@ fun MainScreen(
 
 @Composable
 fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
-    Box(
+    Box (
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            //.clickable { onClick() }
-            .padding(12.dp),
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
-    ) {
+    ){
         Image(
             painter = painterResource(id = iconRes),
             contentDescription = null,
