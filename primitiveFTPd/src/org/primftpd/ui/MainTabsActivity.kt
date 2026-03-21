@@ -156,6 +156,7 @@ fun MainScreen(
             ) {
                 MenuButton(
                     iconRes = R.drawable.gear,
+                    //New files add in \res\drawable\...
                     rotation = gearRotation,
                     onClick = { leftMenuVisible = !leftMenuVisible }
                 )
@@ -216,10 +217,14 @@ fun MainScreen(
                 title = "功能与工具",
                 width = 280.dp,
                 onClose = { rightMenuVisible = false }
-            ) {
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "网络状态", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_cloud_download_24), "扫码连接", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "清理空间", onClick = {})
+            ) {//这是右边的侧滑菜单
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting),"Network status",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),"Scan code",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.cleaner),"Clean cache",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),"Client logs",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24),"Finger print",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.thinkey),"Verification Key",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24),"About",onClick = {})
             }
         }
 
@@ -233,10 +238,23 @@ fun MainScreen(
                 title = "设置与系统",
                 width = 280.dp,
                 onClose = { leftMenuVisible = false }
-            ) {
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "身份验证", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "连接方式", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "系统设置", onClick = {})
+            ) {//这是左边的侧滑菜单
+                RowClick(
+                    icon = ImageVector.vectorResource(id = R.drawable.authentication),
+                    "Authentication",
+                    onClick = {})
+                RowClick(
+                    icon = ImageVector.vectorResource(id = R.drawable.port),
+                    "How to connect",
+                    onClick = {})
+                RowClick(
+                    icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse),
+                    "UI setting",
+                    onClick = {})
+                RowClick(
+                    icon = ImageVector.vectorResource(id = R.drawable.system),
+                    "System",
+                    onClick = {})
             }
         }
     }
