@@ -1,6 +1,9 @@
 # Just fork it （I've now detached myself from the fork, which is more convenient.）
 
 # I have never made app before...Maybe it will cost me a few month
+# Upgrade 
+# Change it to material3
+
 #Why they didn't use newer version of platform(?
 
 # Primitive FTPd
