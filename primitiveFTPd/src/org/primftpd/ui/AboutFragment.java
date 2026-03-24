@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
+import androidx.fragment.app.DialogFragment; // 修改这里
 
-public class AboutFragment extends Fragment
+public class AboutFragment extends DialogFragment // 修改这里
 {
     public static final String URL_APL =
         "https://www.apache.org/licenses/LICENSE-2.0";
