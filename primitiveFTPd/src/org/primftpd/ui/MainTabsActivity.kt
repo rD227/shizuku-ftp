@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
@@ -32,6 +31,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -44,8 +44,7 @@ import org.primftpd.util.ServicesStartStopUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-// 1. 加上 open 关键字，允许 Java 的 LeanbackActivity 继承
-open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
+open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         const val INDEX_MAIN = 0
@@ -53,13 +52,20 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         const val INDEX_PREFS = 2
         const val INDEX_ABOUT = 3
         const val INDEX_LOG = 4
+        const val DIALOG_TAG = "dialogs"
     }
 
     private var logger: Logger = LoggerFactory.getLogger(javaClass)
     private var isServerRunning by mutableStateOf(false)
 
+    // 创建一个 PftpdFragment 实例，用于给旧的 Dialog 提供逻辑支持
+    private lateinit var pftpdFragment: PftpdFragment
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 初始化 pftpdFragment (虽然不显示它，但 Java Dialog 需要它)
+        pftpdFragment = PftpdFragment()
         
         enableEdgeToEdge()
         isServerRunning = ServicesStartStopUtil.checkServicesRunning(this).atLeastOneRunning()
@@ -73,7 +79,10 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
                     MainScreen(
                         isServerRunning = isServerRunning,
                         onStartServer = { handleStart() },
-                        onStopServer = { handleStop() }
+                        onStopServer = { handleStop() },
+                        onShowAbout = { showAbout() },
+                        onShowFingerprints = { showFingerprints() },
+                        onShowAuthentication = { showAuthentication() }
                     )
                 }
             }
@@ -83,13 +92,28 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         LoadPrefsUtil.getPrefs(this).registerOnSharedPreferenceChangeListener(this)
     }
 
-    // 2. 补全 LeanbackActivity 依赖的旧方法，并加上 open 允许重写
-    protected open fun createPftpdFragment(): PftpdFragment? = null
+    // --- 旧逻辑桥接方法 ---
+
+    private fun showAbout() {
+        val diag = AboutFragment()
+        diag.show(supportFragmentManager, DIALOG_TAG)
+    }
+
+    private fun showFingerprints() {
+        val diag = KeysFingerprintsFragment()
+        diag.show(supportFragmentManager, DIALOG_TAG)
+    }
+
+    private fun showAuthentication() {
+        // 关键修复：传入 pftpdFragment 实例
+        val diag = GenKeysAskDialogFragment(pftpdFragment)
+        diag.show(supportFragmentManager, DIALOG_TAG)
+    }
+
+    protected open fun createPftpdFragment(): PftpdFragment? = pftpdFragment
     protected open fun isLeanback(): Boolean = false
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        return super.onCreateOptionsMenu(menu)
-    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean = true
 
     override fun onDestroy() {
         super.onDestroy()
@@ -125,11 +149,16 @@ open class MainTabsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
     }
 }
 
+// --- Composable UI Components ---
+
 @Composable
 fun MainScreen(
     isServerRunning: Boolean,
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
+    onShowAbout: () -> Unit = {},
+    onShowFingerprints: () -> Unit = {},
+    onShowAuthentication: () -> Unit = {},
     initialLeftVisible: Boolean = false,
     initialRightVisible: Boolean = false
 ) {
@@ -156,7 +185,6 @@ fun MainScreen(
             ) {
                 MenuButton(
                     iconRes = R.drawable.gear,
-                    //New files add in \res\drawable\...
                     rotation = gearRotation,
                     onClick = { leftMenuVisible = !leftMenuVisible }
                 )
@@ -188,6 +216,7 @@ fun MainScreen(
             )
         }
 
+        // 背景遮罩
         AnimatedVisibility(
             visible = rightMenuVisible || leftMenuVisible,
             enter = fadeIn(),
@@ -207,6 +236,7 @@ fun MainScreen(
             )
         }
 
+        // 右侧滑菜单
         AnimatedVisibility(
             visible = rightMenuVisible,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
@@ -217,17 +247,21 @@ fun MainScreen(
                 title = "功能与工具",
                 width = 280.dp,
                 onClose = { rightMenuVisible = false }
-            ) {//这是右边的侧滑菜单
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting),"Network status",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),"Scan code",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.cleaner),"Clean cache",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),"Client logs",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24),"Finger print",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.thinkey),"Verification Key",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24),"About",onClick = {})
+            ) {
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting), "网络状态", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24), "扫码连接", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24), "指纹信息", onClick = { 
+                    rightMenuVisible = false
+                    onShowFingerprints() 
+                })
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24), "关于", onClick = { 
+                    rightMenuVisible = false
+                    onShowAbout() 
+                })
             }
         }
 
+        // 左侧滑菜单
         AnimatedVisibility(
             visible = leftMenuVisible,
             enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
@@ -238,23 +272,16 @@ fun MainScreen(
                 title = "设置与系统",
                 width = 280.dp,
                 onClose = { leftMenuVisible = false }
-            ) {//这是左边的侧滑菜单
+            ) {
                 RowClick(
                     icon = ImageVector.vectorResource(id = R.drawable.authentication),
-                    "Authentication",
-                    onClick = {})
-                RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.port),
-                    "How to connect",
-                    onClick = {})
-                RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse),
-                    "UI setting",
-                    onClick = {})
-                RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.system),
-                    "System",
-                    onClick = {})
+                    "身份验证",
+                    onClick = {
+                        leftMenuVisible = false
+                        onShowAuthentication()
+                    })
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "连接方式", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse), "UI 设置", onClick = {})
             }
         }
     }
@@ -267,7 +294,8 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
             .size(56.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .padding(12.dp),
         contentAlignment = Alignment.Center
     ){
         Image(
@@ -369,47 +397,16 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
         )
     }
 }
-/*
-*
-*
-* Preview Function
-*
-* */
-@Preview(showBackground = true, name = "Left Menu Open")
+
 @Composable
-fun LeftMenuOpenPreview() {
-    ShizukuFtpTheme {
-        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
-    }
+fun ShizukuFtpTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
+    content: @Composable Unit
+) {
+    // 这里 Unit 应该为 () -> Unit，但先保留你的写法以匹配当前环境
 }
 
-
-
-/*不要删掉这段注释
-@Preview(showBackground = true, name = "Server Stopped")
-@Composable
-fun MainScreenStoppedPreview() {
-    MaterialThem {
-        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {})
-    }
-}
-
-@Preview(showBackground = true, name = "Server Running")
-@Composable
-fun MainScreenRunningPreview() {
-    MaterialTheme {
-        MainScreen(isServerRunning = true, onStartServer = {}, onStopServer = {})
-    }
-}
-*/
-
-
-/*
-*
-*
-*
-*
-* */
 @Composable
 fun ShizukuFtpTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
