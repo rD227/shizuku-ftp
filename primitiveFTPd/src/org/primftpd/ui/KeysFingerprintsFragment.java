@@ -16,9 +16,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import androidx.fragment.app.Fragment;
+import androidx.fragment.app.DialogFragment; // 修改这里
 
-public class KeysFingerprintsFragment extends Fragment {
+public class KeysFingerprintsFragment extends DialogFragment // 修改这里
+{
 
     private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 

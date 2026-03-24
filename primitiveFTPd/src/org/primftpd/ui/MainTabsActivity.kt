@@ -58,7 +58,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     private var logger: Logger = LoggerFactory.getLogger(javaClass)
     private var isServerRunning by mutableStateOf(false)
 
-    // 创建一个 PftpdFragment 实例，用于给旧的 Dialog 提供逻辑支持
+    // 创建一个 PftpdFragment 实例，用于给旧的 Dialog 提供 logic 支持
     private lateinit var pftpdFragment: PftpdFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,7 +105,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     }
 
     private fun showAuthentication() {
-        // 关键修复：传入 pftpdFragment 实例
+        // 传入 pftpdFragment 实例
         val diag = GenKeysAskDialogFragment(pftpdFragment)
         diag.show(supportFragmentManager, DIALOG_TAG)
     }
@@ -398,13 +398,12 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
     }
 }
 
+@Preview(showBackground = true, name = "Left Menu Open")
 @Composable
-fun ShizukuFtpTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    content: @Composable Unit
-) {
-    // 这里 Unit 应该为 () -> Unit，但先保留你的写法以匹配当前环境
+fun LeftMenuOpenPreview() {
+    ShizukuFtpTheme {
+        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
+    }
 }
 
 @Composable
