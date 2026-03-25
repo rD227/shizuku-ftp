@@ -16,9 +16,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import androidx.fragment.app.DialogFragment; // 修改这里
+import androidx.fragment.app.DialogFragment;
 
-public class KeysFingerprintsFragment extends DialogFragment // 修改这里
+public class KeysFingerprintsFragment extends DialogFragment
 {
 
     private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -117,5 +117,15 @@ public class KeysFingerprintsFragment extends DialogFragment // 修改这里
                     .setText(keyFingerprintBean.getFingerprintSha256());
         }
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            // 将对话框宽度设置为屏幕宽度的 90%
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
+            getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 }
