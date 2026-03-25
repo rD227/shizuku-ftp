@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.ViewGroup;
 
 import org.primftpd.R;
 import org.primftpd.crypto.HostKeyAlgorithm;
@@ -34,6 +35,7 @@ public class GenKeysAskDialogFragment extends DialogFragment {
     public GenKeysAskDialogFragment(PftpdFragment pftpdFragment) {
         this.pftpdFragment = pftpdFragment;
     }
+
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
@@ -55,6 +57,15 @@ public class GenKeysAskDialogFragment extends DialogFragment {
         return builder.create();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
+            getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
     public void genKeysAndShowProgressDiag(boolean startServerOnFinish) {
         logger.trace("genKeysAndShowProgressDiag()");
 
@@ -66,16 +77,9 @@ public class GenKeysAskDialogFragment extends DialogFragment {
 
         KeyFingerprintProvider keyFingerprintProvider = pftpdFragment.getKeyFingerprintProvider();
 
-        // run in background to not block UI
-        // note: in previous versions a progress dialog was shown here
-        // in recent android versions that is hard to implement
-        // on most devices it should be fast enough to give good UX without dialog ...
         try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             executorService.execute(() -> {
-
-                // remove old keys
                 for (HostKeyAlgorithm hka : HostKeyAlgorithm.values()) {
-                    logger.trace("removing keys of hostkey algo {}", hka.getAlgorithmName());
                     try {
                         keyFingerprintProvider.deleteKeyFiles(ctxt, hka);
                     } catch (Exception e) {
@@ -83,14 +87,11 @@ public class GenKeysAskDialogFragment extends DialogFragment {
                     }
                 }
 
-                // what keys does user want to have?
                 SharedPreferences prefs = LoadPrefsUtil.getPrefs(ctxt);
                 Set<String> configuredAlgos = prefs.getStringSet(
                         LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS,
                         LoadPrefsUtil.HOSTKEY_ALGOS_DEFAULTS);
-                logger.trace("got configured algos {}", configuredAlgos);
 
-                // generate new keys
                 for (HostKeyAlgorithm hka : HostKeyAlgorithm.values()) {
                     if (configuredAlgos.contains(hka.getPreferenceValue())) {
                         try (
@@ -106,13 +107,10 @@ public class GenKeysAskDialogFragment extends DialogFragment {
             });
         }
 
-        // clean up
-        // update UI in UI thread
         keyFingerprintProvider.calcPubkeyFingerprints(ctxt);
         pftpdFragment.showKeyFingerprints();
 
         if (startServerOnFinish) {
-            // icon members should be set at this time
             ServicesStartStopUtil.startServers(pftpdFragment);
         }
     }

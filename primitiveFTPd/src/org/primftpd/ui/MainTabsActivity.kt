@@ -58,13 +58,11 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     private var logger: Logger = LoggerFactory.getLogger(javaClass)
     private var isServerRunning by mutableStateOf(false)
 
-    // 创建一个 PftpdFragment 实例，用于给旧的 Dialog 提供 logic 支持
     private lateinit var pftpdFragment: PftpdFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 初始化 pftpdFragment (虽然不显示它，但 Java Dialog 需要它)
         pftpdFragment = PftpdFragment()
         
         enableEdgeToEdge()
@@ -82,7 +80,8 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         onStopServer = { handleStop() },
                         onShowAbout = { showAbout() },
                         onShowFingerprints = { showFingerprints() },
-                        onShowAuthentication = { showAuthentication() }
+                        onShowAuthentication = { showAuthentication() },
+                        onShowQrCode = { showQrCode() }
                     )
                 }
             }
@@ -92,22 +91,20 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         LoadPrefsUtil.getPrefs(this).registerOnSharedPreferenceChangeListener(this)
     }
 
-    // --- 旧逻辑桥接方法 ---
-
     private fun showAbout() {
-        val diag = AboutFragment()
-        diag.show(supportFragmentManager, DIALOG_TAG)
+        AboutFragment().show(supportFragmentManager, DIALOG_TAG)
     }
 
     private fun showFingerprints() {
-        val diag = KeysFingerprintsFragment()
-        diag.show(supportFragmentManager, DIALOG_TAG)
+        KeysFingerprintsFragment().show(supportFragmentManager, DIALOG_TAG)
     }
 
     private fun showAuthentication() {
-        // 传入 pftpdFragment 实例
-        val diag = GenKeysAskDialogFragment(pftpdFragment)
-        diag.show(supportFragmentManager, DIALOG_TAG)
+        GenKeysAskDialogFragment(pftpdFragment).show(supportFragmentManager, DIALOG_TAG)
+    }
+
+    private fun showQrCode() {
+        QrFragment().show(supportFragmentManager, DIALOG_TAG)
     }
 
     protected open fun createPftpdFragment(): PftpdFragment? = pftpdFragment
@@ -149,8 +146,6 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     }
 }
 
-// --- Composable UI Components ---
-
 @Composable
 fun MainScreen(
     isServerRunning: Boolean,
@@ -159,6 +154,7 @@ fun MainScreen(
     onShowAbout: () -> Unit = {},
     onShowFingerprints: () -> Unit = {},
     onShowAuthentication: () -> Unit = {},
+    onShowQrCode: () -> Unit = {},
     initialLeftVisible: Boolean = false,
     initialRightVisible: Boolean = false
 ) {
@@ -249,14 +245,17 @@ fun MainScreen(
                 onClose = { rightMenuVisible = false }
             ) {
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting), "网络状态", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24), "扫码连接", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.cleaner),"Clean cache",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),"Client logs",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24), "扫码连接", onClick = {
+                    rightMenuVisible = false
+                    onShowQrCode()
+                })
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Clean cache",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Client logs",onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24), "指纹信息", onClick = { 
                     rightMenuVisible = false
                     onShowFingerprints() 
                 })
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.thinkey),"Verification Key",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Verification Key",onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24), "关于", onClick = { 
                     rightMenuVisible = false
                     onShowAbout() 
@@ -283,10 +282,10 @@ fun MainScreen(
                         leftMenuVisible = false
                         onShowAuthentication()
                     })
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "连接方式", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse), "UI 设置", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "连接方式", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "UI 设置", onClick = {})
                 RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.system),
+                    icon = ImageVector.vectorResource(id = R.drawable.refresh),
                     "System",
                     onClick = {})
             }

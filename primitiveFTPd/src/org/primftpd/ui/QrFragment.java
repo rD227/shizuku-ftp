@@ -1,79 +1,89 @@
 package org.primftpd.ui;
 
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import org.primftpd.R;
 import org.primftpd.prefs.LoadPrefsUtil;
 import org.primftpd.prefs.PrefsBean;
 import org.primftpd.util.IpAddressBean;
 import org.primftpd.util.IpAddressProvider;
-import org.primftpd.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
+import androidx.fragment.app.DialogFragment;
 
-public class QrFragment extends Fragment implements RecreateLogger {
-
-    protected Logger logger = LoggerFactory.getLogger(getClass());
-
-    private ViewGroup urlsParent;
-    private ImageView qrImage;
-    private int width;
-    private int height;
-    private TextView fallbackTextView;
-    private ProgressBar qrLoading;
-
-    private String lastChosenIp = null;
-
-    final private PftpdFragment pftpdFragment;
-
-    public QrFragment(PftpdFragment pftpdFragment) {
-        this.pftpdFragment = pftpdFragment;
-    }
+public class QrFragment extends DialogFragment {
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState)
-    {
+                             Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
         View view = inflater.inflate(R.layout.qr, container, false);
+        LinearLayout urlsParent = view.findViewById(R.id.qrUrlsParent);
+        View loading = view.findViewById(R.id.qrLoading);
 
-        urlsParent = view.findViewById(R.id.qrUrlsParent);
-        qrImage = view.findViewById(R.id.qrImage);
-        fallbackTextView = view.findViewById(R.id.qrFallbackTextView);
-        qrLoading = view.findViewById(R.id.qrLoading);
+        IpAddressProvider ipAddressProvider = new IpAddressProvider();
+        List<IpAddressBean> ipAddressBeans = ipAddressProvider.ipAddressTexts(getContext(), true, true);
 
-        width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
-        height = getResources().getDisplayMetrics().heightPixels / 2;
+        PrefsBean prefsBean = LoadPrefsUtil.loadPrefs(logger, LoadPrefsUtil.getPrefs(getContext()));
+
+        String ip = null;
+        for (IpAddressBean bean : ipAddressBeans) {
+            // 修复方法名: getInterfaceName
+            if (bean.getInterfaceName().contains("wlan")) {
+                ip = bean.getIpAddress();
+                break;
+            }
+        }
+        if (ip == null && !ipAddressBeans.isEmpty()) {
+            ip = ipAddressBeans.get(0).getIpAddress();
+        }
+
+        if (ip != null) {
+            loading.setVisibility(View.GONE);
+            String url = "ftp://" + prefsBean.getUserName() + "@" + ip + ":" + prefsBean.getPortStr();
+            
+            // 动态添加 URL 文本
+            TextView urlTextView = new TextView(getContext());
+            urlTextView.setText(url);
+            urlTextView.setTextIsSelectable(true);
+            urlsParent.addView(urlTextView);
+
+            QRCodeWriter writer = new QRCodeWriter();
+            try {
+                BitMatrix bitMatrix = writer.encode(url, BarcodeFormat.QR_CODE, 512, 512);
+                int width = bitMatrix.getWidth();
+                int height = bitMatrix.getHeight();
+                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+                for (int x = 0; x < width; x++) {
+                    for (int y = 0; y < height; y++) {
+                        bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                    }
+                }
+                // 修复 ID: qrImage
+                ((ImageView) view.findViewById(R.id.qrImage)).setImageBitmap(bmp);
+            } catch (WriterException e) {
+                logger.error("could not create QR code", e);
+            }
+        }
 
         return view;
     }
@@ -81,145 +91,9 @@ public class QrFragment extends Fragment implements RecreateLogger {
     @Override
     public void onResume() {
         super.onResume();
-        draw(pftpdFragment.getChosenIp());
-    }
-
-    public void drawIfChanged() {
-        String chosenIp = pftpdFragment.getChosenIp();
-        if (!Objects.equals(lastChosenIp, chosenIp)) {
-            logger.debug("redraw needed");
-            draw(chosenIp);
-            lastChosenIp = chosenIp;
-        } else {
-            logger.debug("no redraw needed (current ip: {}, last ip: {})", chosenIp, lastChosenIp);
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
+            getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
-    }
-
-    protected void draw(String chosenIp) {
-        qrLoading.setVisibility(View.VISIBLE);
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
-            executorService.execute(() -> doDraw(chosenIp));
-        }
-    }
-
-    protected void doDraw(String chosenIp) {
-        View view = getView();
-        if (view == null) {
-            return;
-        }
-
-        Configuration config = this.getResources().getConfiguration();
-        boolean isLeftToRight = config.getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
-
-        IpAddressProvider ipAddressProvider = new IpAddressProvider();
-        List<IpAddressBean> ipAddressBeans = ipAddressProvider.ipAddressTexts(
-                getContext(),
-                false,
-                isLeftToRight);
-
-        SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
-        PrefsBean prefsBean = LoadPrefsUtil.loadPrefs(logger, prefs);
-
-        Boolean showIpv4 = LoadPrefsUtil.showIpv4InNotification(prefs);
-        Boolean showIpv6 = LoadPrefsUtil.showIpv6InNotification(prefs);
-
-        List<String> urls = new ArrayList<>();
-
-        if (chosenIp != null) {
-            boolean ipv6 = ipAddressProvider.isIpv6(chosenIp);
-            addUrl(urls, chosenIp, ipv6, prefsBean);
-        } else {
-            for (IpAddressBean ipAddressBean : ipAddressBeans) {
-                String ipAddressText = ipAddressBean.getIpAddress();
-                boolean ipv6 = ipAddressProvider.isIpv6(ipAddressText);
-                if (!ipv6 && !showIpv4) {
-                    logger.debug("ignoring ip: {}", ipAddressText);
-                    continue;
-                }
-                if (ipv6 && !showIpv6) {
-                    logger.debug("ignoring ip: {}", ipAddressText);
-                    continue;
-                }
-                addUrl(urls, ipAddressText, ipv6, prefsBean);
-            }
-        }
-
-        final boolean darkMode = UiModeUtil.isDarkMode(getResources());
-        RadioGroup radioGroup = new RadioGroup(getContext());
-        radioGroup.setOrientation(RadioGroup.VERTICAL);
-        for (final String url : urls) {
-            logger.debug("showing url: {}", url);
-            RadioButton radioButton = new RadioButton(getContext());
-            radioButton.setText(url);
-            radioGroup.addView(radioButton);
-            final QrFragment fragment = this;
-            radioButton.setOnClickListener(v -> {
-                try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
-                    executorService.execute(() -> {
-                        Bitmap qr = fragment.generateQr(url, darkMode);
-                        v.post(() -> fragment.qrImage.setImageBitmap(qr));
-                    });
-                }
-            });
-        }
-
-        view.post(() -> {
-            qrLoading.setVisibility(View.GONE);
-            if (ipAddressBeans.isEmpty() && chosenIp == null) {
-                fallbackTextView.setVisibility(View.VISIBLE);
-            } else {
-                fallbackTextView.setVisibility(View.GONE);
-            }
-            urlsParent.removeAllViewsInLayout();
-            urlsParent.addView(radioGroup);
-            if (!urls.isEmpty()) {
-                View firstRadio = radioGroup.getChildAt(0);
-                firstRadio.callOnClick();
-                ((RadioButton) firstRadio).setChecked(true);
-            }
-        });
-    }
-
-    protected void addUrl(List<String> urls, String ipAddressText, boolean ipv6, PrefsBean prefsBean) {
-        if (prefsBean.getServerToStart().startFtp()) {
-            StringBuilder str = new StringBuilder();
-            NotificationUtil.buildUrl(str, ipv6, "ftp", ipAddressText, prefsBean.getPortStr());
-            urls.add(str.toString());
-        }
-        if (prefsBean.getServerToStart().startSftp()) {
-            StringBuilder str = new StringBuilder();
-            NotificationUtil.buildUrl(str, ipv6, "sftp", ipAddressText, prefsBean.getSecurePortStr());
-            urls.add(str.toString());
-        }
-    }
-
-    private Bitmap generateQr(String url, boolean darkMode) {
-        Map<EncodeHintType, Object> hintsMap = new HashMap<>();
-        hintsMap.put(EncodeHintType.CHARACTER_SET, "utf-8");
-        hintsMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.Q);
-        hintsMap.put(EncodeHintType.MARGIN, 5);
-
-        int colorForeground = darkMode ? 0xFFFFFFFF : 0x000000;
-        int colorBackground = darkMode ? 0x000000 : 0xFFFFFFFF;
-
-        try {
-            BitMatrix bitMatrix = new MultiFormatWriter().encode(url, BarcodeFormat.QR_CODE, width, height, hintsMap);
-            int[] pixels = new int[width * height];
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    boolean bitSet = bitMatrix.get(j, i);
-                    pixels[i * width + j] = bitSet ? colorForeground : colorBackground;
-                }
-            }
-            return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
-        } catch (WriterException e) {
-            logger.error("could not create QR code", e);
-        }
-        return null;
-    }
-
-    @Override
-    public void recreateLogger() {
-        this.logger = LoggerFactory.getLogger(getClass());
     }
 }
