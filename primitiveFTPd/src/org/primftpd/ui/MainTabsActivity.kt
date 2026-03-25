@@ -250,10 +250,13 @@ fun MainScreen(
             ) {
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting), "网络状态", onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24), "扫码连接", onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.cleaner),"Clean cache",onClick = {})
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),"Client logs",onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24), "指纹信息", onClick = { 
                     rightMenuVisible = false
                     onShowFingerprints() 
                 })
+                RowClick(icon = ImageVector.vectorResource(id = R.drawable.thinkey),"Verification Key",onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24), "关于", onClick = { 
                     rightMenuVisible = false
                     onShowAbout() 
@@ -282,6 +285,10 @@ fun MainScreen(
                     })
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "连接方式", onClick = {})
                 RowClick(icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse), "UI 设置", onClick = {})
+                RowClick(
+                    icon = ImageVector.vectorResource(id = R.drawable.system),
+                    "System",
+                    onClick = {})
             }
         }
     }
