@@ -272,11 +272,11 @@ fun MainScreen(
                             onShowQrCode()
                         })
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        icon = ImageVector.vectorResource(id = R.drawable.cleaner),
                         "Clean cache",
                         onClick = {})
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),
                         "Client logs",
                         onClick = {})
                     RowClick(
@@ -287,7 +287,7 @@ fun MainScreen(
                             onShowFingerprints()
                         })
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        icon = ImageVector.vectorResource(id = R.drawable.thinkey),
                         "Verification Key",
                         onClick = {})
                     RowClick(
@@ -336,7 +336,7 @@ fun MainScreen(
                             leftMenuVisible = false
                             onShowAuthentication()
                         })
-                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "连接方式", onClick = {})
+                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "连接方式", onClick = {})
                     RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "UI 设置", onClick = {})
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.refresh),
