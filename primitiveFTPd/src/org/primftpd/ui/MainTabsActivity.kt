@@ -336,10 +336,10 @@ fun MainScreen(
                             leftMenuVisible = false
                             onShowAuthentication()
                         })
-                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "连接方式", onClick = {})
-                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "UI 设置", onClick = {})
+                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "How to connect", onClick = {})
+                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse), "UI setting", onClick = {})
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        icon = ImageVector.vectorResource(id = R.drawable.system),
                         "System",
                         onClick = {})
                 }
