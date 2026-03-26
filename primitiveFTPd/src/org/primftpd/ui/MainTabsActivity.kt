@@ -249,7 +249,7 @@ fun MainScreen(
                     Text(
                         text = "侧边菜单"/*, style = MaterialTheme.typography.headlineSmall*/,
                         modifier = Modifier
-                            .padding(top = 10.dp)
+                            .padding(top = 20.dp)
                             .padding(start = 10.dp)
                     )
                     Button(
@@ -308,24 +308,41 @@ fun MainScreen(
             exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
-            SideMenu(
-                title = "设置与系统",
-                width = 280.dp,
-                onClose = { leftMenuVisible = false }
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(250.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.authentication),
-                    "身份验证",
-                    onClick = {
-                        leftMenuVisible = false
-                        onShowAuthentication()
-                    })
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "连接方式", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "UI 设置", onClick = {})
-                RowClick(
-                    icon = ImageVector.vectorResource(id = R.drawable.refresh),
-                    "System",
-                    onClick = {})
+                Column() {
+                    Text(
+                        text = "侧边菜单"/*, style = MaterialTheme.typography.headlineSmall*/,
+                        modifier = Modifier
+                            .padding(top = 20.dp)
+                            .padding(start = 10.dp)
+                    )
+                    Button(
+                        onClick = { rightMenuVisible = false },
+                        modifier = Modifier
+                            .padding(top = 16.dp)
+                            .padding(start = 10.dp)
+                    ) {
+                        Text("关闭")
+                    }
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.authentication),
+                        "身份验证",
+                        onClick = {
+                            leftMenuVisible = false
+                            onShowAuthentication()
+                        })
+                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "连接方式", onClick = {})
+                    RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh), "UI 设置", onClick = {})
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        "System",
+                        onClick = {})
+                }
             }
         }
     }
