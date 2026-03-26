@@ -1,0 +1,167 @@
+lines 1-33...skipping...
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1700: cancel delayed work sync
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1707: suspend start
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1710: if enable pen,will close it
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1175: ++
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1199: pen charge state is DISABLE, DISABL>
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1204: --
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1759: end
+Mar 25 20:13:36 alarm kernel: [NVT-ts-spi] nvt_ts_remove 1603: Removing driver...
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a8f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a6f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1234: probe start
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1286: mode=0, max_speed_hz=9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 681: novatek,irq-gpio=585
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 684: novatek,pen-support=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 687: novatek,wgp-stylus=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 694: SWRST_N8_ADDR=0x03F0FE
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 703: SPI_RD_FAST_ADDR=0x03F310
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 717: spi-max-frequency: 9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1360: Set default fw_ver=0, x_num=32, y_num=50, abs_x>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1455: int_trigger_type=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1464: request irq 225 succeed
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] update_firmware_request 302: filename is novatek/novatek_nt36523_f>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 125: cascade_2nd_header_info = 1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 156: ovly_info = 0, ilm_dlm_num = 2, ovly_se>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, >
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed.>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, >
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed.>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+lines 1-34...skipping...
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1700: cancel delayed work sync
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1707: suspend start
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1710: if enable pen,will close it
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1175: ++
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1199: pen charge state is DISABLE, DISABLE >
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1204: --
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1759: end
+Mar 25 20:13:36 alarm kernel: [NVT-ts-spi] nvt_ts_remove 1603: Removing driver...
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a8f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a6f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1234: probe start
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1286: mode=0, max_speed_hz=9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 681: novatek,irq-gpio=585
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 684: novatek,pen-support=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 687: novatek,wgp-stylus=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 694: SWRST_N8_ADDR=0x03F0FE
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 703: SPI_RD_FAST_ADDR=0x03F310
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 717: spi-max-frequency: 9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1360: Set default fw_ver=0, x_num=32, y_num=50, abs_x_m>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1455: int_trigger_type=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1464: request irq 225 succeed
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] update_firmware_request 302: filename is novatek/novatek_nt36523_fw.>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 125: cascade_2nd_header_info = 1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 156: ovly_info = 0, ilm_dlm_num = 2, ovly_sec_>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x>
+lines 1-35...skipping...
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1700: cancel delayed work sync
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1707: suspend start
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1710: if enable pen,will close it
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1175: ++
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1199: pen charge state is DISABLE, DISABLE pen input devi>
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1204: --
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1759: end
+Mar 25 20:13:36 alarm kernel: [NVT-ts-spi] nvt_ts_remove 1603: Removing driver...
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a8f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a6f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1234: probe start
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1286: mode=0, max_speed_hz=9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 681: novatek,irq-gpio=585
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 684: novatek,pen-support=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 687: novatek,wgp-stylus=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 694: SWRST_N8_ADDR=0x03F0FE
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 703: SPI_RD_FAST_ADDR=0x03F310
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 717: spi-max-frequency: 9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1360: Set default fw_ver=0, x_num=32, y_num=50, abs_x_max=1600, abs_y>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1455: int_trigger_type=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1464: request irq 225 succeed
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] update_firmware_request 302: filename is novatek/novatek_nt36523_fw.bin
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 125: cascade_2nd_header_info = 1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 156: ovly_info = 0, ilm_dlm_num = 2, ovly_sec_num = 0, info_>
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x00, 0x00, 0x00
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (-1)
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x00, 0x00, 0x00
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (-1)
+lines 1-33...skipping...
+Mar 25 20:03:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:03:37 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1841: event=2, *blank=1
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1700: cancel delayed work sync
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1707: suspend start
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1710: if enable pen,will close it
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1175: ++
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1199: pen charge state is DISABLE, DISABLE pen input device
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1204: --
+Mar 25 20:04:37 alarm kernel: [NVT-ts-spi] nvt_ts_suspend 1759: end
+Mar 25 20:13:36 alarm kernel: [NVT-ts-spi] nvt_ts_remove 1603: Removing driver...
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a8f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: dwc3-qcom a6f8800.usb: port-1 HS-PHY not in L2
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1234: probe start
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1286: mode=0, max_speed_hz=9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 681: novatek,irq-gpio=585
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 684: novatek,pen-support=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 687: novatek,wgp-stylus=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 694: SWRST_N8_ADDR=0x03F0FE
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 703: SPI_RD_FAST_ADDR=0x03F310
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_parse_dt 717: spi-max-frequency: 9600000
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1360: Set default fw_ver=0, x_num=32, y_num=50, abs_x_max=1600, abs_y_max=2560, max_button_num=0!
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1455: int_trigger_type=1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1464: request irq 225 succeed
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] update_firmware_request 302: filename is novatek/novatek_nt36523_fw.bin
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 125: cascade_2nd_header_info = 1
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_bin_header_parser 156: ovly_info = 0, ilm_dlm_num = 2, ovly_sec_num = 0, info_sec_num = 14, partition = 16
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x00, 0x00, 0x00
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (-1)
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x00, 0x00, 0x00
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (-1)
+Mar 25 20:21:37 alarm kernel: [NVT-ts-spi] nvt_tx_auto_copy_mode 323: tx auto copy mode enable
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_check_fw_reset_state 537: error, retry=11, buf[1]=0x00, 0x00, 0x00, 0x00, 0x00
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 694: nvt_check_fw_reset_state failed. (-1)
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_download_firmware_hw_crc 703: error, retry=3
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_read_bld_hw_crc 587: crc_done = 0, ilm_crc_flag = 0, dlm_crc_flag = 0
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_read_bld_hw_crc 609: ilm: bin crc = 0x232D505D, golden = 0x00000000, result = 0x00000000
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_read_bld_hw_crc 631: dlm: bin crc = 0x341518A9, golden = 0x00000000, result = 0x00000000
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_update_firmware 817: Download Firmware failed. (-1)
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1488: download firmware failed
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1491: NVT_TOUCH_ESD_PROTECT is 1
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1175: ++
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1199: pen charge state is DISABLE, ENABLE pen input device
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] disable_pen_input_device 1204: --
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_ts_probe 1525: end
+Mar 25 20:21:38 alarm rtkit-daemon[773]: Failed to make ourselves RT: Operation not permitted
+Mar 25 20:21:38 alarm kernel: [NVT-ts-spi] nvt_drm_notifier_callback 1847: event=1, *blank=0
