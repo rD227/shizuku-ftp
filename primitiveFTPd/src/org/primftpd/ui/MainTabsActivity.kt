@@ -239,27 +239,65 @@ fun MainScreen(
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            SideMenu(
-                title = "功能与工具",
-                width = 280.dp,
-                onClose = { rightMenuVisible = false }
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(250.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.connectsetting), "网络状态", onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24), "扫码连接", onClick = {
-                    rightMenuVisible = false
-                    onShowQrCode()
-                })
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Clean cache",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Client logs",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24), "指纹信息", onClick = { 
-                    rightMenuVisible = false
-                    onShowFingerprints() 
-                })
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.refresh),"Verification Key",onClick = {})
-                RowClick(icon = ImageVector.vectorResource(id = R.drawable.outline_info_24), "关于", onClick = { 
-                    rightMenuVisible = false
-                    onShowAbout() 
-                })
+                Column {
+                    Text(
+                        text = "侧边菜单"/*, style = MaterialTheme.typography.headlineSmall*/,
+                        modifier = Modifier
+                            .padding(top = 10.dp)
+                            .padding(start = 10.dp)
+                    )
+                    Button(
+                        onClick = { rightMenuVisible = false },
+                        modifier = Modifier
+                            .padding(top = 16.dp)
+                            .padding(start = 10.dp)
+                    ) {
+                        Text("关闭")
+                    }
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.connectsetting),
+                        "网络状态",
+                        onClick = {})
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),
+                        "扫码连接",
+                        onClick = {
+                            rightMenuVisible = false
+                            onShowQrCode()
+                        })
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        "Clean cache",
+                        onClick = {})
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        "Client logs",
+                        onClick = {})
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24),
+                        "指纹信息",
+                        onClick = {
+                            rightMenuVisible = false
+                            onShowFingerprints()
+                        })
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.refresh),
+                        "Verification Key",
+                        onClick = {})
+                    RowClick(
+                        icon = ImageVector.vectorResource(id = R.drawable.outline_info_24),
+                        "关于",
+                        onClick = {
+                            rightMenuVisible = false
+                            onShowAbout()
+                        })
+                }
             }
         }
 
@@ -409,6 +447,14 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
 fun LeftMenuOpenPreview() {
     ShizukuFtpTheme {
         MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialLeftVisible = true)
+    }
+}
+
+@Preview(showBackground = true, name = "Right Menu Open")
+@Composable
+fun RightMenuOpenPreview() {
+    ShizukuFtpTheme {
+        MainScreen(isServerRunning = false, onStartServer = {}, onStopServer = {}, initialRightVisible = true)
     }
 }
 
