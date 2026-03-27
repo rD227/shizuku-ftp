@@ -105,6 +105,7 @@ dependencies {
     implementation libs.androidx.runtime
     implementation libs.androidx.material3
     implementation libs.androidx.ui.tooling.preview
+    implementation libs.androidx.navigation.compose
 
     coreLibraryDesugaring(libs.google.desugar)
     implementation libs.google.material//and what is implementation com.google.android.material??

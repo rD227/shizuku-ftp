@@ -252,14 +252,14 @@ fun MainScreen(
                             .padding(top = 20.dp)
                             .padding(start = 10.dp)
                     )
-                    Button(
+                    /*Button(
                         onClick = { rightMenuVisible = false },
                         modifier = Modifier
                             .padding(top = 16.dp)
                             .padding(start = 10.dp)
                     ) {
                         Text("关闭")
-                    }
+                    }*/
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.connectsetting),
                         "网络状态",
@@ -321,27 +321,29 @@ fun MainScreen(
                             .padding(top = 20.dp)
                             .padding(start = 10.dp)
                     )
-                    Button(
+                    /*Button(
                         onClick = { rightMenuVisible = false },
                         modifier = Modifier
                             .padding(top = 16.dp)
                             .padding(start = 10.dp)
                     ) {
                         Text("关闭")
-                    }
+                    }*/
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.authentication),
                         "身份验证",
                         onClick = {
                             leftMenuVisible = false
                             onShowAuthentication()
-                        })
+                        }
+                    )
                     RowClick(icon = ImageVector.vectorResource(id = R.drawable.port), "How to connect", onClick = {})
                     RowClick(icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse), "UI setting", onClick = {})
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.system),
                         "System",
-                        onClick = {})
+                        onClick = {}
+                    )
                 }
             }
         }
