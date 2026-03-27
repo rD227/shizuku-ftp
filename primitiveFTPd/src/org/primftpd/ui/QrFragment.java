@@ -47,7 +47,6 @@ public class QrFragment extends DialogFragment {
 
         String ip = null;
         for (IpAddressBean bean : ipAddressBeans) {
-            // 修复方法名: getInterfaceName
             if (bean.getInterfaceName().contains("wlan")) {
                 ip = bean.getIpAddress();
                 break;
