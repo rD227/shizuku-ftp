@@ -9,11 +9,11 @@
 
     <style name="PrimFtpdDeviceTheme" parent="Theme.AppCompat.DayNight">
         <item name="colorPrimary">?attr/colorOutlineVariant</item>
-        <item name="colorAccent">@color/blueIcon</item>
+        <item name="colorAccent">?attr/colorOutlineVariant</item>
         <item name="colorPrimaryVariant">?attr/colorPrimary</item>
         <item name="colorOnPrimary">@color/black</item>
-        <item name="colorSecondary">@color/blueIconDark</item>
-        <item name="colorSecondaryVariant">@color/blueIcon</item>
+        <item name="colorSecondary">?attr/colorPrimary</item>
+        <item name="colorSecondaryVariant">?attr/colorOutlineVariant</item>
         <item name="colorOnSecondary">@color/black</item>
 
         <item name="android:statusBarColor">?attr/colorPrimary</item>
