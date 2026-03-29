@@ -36,7 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -91,9 +93,6 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             },
                             onNavigate = { route ->
                                 navController.navigate(route)
-                            },
-                            onShowAuthentication = {
-                                showAuthentication()
                             }
                         )
                     }
@@ -118,6 +117,13 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             }
                         )
                     }
+                    composable("settings") {
+                        SettingsScreen(
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -136,14 +142,6 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         return super.onCreateOptionsMenu(menu)
-    }
-
-    private fun showAuthentication() {
-        try {
-            GenKeysAskDialogFragment(pftpdFragment).show(supportFragmentManager, DIALOG_TAG)
-        } catch (e: Exception) {
-            Toast.makeText(this, "身份验证 Dialog 弹出失败", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun handleStart() {
@@ -179,7 +177,6 @@ fun MainScreen(
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
     onNavigate: (String) -> Unit,
-    onShowAuthentication: () -> Unit,
     initialLeftVisible: Boolean = false,
     initialRightVisible: Boolean = false
 ) {
@@ -384,7 +381,7 @@ fun MainScreen(
                         text = "Authentication",
                         onClick = {
                             leftMenuVisible = false
-                            onShowAuthentication()
+                            onNavigate("settings")
                         }
                     )
                     RowClick(
@@ -408,6 +405,44 @@ fun MainScreen(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("设置") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        AndroidView<FragmentContainerView>(
+            factory = { ctx ->
+                FragmentContainerView(ctx).apply {
+                    id = android.view.View.generateViewId()
+                }
+            },
+            update = { view ->
+                (context as? FragmentActivity)?.supportFragmentManager?.let { fragmentManager ->
+                    if (fragmentManager.findFragmentByTag("prefs_fragment") == null) {
+                        fragmentManager.beginTransaction()
+                            .replace(view.id, org.primftpd.prefs.FtpPrefsFragment(), "prefs_fragment")
+                            .commit()
+                    }
+                }
+            },
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        )
     }
 }
 
@@ -629,8 +664,6 @@ fun MainScreenPreview() {
             onStopServer = {
             },
             onNavigate = {
-            },
-            onShowAuthentication = {
             }
         )
     }
@@ -647,8 +680,6 @@ fun LeftMenuOpenPreview() {
             onStopServer = {
             },
             onNavigate = {
-            },
-            onShowAuthentication = {
             },
             initialLeftVisible = true
         )
