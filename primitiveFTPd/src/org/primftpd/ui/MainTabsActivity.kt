@@ -412,6 +412,8 @@ fun MainScreen(
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -424,25 +426,37 @@ fun SettingsScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
+        // 使用 remember 记住 ID，防止重组时改变
+        val containerId = remember { android.view.View.generateViewId() }
+
         AndroidView<FragmentContainerView>(
             factory = { ctx ->
                 FragmentContainerView(ctx).apply {
-                    id = android.view.View.generateViewId()
-                }
-            },
-            update = { view ->
-                (context as? FragmentActivity)?.supportFragmentManager?.let { fragmentManager ->
-                    if (fragmentManager.findFragmentByTag("prefs_fragment") == null) {
-                        fragmentManager.beginTransaction()
-                            .replace(view.id, org.primftpd.prefs.FtpPrefsFragment(), "prefs_fragment")
-                            .commit()
-                    }
+                    id = containerId
                 }
             },
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
         )
+
+        // 使用 DisposableEffect 管理 Fragment 生命周期
+        DisposableEffect(containerId) {
+            // 当 Composable 进入视图树时，添加 Fragment
+            val fragment = org.primftpd.prefs.FtpPrefsFragment()
+            fragmentManager?.beginTransaction()
+                ?.replace(containerId, fragment, "prefs_fragment")
+                ?.commit()
+
+            // 当 Composable 从视图树移除时，清理掉 Fragment
+            onDispose {
+                fragmentManager?.findFragmentByTag("prefs_fragment")?.let { existingFragment ->
+                    fragmentManager.beginTransaction()
+                        .remove(existingFragment)
+                        .commitAllowingStateLoss()
+                }
+            }
+        }
     }
 }
 
