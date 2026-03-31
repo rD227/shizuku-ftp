@@ -206,8 +206,8 @@ public class ServicesStartStopUtil {
             PrefsBean prefsBean,
             KeyFingerprintProvider keyFingerprintProvider,
             QuickShareBean quickShareBean,
-            String chosenIp) {
-        Intent intent = new Intent(context, FtpServerService.class);
+            String chosenIp
+    ) { Intent intent = new Intent(context, FtpServerService.class);
         putPrefsInIntent(intent, prefsBean);
         putKeyFingerprintProviderInIntent(intent, keyFingerprintProvider);
         putQuickShareBeanInIntent(intent, quickShareBean);
@@ -220,8 +220,8 @@ public class ServicesStartStopUtil {
             PrefsBean prefsBean,
             KeyFingerprintProvider keyFingerprintProvider,
             QuickShareBean quickShareBean,
-            String chosenIp) {
-        Intent intent = new Intent(context, SshServerService.class);
+            String chosenIp
+    ) { Intent intent = new Intent(context, SshServerService.class);
         putPrefsInIntent(intent, prefsBean);
         putKeyFingerprintProviderInIntent(intent, keyFingerprintProvider);
         putQuickShareBeanInIntent(intent, quickShareBean);
