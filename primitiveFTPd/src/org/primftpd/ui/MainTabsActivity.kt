@@ -19,7 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+//import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
@@ -47,12 +47,10 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
-import org.primftpd.log.LogController
 import org.primftpd.prefs.LoadPrefsUtil
-import org.primftpd.util.NotificationUtil
 import org.primftpd.util.ServicesStartStopUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+//import org.slf4j.Logger
+//import org.slf4j.LoggerFactory
 
 open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -65,7 +63,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         const val DIALOG_TAG = "dialogs"
     }
 
-    private var logger: Logger = LoggerFactory.getLogger(javaClass)
+    //private var logger: Logger = LoggerFactory.getLogger(javaClass)
     private var isServerRunning by mutableStateOf(false)
     private lateinit var pftpdFragment: PftpdFragment
 
@@ -429,7 +427,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                             }
                         }
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
@@ -481,7 +479,7 @@ fun AboutScreen(onBack: () -> Unit) {
                             onBack()
                         }
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
@@ -525,7 +523,7 @@ fun FingerprintsScreen(onBack: () -> Unit) {
                             onBack()
                         }
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
@@ -556,7 +554,7 @@ fun QrScreen(onBack: () -> Unit) {
                             onBack()
                         }
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
