@@ -414,20 +414,29 @@ fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
+    var hasNavigatedBack by remember { mutableStateOf(false) }
+// Prevent double click
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("设置") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = {
+                            if (!hasNavigatedBack) {
+                                hasNavigatedBack = true
+                                onBack()
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }
                 }
             )
         }
     ) { padding ->
-        // 使用 remember 记住 ID，防止重组时改变
         val containerId = remember { android.view.View.generateViewId() }
+        val fragmentTag = remember(containerId) { "prefs_fragment_$containerId" }
 
         AndroidView<FragmentContainerView>(
             factory = { ctx ->
@@ -440,17 +449,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .fillMaxSize()
         )
 
-        // 使用 DisposableEffect 管理 Fragment 生命周期
         DisposableEffect(containerId) {
-            // 当 Composable 进入视图树时，添加 Fragment
             val fragment = org.primftpd.prefs.FtpPrefsFragment()
             fragmentManager?.beginTransaction()
-                ?.replace(containerId, fragment, "prefs_fragment")
+                ?.replace(containerId, fragment, fragmentTag)
                 ?.commit()
 
-            // 当 Composable 从视图树移除时，清理掉 Fragment
             onDispose {
-                fragmentManager?.findFragmentByTag("prefs_fragment")?.let { existingFragment ->
+                fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
                     fragmentManager.beginTransaction()
                         .remove(existingFragment)
                         .commitAllowingStateLoss()
