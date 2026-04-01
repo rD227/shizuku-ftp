@@ -70,12 +70,23 @@ public class ServerServiceHandler extends Handler
 			// XXX set properties to prefer IPv4 to run in simulator
 			System.setProperty("java.net.preferIPv4Stack", "true");
 			System.setProperty("java.net.preferIPv6Addresses", "false");
+            //Fixing the crash when start the service
+			// 1. MUST call startForeground immediately to avoid ForegroundServiceDidNotStartInTimeException
+			Notification notification = ServicesStartStopUtil.updateNonActivityUI(
+					service,
+					true,
+					service.prefsBean,
+					service.keyFingerprintProvider,
+					service.quickShareBean,
+					service.chosenIp);
+			service.startForeground(NotificationUtil.NOTIFICATION_ID, notification);
 
 			StorageType storageType = service.prefsBean.getStorageType();
 			if (storageType == StorageType.ROOT || storageType == StorageType.VIRTUAL) {
 				shellOpen();
 			}
 
+			// 2. Then do the heavy lifting
 			boolean started = service.launchServer(shell);
 
 			if (started && service.getServer() != null) {
@@ -87,17 +98,9 @@ public class ServerServiceHandler extends Handler
 				if (service.prefsBean.isAnnounce()) {
 					service.announceService();
 				}
-
-				// make service high priority
-				Notification notification = ServicesStartStopUtil.updateNonActivityUI(
-						service,
-						true,
-						service.prefsBean,
-						service.keyFingerprintProvider,
-						service.quickShareBean,
-						service.chosenIp);
-				service.startForeground(NotificationUtil.NOTIFICATION_ID, notification);
 			} else {
+				// If failed, stop the service. stopSelf() will eventually trigger handleStop
+				// which will update notification to "stopped" state.
 				service.stopSelf();
 			}
 		}
