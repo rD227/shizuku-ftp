@@ -52,6 +52,13 @@ import org.primftpd.util.ServicesStartStopUtil
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
 
+
+
+//PROMPT：in first stage, I can use EventBus to get the data and draw the UI or dashboard
+//        in Second stage (OR NEEDN'T), I can use ViewModel?
+//        in the end, I can delete all the EventBus
+
+
 open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
