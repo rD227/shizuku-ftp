@@ -38,6 +38,9 @@ import java.util.Date;
 
 import eu.chainfire.libsuperuser.Shell;
 
+//WARNING: 'getDefaultSharedPreferences(android.content.Context)' 已弃用
+//LINE: 201
+
 /**
  * Abstract base class for {@link Service}s wrapping servers.
  * <div>
@@ -57,9 +60,7 @@ public abstract class AbstractServerService
 	protected static final int MSG_STOP = 2;
 
 	protected final Logger logger = LoggerFactory.getLogger(getClass());
-
-	private ServerServiceHandler serviceHandler;
-	PrefsBean prefsBean;
+    PrefsBean prefsBean;
 	KeyFingerprintProvider keyFingerprintProvider;
 	QuickShareBean quickShareBean;
 	String chosenIp;
@@ -76,7 +77,10 @@ public abstract class AbstractServerService
 		Looper serviceLooper,
 		AbstractServerService service);
 
-	protected abstract Object getServer();
+    private ServerServiceHandler serviceHandler;
+
+
+    protected abstract Object getServer();
 	protected abstract boolean launchServer(final Shell.Interactive shell);
 	protected abstract void stopServer();
 	protected abstract int getPort();
@@ -107,7 +111,7 @@ public abstract class AbstractServerService
 	public void onCreate() {
 		HandlerThread thread = new HandlerThread(
 			"ServiceStartArguments",
-			Process.THREAD_PRIORITY_BACKGROUND);
+			Process.THREAD_PRIORITY_BACKGROUND);//It's background proprietary （priority)
 		thread.start();
 
 		// listen for events
