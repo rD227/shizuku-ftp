@@ -28,6 +28,7 @@ import org.primftpd.prefs.PrefsBean;
 import org.primftpd.R;
 import org.primftpd.share.QuickShareBean;
 import org.primftpd.util.KeyFingerprintProvider;
+import org.primftpd.util.NotificationUtil;
 import org.primftpd.util.ServicesStartStopUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +135,18 @@ public abstract class AbstractServerService
 		quickShareBean = (QuickShareBean)extras.get(ServicesStartStopUtil.EXTRA_QUICK_SHARE_BEAN);
 		chosenIp = extras.getString(ServicesStartStopUtil.EXTRA_CHOSEN_IP);
 
-		// send start message (to handler)
+		// 1. MUST call startForeground immediately on main thread to avoid ForegroundServiceDidNotStartInTimeException
+		// Do this before sending async message to background thread.
+		android.app.Notification notification = ServicesStartStopUtil.updateNonActivityUI(
+				this,
+				true,
+				prefsBean,
+				keyFingerprintProvider,
+				quickShareBean,
+				chosenIp);
+		startForeground(NotificationUtil.NOTIFICATION_ID, notification);
+
+		// 2. send start message (to handler) to do heavy lifting like key generation/server start
 		Message msg = serviceHandler.obtainMessage();
 		msg.arg1 = MSG_START;
 		serviceHandler.sendMessage(msg);
