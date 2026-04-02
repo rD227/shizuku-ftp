@@ -15,6 +15,26 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+
+/*
+BTW Kotlin can declare object directly
+// PrefKeys.kt
+object PrefKeys {
+    // 所有的 Key 都在这里，干净利落
+    const val PUB_KEY_AUTH = "pub_key_auth"
+    const val START_DIR = "start_dir"
+    const val LOGGING = "logging"
+
+    // 之前的静态辅助方法也可以直接写在这里
+    fun getStartDir(prefs: SharedPreferences): File {
+        val path = prefs.getString(START_DIR, null) ?: return defaultPath()
+        return File(path)
+    }
+}
+then
+PrefKeys.PUB_KEY_AUTH 或者 PrefKeys.getStartDir(prefs)
+ */
+
 public class LoadPrefsUtil
 {
 	public static final String PREF_KEY_USER = "userNamePref";
