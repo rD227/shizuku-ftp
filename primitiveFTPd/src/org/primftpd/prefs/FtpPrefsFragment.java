@@ -18,6 +18,30 @@ import java.io.File;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+//If I want to use compose
+//It should be overwrite because Preference is deep binding PreferenceFragmentCompat
+//org/primftpd/prefs/LoadPrefsUtil.java is also need to be write (best (standard develop
+
+//UI SUCH AS
+/*
+*
+*
+@Composable
+fun PubKeyAuthPreference(isChecked: Boolean, summaryPath: String, onCheckedChange: (Boolean) -> Unit) {
+    Row(...) {
+        Column {
+            Text("Public key authentication") // 标题
+            Text(summaryPath)                 // 你的动态路径副标题
+        }
+        Switch(checked = isChecked, onCheckedChange = onCheckedChange)
+    }
+}
+*
+*
+*
+*
+* */
+
 public class FtpPrefsFragment extends PreferenceFragmentCompat
 {
     protected Logger logger = LoggerFactory.getLogger(getClass());
