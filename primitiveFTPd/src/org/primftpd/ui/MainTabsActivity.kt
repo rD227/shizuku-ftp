@@ -56,6 +56,7 @@ import org.primftpd.util.ServicesStartStopUtil
 
 //PROMPT：in first stage, I can use EventBus to get the data and draw the UI or dashboard
 //        in Second stage (OR NEEDN'T), I can use ViewModel?
+//        https://github.com/copilot/c/ec33ed69-a613-468d-94ee-90b004f3aec9
 //        in the end, I can delete all the EventBus
 
 
