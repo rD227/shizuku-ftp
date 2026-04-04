@@ -124,12 +124,13 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         )
                     }
                     composable("settings") {
-                        SettingsScreen(
-                            onBack = {
-                                navController.popBackStack()
-                            }
+                        FragmentContainerScreen(
+                            title = "设置",
+                            fragmentFactory = { org.primftpd.prefs.FtpPrefsFragment() },
+                            onBack = { navController.popBackStack() }
                         )
                     }
+                    //Can be overwritten now
                 }
             }
         }
@@ -416,6 +417,67 @@ fun MainScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun FragmentContainerScreen(
+    title: String,
+    fragmentFactory: () -> androidx.fragment.app.Fragment, // 传入 Fragment 的构造方法
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+    var hasNavigatedBack by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            if (!hasNavigatedBack) {
+                                hasNavigatedBack = true
+                                onBack()
+                            }
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        val containerId = remember { android.view.View.generateViewId() }
+        val fragmentTag = remember(containerId) { "fragment_$containerId" }
+
+        AndroidView<FragmentContainerView>(
+            factory = { ctx ->
+                FragmentContainerView(ctx).apply {
+                    id = containerId
+                }
+            },
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        )
+
+        DisposableEffect(containerId) {
+            val fragment = fragmentFactory() // 在这里调用传入的构造器
+            fragmentManager?.beginTransaction()
+                ?.replace(containerId, fragment, fragmentTag)
+                ?.commit()
+
+            onDispose {
+                fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
+                    fragmentManager.beginTransaction()
+                        .remove(existingFragment)
+                        .commitAllowingStateLoss()
+                }
+            }
+        }
+    }
+}
+
+/*@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
@@ -471,6 +533,7 @@ fun SettingsScreen(onBack: () -> Unit) {
         }
     }
 }
+*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
