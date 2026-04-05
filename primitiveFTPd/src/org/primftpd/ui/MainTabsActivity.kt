@@ -152,7 +152,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     }
 
     private fun handleStart() {
-        ServicesStartStopUtil.startServers(this)
+        ServicesStartStopUtil.startServers(pftpdFragment)
     }
 
     private fun handleStop() {
@@ -168,8 +168,11 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         if (isServerRunning) {
             Toast.makeText(this, R.string.restartServer, Toast.LENGTH_LONG).show()
         }
+        if (LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS == key) {
+            val askDiag = org.primftpd.ui.GenKeysAskDialogFragment(pftpdFragment)
+            askDiag.show(supportFragmentManager, DIALOG_TAG)
+        }
     }
-
     override fun onDestroy() {
         super.onDestroy()
         EventBus.getDefault().unregister(this)
@@ -476,64 +479,7 @@ fun FragmentContainerScreen(
     }
 }
 
-/*@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
-    var hasNavigatedBack by remember { mutableStateOf(false) }
-// Prevent double click
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("设置") },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (!hasNavigatedBack) {
-                                hasNavigatedBack = true
-                                onBack()
-                            }
-                        }
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        val containerId = remember { android.view.View.generateViewId() }
-        val fragmentTag = remember(containerId) { "prefs_fragment_$containerId" }
-
-        AndroidView<FragmentContainerView>(
-            factory = { ctx ->
-                FragmentContainerView(ctx).apply {
-                    id = containerId
-                }
-            },
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        )
-
-        DisposableEffect(containerId) {
-            val fragment = org.primftpd.prefs.FtpPrefsFragment()
-            fragmentManager?.beginTransaction()
-                ?.replace(containerId, fragment, fragmentTag)
-                ?.commit()
-
-            onDispose {
-                fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
-                    fragmentManager.beginTransaction()
-                        .remove(existingFragment)
-                        .commitAllowingStateLoss()
-                }
-            }
-        }
-    }
-}
-*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
