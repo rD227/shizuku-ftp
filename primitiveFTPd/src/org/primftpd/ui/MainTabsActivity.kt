@@ -131,6 +131,34 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         )
                     }
                     //Can be overwritten now
+                    composable("netWorkStatus"){
+                        FragmentContainerScreen(
+                            "networkStatus",
+                            {org.primftpd.ui.PftpdFragment()},
+                            {navController.popBackStack()}
+                            )
+                    }
+                    composable("clientStatus"){
+                        FragmentContainerScreen(
+                            "clientStatus",
+                            {org.primftpd.ui.ClientActionFragment()},
+                            {navController.popBackStack()}
+                            )
+                    }
+                    composable("fingerPrint"){
+                        FragmentContainerScreen(
+                            "fingerPrint",
+                            {org.primftpd.ui.PubKeyAuthKeysFragment(true)},
+                            {navController.popBackStack()}
+                            )
+                    }
+                    composable("clean"){
+                        FragmentContainerScreen(
+                            "cleaner",
+                            {org.primftpd.ui.CleanSpaceFragment()},
+                            {navController.popBackStack()}
+                            )
+                    }
                 }
             }
         }
@@ -307,6 +335,8 @@ fun MainScreen(
                         icon = ImageVector.vectorResource(id = R.drawable.connectsetting),
                         text = "Network status",
                         onClick = {
+                            rightMenuVisible = false
+                            onNavigate("netWorkStatus")
                         }
                     )
                     RowClick(
@@ -321,12 +351,16 @@ fun MainScreen(
                         icon = ImageVector.vectorResource(id = R.drawable.cleaner),
                         text = "Clean cache",
                         onClick = {
+                            rightMenuVisible = false
+                            onNavigate("clean")
                         }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),
                         text = "Client logs",
                         onClick = {
+                            rightMenuVisible = false
+                            onNavigate("clientStatus")
                         }
                     )
                     RowClick(
@@ -334,7 +368,8 @@ fun MainScreen(
                         text = "Finger print",
                         onClick = {
                             rightMenuVisible = false
-                            onNavigate("fingerprints")
+                            //onNavigate("fingerprints")
+                            onNavigate("fingerPrint")
                         }
                     )
                     RowClick(
