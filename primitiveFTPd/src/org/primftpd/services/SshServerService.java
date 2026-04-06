@@ -133,6 +133,7 @@ public class SshServerService extends AbstractServerService
 		sshServer.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());
 
 		PftpdService pftpdService = this;
+        //这个匿名内部类没有用lambda表达式 //Chinese note is unimportant && needn't read
 		sshServer.setSessionFactory(new SessionFactory() {
 			@Override
 			protected AbstractSession createSession(IoSession ioSession) throws Exception {
@@ -153,6 +154,7 @@ public class SshServerService extends AbstractServerService
 				|| prefsBean.isAnonymousLogin())
 		{
 			final AndroidPrefsUserManager userManager = new AndroidPrefsUserManager(prefsBean);
+            //这是一个匿名内部类，没有new，由lambda自动推断
 			sshServer.setPasswordAuthenticator((username, password, session) -> {
 			Authentication authentication = prefsBean.isAnonymousLogin()
 				? new AnonymousAuthentication()
