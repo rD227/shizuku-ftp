@@ -17,3 +17,18 @@ local.properties
 batchfile
 script.sh
 #gradle.properties
+
+
+# 编译产物
+**/bin/
+**/build/
+*.class
+
+# IDE 配置文件
+.project
+.classpath
+.settings/
+.idea/
+
+# Android/Gradle 缓存
+.gradle/

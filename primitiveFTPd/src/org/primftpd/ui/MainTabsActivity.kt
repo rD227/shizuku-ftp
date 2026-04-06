@@ -1,9 +1,12 @@
 package org.primftpd.ui
 
+//import androidx.compose.material.icons.filled.ArrowBack
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-//import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,6 +51,7 @@ import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
 import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.ServicesStartStopUtil
+
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
 
@@ -109,18 +112,26 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             }
                         )
                     }
+                    /*
                     composable("fingerprints") {
-                        FingerprintsScreen(
+                        FingerprintsScreen(//can be del
                             onBack = {
                                 navController.popBackStack()
                             }
                         )
                     }
+                     */
                     composable("qr") {
+                        /*
                         QrScreen(
                             onBack = {
                                 navController.popBackStack()
                             }
+                        )*/
+                        FragmentContainerScreen(
+                            "扫码了",
+                            {org.primftpd.ui.QrFragment()},
+                            {navController.popBackStack()}
                         )
                     }
                     composable("settings") {
@@ -338,7 +349,7 @@ fun MainScreen(
                             rightMenuVisible = false
                             onNavigate("netWorkStatus")
                         }
-                    )
+                    )//&&
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),
                         text = "Scan code",
@@ -453,6 +464,10 @@ fun MainScreen(
     }
 }
 
+
+/**
+ * 这个玩意其实是可以用 `AndroidFragment<org.primftpd.prefs.FtpPrefsFragment>()` 代替的。摆了不想改了
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FragmentContainerScreen(
@@ -549,19 +564,36 @@ fun AboutScreen(onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "版本: 2026.03.25 (全屏重构版)",
+                text = "2026.04.04",
                 style = MaterialTheme.typography.bodyMedium
             )
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
             Text(text = "这是全屏关于页内容。")
+            /*
+            // show other links
+            (view.findViewById<View?>(R.id.githubLabel) as TextView).setText("GitHub")
+            (view.findViewById<View?>(R.id.githubTextView) as TextView).setText(AboutFragment.URL_GITHUB)
+
+            (view.findViewById<View?>(R.id.fdroidLabel) as TextView).setText("F-Droid")
+            (view.findViewById<View?>(R.id.fdroidTextView) as TextView).setText(AboutFragment.URL_FDROID)
+
+            (view.findViewById<View?>(R.id.minaTextView) as TextView).setText(AboutFragment.URL_MINA)
+            (view.findViewById<View?>(R.id.bouncyCastleTextView) as TextView).setText(AboutFragment.URL_BC)
+            (view.findViewById<View?>(R.id.slf4jTextView) as TextView).setText(AboutFragment.URL_SLF4J)
+            (view.findViewById<View?>(R.id.filepickerTextView) as TextView).setText(AboutFragment.URL_FILEPICKER)
+            (view.findViewById<View?>(R.id.libsuperuserTextView) as TextView).setText(AboutFragment.URL_LIBSUPERUSER)
+            (view.findViewById<View?>(R.id.eventbusTextView) as TextView).setText(AboutFragment.URL_EVENTBUS)
+
+             */
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+//can be del
 fun FingerprintsScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
@@ -591,36 +623,6 @@ fun FingerprintsScreen(onBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun QrScreen(onBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("扫码连接")
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            onBack()
-                        }
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text("二维码扫描界面内容...")
-        }
-    }
-}
 
 // --- Helpers ---
 
