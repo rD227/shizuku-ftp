@@ -190,9 +190,37 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         return super.onCreateOptionsMenu(menu)
     }
 
+
     private fun handleStart() {
-        ServicesStartStopUtil.startServers(pftpdFragment)
+        val context = this
+        val prefs = LoadPrefsUtil.getPrefs(context)
+        val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
+
+        // 仅当需要启动 SFTP 时才检查密钥
+        if (prefsBean.serverToStart.startSftp()) {
+            val keyProvider = org.primftpd.util.KeyFingerprintProvider()
+
+            if (!keyProvider.areFingerprintsGenerated()) {
+                keyProvider.calcPubkeyFingerprints(context)
+            }
+
+            val keyPresent = keyProvider.isKeyPresent()
+            if (!keyPresent) {
+                // 复用你现有的 dialog + 生成后可继续启动的流程
+                val askDiag = org.primftpd.ui.GenKeysAskDialogFragment(pftpdFragment)
+                val args = Bundle().apply {
+                    putBoolean(org.primftpd.ui.GenKeysAskDialogFragment.KEY_START_SERVER, true)
+                }
+                askDiag.arguments = args
+                askDiag.show(supportFragmentManager, DIALOG_TAG)
+                return
+            }
+        }
+
+        // 走 this，避免依赖游离 fragment 的生命周期
+        ServicesStartStopUtil.startServers(this)
     }
+
 
     private fun handleStop() {
         ServicesStartStopUtil.stopServers(this)
