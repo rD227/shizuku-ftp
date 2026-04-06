@@ -43,7 +43,9 @@ public class ServicesStartStopUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServicesStartStopUtil.class);
 
 
-    //We can use Kotlin to overwrite it : by @JvmTarget
+    /**
+     * We can use Kotlin to overwrite it : by @JvmTarget
+     */
     public static void startServers(PftpdFragment fragment) {
         startServers(null, null, null, fragment, null);
     }
@@ -53,6 +55,22 @@ public class ServicesStartStopUtil {
 
     public static void startServers(Context context, QuickShareBean quickShareBean) {
         startServers(context, null, null, null, quickShareBean);
+    }
+
+
+    //把这些东西打包成一个Intent对象交给UI
+    protected static Intent createFtpServiceIntent(
+            Context context,
+            PrefsBean prefsBean,
+            KeyFingerprintProvider keyFingerprintProvider,
+            QuickShareBean quickShareBean,
+            String chosenIp
+    ) { Intent intent = new Intent(context, FtpServerService.class);
+        putPrefsInIntent(intent, prefsBean);
+        putKeyFingerprintProviderInIntent(intent, keyFingerprintProvider);
+        putQuickShareBeanInIntent(intent, quickShareBean);
+        putChosenIpInIntent(intent, chosenIp);
+        return intent;
     }
 
     private static void startServers(
@@ -124,6 +142,7 @@ public class ServicesStartStopUtil {
                                 keyFingerprintProvider,
                                 quickShareBean,
                                 chosenIp);
+                        // 使用intent来让UI来绘制，UI是无法直接拿到服务端的handleStart方法直接来绘制的
                         startServerByIntent(intent, context);
                     } catch (Exception e) {
                         LOGGER.error("could not start sftp server", e);
@@ -203,19 +222,6 @@ public class ServicesStartStopUtil {
         context.stopService(createSshServiceIntent(context, null, null, null, null));
     }
 
-    protected static Intent createFtpServiceIntent(
-            Context context,
-            PrefsBean prefsBean,
-            KeyFingerprintProvider keyFingerprintProvider,
-            QuickShareBean quickShareBean,
-            String chosenIp
-    ) { Intent intent = new Intent(context, FtpServerService.class);
-        putPrefsInIntent(intent, prefsBean);
-        putKeyFingerprintProviderInIntent(intent, keyFingerprintProvider);
-        putQuickShareBeanInIntent(intent, quickShareBean);
-        putChosenIpInIntent(intent, chosenIp);
-        return intent;
-    }
 
     protected static Intent createSshServiceIntent(
             Context context,
