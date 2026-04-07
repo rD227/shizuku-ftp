@@ -28,18 +28,14 @@ public class GenKeysAskDialogFragment extends DialogFragment {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private boolean startServerOnFinish;
+    private boolean startServerOnFinish = false;
 
-//    private final PftpdFragment pftpdFragment;
-
-/*    public GenKeysAskDialogFragment(PftpdFragment pftpdFragment) {
-        this.pftpdFragment = pftpdFragment;
-    }
-*/
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
-        startServerOnFinish = args.getBoolean(KEY_START_SERVER);
+        if (args != null) {
+            startServerOnFinish = args.getBoolean(KEY_START_SERVER, false);
+        }
     }
 
     @Override
@@ -49,7 +45,7 @@ public class GenKeysAskDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.generateKeysMessage);
         builder.setPositiveButton(R.string.generate, (dialog, id) ->
-            genKeysAndShowProgressDiag(startServerOnFinish)
+                genKeysAndShowProgressDiag(startServerOnFinish)
         );
         builder.setNegativeButton(R.string.cancel, (dialog, id) -> {
             // nothing
@@ -75,10 +71,12 @@ public class GenKeysAskDialogFragment extends DialogFragment {
             return;
         }
 
-        KeyFingerprintProvider keyFingerprintProvider = pftpdFragment.getKeyFingerprintProvider();
+        KeyFingerprintProvider keyFingerprintProvider = new KeyFingerprintProvider();
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
-            executorService.execute(() -> {
+        // 异步生成密钥
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try {
                 for (HostKeyAlgorithm hka : HostKeyAlgorithm.values()) {
                     try {
                         keyFingerprintProvider.deleteKeyFiles(ctxt, hka);
@@ -93,10 +91,10 @@ public class GenKeysAskDialogFragment extends DialogFragment {
                         LoadPrefsUtil.HOSTKEY_ALGOS_DEFAULTS);
 
                 for (HostKeyAlgorithm hka : HostKeyAlgorithm.values()) {
-                    if (configuredAlgos.contains(hka.getPreferenceValue())) {
+                    if (configuredAlgos != null && configuredAlgos.contains(hka.getPreferenceValue())) {
                         try (
-                            FileOutputStream publickeyFos = keyFingerprintProvider.buildPublickeyOutStream(ctxt, hka);
-                            FileOutputStream privatekeyFos = keyFingerprintProvider.buildPrivatekeyOutStream(ctxt, hka)
+                                FileOutputStream publickeyFos = keyFingerprintProvider.buildPublickeyOutStream(ctxt, hka);
+                                FileOutputStream privatekeyFos = keyFingerprintProvider.buildPrivatekeyOutStream(ctxt, hka)
                         ) {
                             hka.generateKey(publickeyFos, privatekeyFos);
                         } catch (Exception e) {
@@ -104,14 +102,15 @@ public class GenKeysAskDialogFragment extends DialogFragment {
                         }
                     }
                 }
-            });
-        }
 
-        keyFingerprintProvider.calcPubkeyFingerprints(ctxt);
-        pftpdFragment.showKeyFingerprints();
+                keyFingerprintProvider.calcPubkeyFingerprints(ctxt);
 
-        if (startServerOnFinish) {
-            ServicesStartStopUtil.startServers(ctxt);
-        }
+                if (startServerOnFinish) {
+                    ServicesStartStopUtil.startServers(ctxt);
+                }
+            } finally {
+                executorService.shutdown();
+            }
+        });
     }
 }
