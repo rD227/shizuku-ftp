@@ -30,12 +30,12 @@ public class GenKeysAskDialogFragment extends DialogFragment {
 
     private boolean startServerOnFinish;
 
-    private final PftpdFragment pftpdFragment;
+//    private final PftpdFragment pftpdFragment;
 
-    public GenKeysAskDialogFragment(PftpdFragment pftpdFragment) {
+/*    public GenKeysAskDialogFragment(PftpdFragment pftpdFragment) {
         this.pftpdFragment = pftpdFragment;
     }
-
+*/
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
@@ -111,7 +111,7 @@ public class GenKeysAskDialogFragment extends DialogFragment {
         pftpdFragment.showKeyFingerprints();
 
         if (startServerOnFinish) {
-            ServicesStartStopUtil.startServers(pftpdFragment);
+            ServicesStartStopUtil.startServers(ctxt);
         }
     }
 }

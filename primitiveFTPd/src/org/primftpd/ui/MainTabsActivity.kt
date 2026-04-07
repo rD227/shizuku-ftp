@@ -192,6 +192,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
 
     private fun handleStart() {
+        /*
         val context = this
         val prefs = LoadPrefsUtil.getPrefs(context)
         val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
@@ -208,6 +209,30 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
             if (!keyPresent) {
                 // 复用你现有的 dialog + 生成后可继续启动的流程
                 val askDiag = org.primftpd.ui.GenKeysAskDialogFragment(pftpdFragment)
+                val args = Bundle().apply {
+                    putBoolean(org.primftpd.ui.GenKeysAskDialogFragment.KEY_START_SERVER, true)
+                }
+                askDiag.arguments = args
+                askDiag.show(supportFragmentManager, DIALOG_TAG)
+                return
+            }
+        }
+*/
+        val context = this
+        val prefs = LoadPrefsUtil.getPrefs(context)
+        val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
+
+        // 仅当需要启动 SFTP 时才检查密钥
+        if (prefsBean.serverToStart.startSftp()) {
+            val keyProvider = org.primftpd.util.KeyFingerprintProvider()
+
+            if (!keyProvider.areFingerprintsGenerated()) {
+                keyProvider.calcPubkeyFingerprints(context)
+            }
+
+            val keyPresent = keyProvider.isKeyPresent()
+            if (!keyPresent) {
+                val askDiag = org.primftpd.ui.GenKeysAskDialogFragment()
                 val args = Bundle().apply {
                     putBoolean(org.primftpd.ui.GenKeysAskDialogFragment.KEY_START_SERVER, true)
                 }
@@ -236,7 +261,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
             Toast.makeText(this, R.string.restartServer, Toast.LENGTH_LONG).show()
         }
         if (LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS == key) {
-            val askDiag = org.primftpd.ui.GenKeysAskDialogFragment(pftpdFragment)
+            val askDiag = org.primftpd.ui.GenKeysAskDialogFragment()
             askDiag.show(supportFragmentManager, DIALOG_TAG)
         }
     }
