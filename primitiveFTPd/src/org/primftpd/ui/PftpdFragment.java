@@ -760,7 +760,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         View refreshButton = view.findViewById(R.id.keyFingerprintsLabel);
         refreshButton.setOnClickListener(v -> {
             logger.trace("refreshButton OnClickListener");
-            GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment(pftpdFragment);
+            GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment(/*pftpdFragment*/);
             askDiag.show(requireActivity().getSupportFragmentManager(), DIALOG_TAG);
         });
 

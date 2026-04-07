@@ -194,7 +194,7 @@ public class ServicesStartStopUtil {
 
     private static void showGenKeyDialog(PftpdFragment fragment) {
         LOGGER.trace("showGenKeyDialog()");
-        GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment(fragment);
+        GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment(/*fragment*/);
         Bundle diagArgs = new Bundle();
         diagArgs.putBoolean(GenKeysAskDialogFragment.KEY_START_SERVER, true);
         askDiag.setArguments(diagArgs);
