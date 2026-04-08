@@ -9,6 +9,8 @@ public abstract class VirtualFileSystemView<
         TRoSafFile extends RoSafFile<TMina, ? extends RoSafFileSystemView>,
         TMina> extends AbstractFileSystemView {
 
+
+    public static final String PREFIX_SHIZUKU = "shizuku";
     public static final String PREFIX_FS = "fs";
     public static final String PREFIX_ROOT = "superuser";
     public static final String PREFIX_SAF = "saf";
@@ -18,6 +20,9 @@ public abstract class VirtualFileSystemView<
     protected final RootFileSystemView<TRootFile, TMina> rootFileSystemView;
     protected final SafFileSystemView<TSafFile, TMina> safFileSystemView;
     protected final RoSafFileSystemView<TRoSafFile, TMina> roSafFileSystemView;
+
+    protected final ShizukuFileSystemView<TShizukuFile, TMina> shizukuFileSystemView;
+
 
     public VirtualFileSystemView(
             PftpdService pftpdService,
@@ -40,29 +45,47 @@ public abstract class VirtualFileSystemView<
     public TMina getFile(String file) {
         String absoluteVirtualPath = absolute(file);
         logger.debug("getFile '{}', absolute: '{}'", file, absoluteVirtualPath);
-        if ("/".equals(absoluteVirtualPath)) {
+        if ("/".equals
+                (absoluteVirtualPath)
+        ) {
             return createFile(absoluteVirtualPath, true);
-        } else if (absoluteVirtualPath.startsWith("/" + PREFIX_FS)) {
+        } else if (
+                absoluteVirtualPath.startsWith("/" + PREFIX_FS)
+        ) {
             String realPath = toRealPath(absoluteVirtualPath, "/" + PREFIX_FS);
             logger.debug("Using FS '{}' for '{}'", realPath, absoluteVirtualPath);
             AbstractFile delegate = fsFileSystemView.getFile(realPath);
             return createFile(absoluteVirtualPath, delegate);
-        } else if (absoluteVirtualPath.startsWith("/" + PREFIX_ROOT)) {
+        } else if (
+                absoluteVirtualPath.startsWith("/" + PREFIX_ROOT)
+        ) {
             String realPath = toRealPath(absoluteVirtualPath, "/" + PREFIX_ROOT);
             logger.debug("Using ROOT '{}' for '{}'", realPath, absoluteVirtualPath);
             AbstractFile delegate = rootFileSystemView.getFile(realPath);
             return createFile(absoluteVirtualPath, delegate);
-        } else if (absoluteVirtualPath.startsWith("/" + PREFIX_SAF)) {
+        } else if (
+                absoluteVirtualPath.startsWith("/" + PREFIX_SAF)
+        ) {
             String realPath = toRealPath(absoluteVirtualPath, "/" + PREFIX_SAF);
             logger.debug("Using SAF '{}' for '{}'", realPath, absoluteVirtualPath);
             AbstractFile delegate = safFileSystemView.getFile(realPath);
             return createFile(absoluteVirtualPath, delegate);
-        } else if (absoluteVirtualPath.startsWith("/" + PREFIX_ROSAF)) {
+        } else if (
+                absoluteVirtualPath.startsWith("/" + PREFIX_ROSAF)
+        ) {
             String realPath = toRealPath(absoluteVirtualPath, "/" + PREFIX_ROSAF);
             logger.debug("Using ROSAF '{}' for '{}'", realPath, absoluteVirtualPath);
             AbstractFile delegate = roSafFileSystemView.getFile(realPath);
             return createFile(absoluteVirtualPath, delegate);
-        } else{
+        }else if(absoluteVirtualPath.startsWith
+                ("/" + PREFIX_SHIZUKU)
+        ){
+            String realPath = toRealPath(absoluteVirtualPath, "/" + PREFIX_SHIZUKU);
+            logger.debug("Using SHIZUKU '{}' for '{}'", realPath, absoluteVirtualPath);
+            AbstractFile delegate = shizukuFileSystemView.getFile(realPath);
+            return createFile(absoluteVirtualPath, delegate);
+
+        }else{
             logger.debug("Using VirtualFile for unknown path '{}'", absoluteVirtualPath);
             return createFile(absoluteVirtualPath, false);
         }

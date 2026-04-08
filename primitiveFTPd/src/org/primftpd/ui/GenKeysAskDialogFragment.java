@@ -102,7 +102,8 @@ public class GenKeysAskDialogFragment extends DialogFragment {
                         }
                     }
                 }
-
+                //        pftpdFragment.showKeyFingerprints(); is be deled. It maybe can't monitor the event and refresh the UI
+                //WARNING :
                 keyFingerprintProvider.calcPubkeyFingerprints(ctxt);
 
                 if (startServerOnFinish) {
