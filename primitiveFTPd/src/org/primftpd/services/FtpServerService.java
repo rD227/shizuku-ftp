@@ -126,6 +126,12 @@ public class FtpServerService extends AbstractServerService
 								shell,
 								prefsBean.getStartDir(),
 								user);
+					case SHIZUKU:
+						return new ShizukuFtpFileSystemView(
+								FtpServerService.this,
+								shell,
+								prefsBean.getStartDir(),
+								user);
 					case SAF:
 						return new SafFtpFileSystemView(
 								FtpServerService.this,
