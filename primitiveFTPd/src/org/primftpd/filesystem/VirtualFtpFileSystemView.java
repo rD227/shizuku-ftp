@@ -12,6 +12,7 @@ public class VirtualFtpFileSystemView extends VirtualFileSystemView<
         RootFtpFile,
         SafFtpFile,
         RoSafFtpFile,
+        ShizukuFtpFile,
         FtpFile> implements FileSystemView {
 
     private final File homeDir;
@@ -25,9 +26,10 @@ public class VirtualFtpFileSystemView extends VirtualFileSystemView<
             RootFtpFileSystemView rootFileSystemView,
             SafFtpFileSystemView safFileSystemView,
             RoSafFtpFileSystemView roSafFileSystemView,
+            ShizukuFtpFileSystemView shizukuFileSystemView,
             File homeDir,
             User user) {
-        super(pftpdService, fsFileSystemView, rootFileSystemView, safFileSystemView, roSafFileSystemView);
+        super(pftpdService, fsFileSystemView, rootFileSystemView, safFileSystemView, roSafFileSystemView, shizukuFileSystemView);
         this.homeDir = homeDir;
         this.user = user;
 
@@ -48,7 +50,7 @@ public class VirtualFtpFileSystemView extends VirtualFileSystemView<
     protected String absolute(String file) {
         logger.trace("  finding abs path for '{}' with wd '{}'", file, (workingDir != null ? workingDir.getAbsolutePath() : "null"));
         if (workingDir == null) {
-            return file; // during c-tor
+            return file;
         }
         return Utils.absolute(file, workingDir.getAbsolutePath());
     }
@@ -72,7 +74,6 @@ public class VirtualFtpFileSystemView extends VirtualFileSystemView<
         FtpFile newWorkingDir;
         boolean isAbsolute = dir != null && dir.charAt(0) == '/';
         if (!isAbsolute) {
-            // curl ignores current WD and tries to switch to WD from root dir by dir
             String topLevelPath = "/" + dir;
             FtpFile topLevelDir = getFile(topLevelPath);
             if (topLevelDir.doesExist()) {

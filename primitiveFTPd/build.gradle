@@ -131,6 +131,9 @@ dependencies {
     implementation(libs.zxing) {
         exclude group: 'com.android.support'
     }
+
+    implementation(dev.rikka.shizuku:api)
+    implementation(dev.rikka.shizuku:provider)
 }
 
 publishing {
