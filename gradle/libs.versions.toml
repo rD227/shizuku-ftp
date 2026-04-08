@@ -1,4 +1,4 @@
-[versions]
+ [versions]
 # Android 8.0
 activity = "1.9.3"
 minSdk = "26"
@@ -88,7 +88,11 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 
-[plugins]
+shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
+shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }
+
+
+ [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

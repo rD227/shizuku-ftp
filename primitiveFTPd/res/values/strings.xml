@@ -110,6 +110,7 @@
     <string name="storageType">Storage Type</string>
     <string name="storageTypePlainV2">Plain old filesystem\nGot read-only access? See our <a href="https://www.github.com/wolpi/prim-ftpd/">GitHub page</a>.</string>
     <string name="storageTypeRoot">Super user (device must be rooted)</string>
+    <string name="storageTypeShizuku" translatable="false">Shizuku (transition / experimental)</string>
     <string name="storageTypeSaf">"Android Storage Access Framework (SAF)\n(e.g. for external SD-card)"</string>
     <string name="storageTypeRoSaf">Read only SAF (faster !)</string>
     <string name="storageTypeVirtual">Virtual Folders (provides all Storage Types)</string>
