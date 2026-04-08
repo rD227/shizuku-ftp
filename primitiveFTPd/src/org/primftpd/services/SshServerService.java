@@ -33,6 +33,7 @@ import org.primftpd.filesystem.SafSshFileSystemView;
 import org.primftpd.filesystem.ShizukuSshFileSystemView;
 import org.primftpd.filesystem.VirtualSshFileSystemView;
 import org.primftpd.pojo.KeyParser;
+import org.primftpd.prefs.StorageType;
 import org.primftpd.util.Defaults;
 import org.primftpd.util.RemoteIpChecker;
 import org.primftpd.util.StringUtils;
@@ -209,6 +210,12 @@ public class SshServerService extends AbstractServerService
 								session);
 					case ROOT:
 						return new RootSshFileSystemView(
+								SshServerService.this,
+								shell,
+								prefsBean.getStartDir(),
+								session);
+					case SHIZUKU:
+						return new ShizukuSshFileSystemView(
 								SshServerService.this,
 								shell,
 								prefsBean.getStartDir(),
