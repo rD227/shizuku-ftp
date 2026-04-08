@@ -248,6 +248,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
 
     private fun handleStop() {
+        // demo 😄
         ServicesStartStopUtil.stopServers(this)
     }
 
