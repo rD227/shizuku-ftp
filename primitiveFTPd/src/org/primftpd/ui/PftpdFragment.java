@@ -204,6 +204,9 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             case ROOT:
                 ((RadioButton) view.findViewById(R.id.radioStorageRoot)).setChecked(true);
                 break;
+            case SHIZUKU:
+                ((RadioButton) view.findViewById(R.id.radioStorageShizuku)).setChecked(true);
+                break;
             case SAF:
                 ((RadioButton) view.findViewById(R.id.radioStorageSaf)).setChecked(true);
                 showSafUrl(prefsBean.getSafUrl());
@@ -294,6 +297,8 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                 storageType = StorageType.PLAIN;
             } else if (crb == R.id.radioStorageRoot) {
                 storageType = StorageType.ROOT;
+            } else if (crb == R.id.radioStorageShizuku) {
+                storageType = StorageType.SHIZUKU;
             } else if (crb == R.id.radioStorageSaf) {
                 storageType = StorageType.SAF;
                 if (!onStartOngoing) {
@@ -321,7 +326,9 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             LoadPrefsUtil.storeStorageType(prefs, storageType);
         }
 
-        if (storageType == StorageType.PLAIN || storageType == StorageType.ROOT) {
+        if (storageType == StorageType.PLAIN
+                || storageType == StorageType.ROOT
+                || storageType == StorageType.SHIZUKU) {
             loadPrefs();
             checkSafAccess();
         }

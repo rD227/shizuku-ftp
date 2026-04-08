@@ -38,11 +38,18 @@
                 android:nextFocusLeft="@+id/radioStoragePlain"
                 android:nextFocusRight="@+id/keyFingerprintsLabel"
                 />
+            <RadioButton android:id="@+id/radioStorageShizuku"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/storageTypeShizuku"
+                android:nextFocusLeft="@+id/radioStorageRoot"
+                android:nextFocusRight="@+id/keyFingerprintsLabel"
+                />
             <RadioButton android:id="@+id/radioStorageSaf"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/storageTypeSaf"
-                android:nextFocusLeft="@+id/radioStorageRoot"
+                android:nextFocusLeft="@+id/radioStorageShizuku"
                 android:nextFocusRight="@+id/keyFingerprintsLabel"
                 />
             <RadioButton android:id="@+id/radioStorageRoSaf"

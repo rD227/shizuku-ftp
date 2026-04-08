@@ -8,6 +8,7 @@ public enum StorageType {
 
     PLAIN("1"),
     ROOT("2"),
+    SHIZUKU("6"),
     SAF("3"),
     RO_SAF("4"),
     VIRTUAL("5");

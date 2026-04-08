@@ -83,6 +83,7 @@ android {
 }
 
 dependencies {
+
     implementation project(':pftpd-pojo-lib')
     implementation project(':sshd-core-0.14.0')
 
@@ -98,7 +99,7 @@ dependencies {
     debugImplementation libs.androidx.ui.tooling
     debugImplementation libs.androidx.ui.test.manifest
     implementation libs.androidx.ui.tooling.preview
-    
+
     implementation platform(libs.androidx.compose.bom)
     implementation libs.androidx.ui
     implementation libs.androidx.foundation
@@ -108,7 +109,7 @@ dependencies {
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.compose.material.icons.core
     coreLibraryDesugaring(libs.google.desugar)
-    implementation libs.google.material//and what is implementation com.google.android.material??
+    implementation libs.google.material
 
     implementation(libs.ftpserver.api)
     implementation(libs.ftpserver.core) {
@@ -132,8 +133,8 @@ dependencies {
         exclude group: 'com.android.support'
     }
 
-    implementation(dev.rikka.shizuku:api)
-    implementation(dev.rikka.shizuku:provider)
+    implementation libs.shizuku.api
+    implementation libs.shizuku.provider
 }
 
 publishing {
