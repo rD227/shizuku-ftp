@@ -12,6 +12,7 @@ public class VirtualSshFileSystemView extends VirtualFileSystemView<
         RootSshFile,
         SafSshFile,
         RoSafSshFile,
+        ShizukuSshFile,
         SshFile> implements FileSystemView {
 
     private final File homeDir;
@@ -23,9 +24,10 @@ public class VirtualSshFileSystemView extends VirtualFileSystemView<
             RootSshFileSystemView rootFileSystemView,
             SafSshFileSystemView safFileSystemView,
             RoSafSshFileSystemView roSafFileSystemView,
+            ShizukuSshFileSystemView shizukuFileSystemView,
             File homeDir,
             Session session) {
-        super(pftpdService, fsFileSystemView, rootFileSystemView, safFileSystemView, roSafFileSystemView);
+        super(pftpdService, fsFileSystemView, rootFileSystemView, safFileSystemView, roSafFileSystemView, shizukuFileSystemView);
         this.homeDir = homeDir;
         this.session = session;
     }
@@ -48,7 +50,6 @@ public class VirtualSshFileSystemView extends VirtualFileSystemView<
     @Override
     public SshFile getFile(SshFile baseDir, String file) {
         logger.trace("getFile(baseDir: {}, file: {})", baseDir.getAbsolutePath(), file);
-        // e.g. for scp
         return getFile(baseDir.getAbsolutePath() + "/" + file);
     }
 

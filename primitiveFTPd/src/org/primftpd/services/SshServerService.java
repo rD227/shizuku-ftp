@@ -30,6 +30,7 @@ import org.primftpd.filesystem.QuickShareSshFileSystemView;
 import org.primftpd.filesystem.RoSafSshFileSystemView;
 import org.primftpd.filesystem.RootSshFileSystemView;
 import org.primftpd.filesystem.SafSshFileSystemView;
+import org.primftpd.filesystem.ShizukuSshFileSystemView;
 import org.primftpd.filesystem.VirtualSshFileSystemView;
 import org.primftpd.pojo.KeyParser;
 import org.primftpd.util.Defaults;
@@ -241,6 +242,11 @@ public class SshServerService extends AbstractServerService
 								new RoSafSshFileSystemView(
 										SshServerService.this,
 										Uri.parse(prefsBean.getSafUrl()),
+										session),
+								new ShizukuSshFileSystemView(
+										SshServerService.this,
+										shell,
+										prefsBean.getStartDir(),
 										session),
 								prefsBean.getStartDir(),
 								session

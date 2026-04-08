@@ -56,7 +56,9 @@ public abstract class VirtualFile<TMina, TFileSystemView extends VirtualFileSyst
     protected abstract List<TMina> listDelegateFiles();
 
     public ClientActionEvent.Storage getClientActionStorage() {
-        return delegate.getClientActionStorage();
+        return delegate != null
+                ? delegate.getClientActionStorage()
+                : ClientActionEvent.Storage.VIRTUAL;
     }
 
     public boolean isDirectory() {
@@ -109,11 +111,12 @@ public abstract class VirtualFile<TMina, TFileSystemView extends VirtualFileSyst
 
     public List<TMina> listFiles() {
         if ("/".equals(absPath)) {
-            List<TMina> files = new ArrayList<>(4);
+            List<TMina> files = new ArrayList<>(5);
             files.add(createFile("/" + VirtualFileSystemView.PREFIX_FS, null));
             files.add(createFile("/" + VirtualFileSystemView.PREFIX_ROOT, null));
             files.add(createFile("/" + VirtualFileSystemView.PREFIX_SAF, null));
             files.add(createFile("/" + VirtualFileSystemView.PREFIX_ROSAF, null));
+            files.add(createFile("/" + VirtualFileSystemView.PREFIX_SHIZUKU, null));
             return Collections.unmodifiableList(files);
         }
         return listDelegateFiles();
