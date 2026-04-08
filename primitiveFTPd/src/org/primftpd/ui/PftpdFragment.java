@@ -73,6 +73,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import rikka.shizuku.Shizuku;
 
 public class PftpdFragment extends Fragment implements RecreateLogger, RadioGroup.OnCheckedChangeListener {
 
@@ -87,6 +88,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     };
 
     private static final int REQUEST_CODE_SAF_PERM = 1234;
+    private static final int REQUEST_CODE_SHIZUKU_PERM = 1235;
 
     public static final String DIALOG_TAG = "dialogs";
 
@@ -106,6 +108,26 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     private boolean onStartOngoing = false;
 
     private String chosenIp;
+
+    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
+            (requestCode, grantResult) -> {
+                if (requestCode != REQUEST_CODE_SHIZUKU_PERM) {
+                    return;
+                }
+                View view = getView();
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getContext(), "Shizuku permission granted", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Shizuku permission denied", Toast.LENGTH_LONG).show();
+                    SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
+                    LoadPrefsUtil.storeStorageType(prefs, StorageType.PLAIN);
+                    loadPrefs();
+                    if (view != null) {
+                        RadioButton plainRadio = view.findViewById(R.id.radioStoragePlain);
+                        plainRadio.setChecked(true);
+                    }
+                }
+            };
 
     protected int getLayoutId() {
         return R.layout.main;
@@ -148,6 +170,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         // listen for events
         EventBus.getDefault().register(this);
+        Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
 
         // start on open ?
         SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
@@ -179,6 +202,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         // server state change events
         EventBus.getDefault().unregister(this);
+        Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
     }
 
     @Override
@@ -277,6 +301,21 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         return intent;
     }
 
+    private boolean requestShizukuPermissionIfNeeded() {
+        if (!Shizuku.pingBinder()) {
+            Toast.makeText(getContext(), "Shizuku service is not available", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        if (Shizuku.shouldShowRequestPermissionRationale()) {
+            Toast.makeText(getContext(), "Please grant Shizuku permission", Toast.LENGTH_LONG).show();
+        }
+        Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
+        return false;
+    }
+
     @Override
     public void onCheckedChanged(@NonNull RadioGroup group, int checkedId) {
         logger.debug("onCheckedChanged()");
@@ -298,7 +337,11 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             } else if (crb == R.id.radioStorageRoot) {
                 storageType = StorageType.ROOT;
             } else if (crb == R.id.radioStorageShizuku) {
-                storageType = StorageType.SHIZUKU;
+                if (requestShizukuPermissionIfNeeded()) {
+                    storageType = StorageType.SHIZUKU;
+                } else {
+                    return;
+                }
             } else if (crb == R.id.radioStorageSaf) {
                 storageType = StorageType.SAF;
                 if (!onStartOngoing) {
