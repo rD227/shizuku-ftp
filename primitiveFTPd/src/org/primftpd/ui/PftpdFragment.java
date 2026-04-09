@@ -91,7 +91,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
     private static final int REQUEST_CODE_SAF_PERM = 1234;
     private static final int REQUEST_CODE_SHIZUKU_PERM = 1235;
-    private static final long SHIZUKU_RETRY_DELAY_MS = 400L;
+    private static final long SHIZUKU_RETRY_DELAY_MS = 5000L;
 
     public static final String DIALOG_TAG = "dialogs";
 
@@ -110,10 +110,25 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
     private boolean onStartOngoing = false;
     private boolean pendingShizukuSelection = false;
+    private boolean shizukuBinderReady = false;
 
     private String chosenIp;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    private final Shizuku.OnBinderReceivedListener binderReceivedListener = () -> {
+        shizukuBinderReady = true;
+        logger.info("Shizuku binder received");
+        if (pendingShizukuSelection) {
+            mainHandler.removeCallbacks(this::retryPendingShizukuSelection);
+            mainHandler.post(this::retryPendingShizukuSelection);
+        }
+    };
+
+    private final Shizuku.OnBinderDeadListener binderDeadListener = () -> {
+        shizukuBinderReady = false;
+        logger.info("Shizuku binder dead");
+    };
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
             (requestCode, grantResult) -> {
@@ -172,7 +187,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         // listen for events
         EventBus.getDefault().register(this);
-        Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
 
         // start on open ?
         SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
@@ -204,7 +218,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         // server state change events
         EventBus.getDefault().unregister(this);
-        Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
         mainHandler.removeCallbacksAndMessages(null);
     }
 
@@ -214,6 +227,12 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         logger.debug("onStart()");
         onStartOngoing = true;
+
+        Shizuku.addBinderReceivedListenerSticky(binderReceivedListener);
+        Shizuku.addBinderDeadListener(binderDeadListener);
+        Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+        shizukuBinderReady = Shizuku.pingBinder();
+        logger.info("Shizuku binder ready onStart={}", shizukuBinderReady);
 
         loadPrefs();
         showLogindata();
@@ -249,6 +268,15 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         }
 
         onStartOngoing = false;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Shizuku.removeBinderReceivedListener(binderReceivedListener);
+        Shizuku.removeBinderDeadListener(binderDeadListener);
+        Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+        mainHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -313,23 +341,32 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         }
     }
 
+    private int tryGetShizukuVersion() {
+        try {
+            return Shizuku.getVersion();
+        } catch (IllegalStateException e) {
+            logger.info("Shizuku getVersion failed before binder is ready: {}", e.toString());
+            return -1;
+        }
+    }
+
     private boolean requestShizukuPermissionIfNeeded() {
         if (pendingShizukuSelection) {
             logger.info("Ignoring duplicate Shizuku selection while pending");
             return false;
         }
 
-        boolean pingBinder = Shizuku.pingBinder();
-        boolean showRationale = false;
+        boolean pingBinder = shizukuBinderReady || Shizuku.pingBinder();
+        int shizukuVersion = pingBinder ? tryGetShizukuVersion() : -1;
         int selfPermission = PackageManager.PERMISSION_DENIED;
 
         if (pingBinder) {
+            shizukuBinderReady = true;
             selfPermission = tryGetShizukuPermission();
-            showRationale = Shizuku.shouldShowRequestPermissionRationale();
         }
 
-        logger.info("Shizuku status: pingBinder={}, selfPermission={}, showRationale={}",
-                pingBinder, selfPermission, showRationale);
+        logger.info("Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
+                shizukuBinderReady, pingBinder, shizukuVersion, selfPermission);
 
         if (!pingBinder) {
             pendingShizukuSelection = true;
@@ -338,9 +375,16 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             Toast.makeText(getContext(), "Waiting for Shizuku service...", Toast.LENGTH_SHORT).show();
             return false;
         }
+
+        if (Shizuku.isPreV11() || shizukuVersion < 11) {
+            Toast.makeText(getContext(), "Shizuku version is not supported", Toast.LENGTH_LONG).show();
+            return false;
+        }
+
         if (selfPermission == PackageManager.PERMISSION_GRANTED) {
             return true;
         }
+
         pendingShizukuSelection = true;
         Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
         return false;
@@ -350,12 +394,25 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         if (!pendingShizukuSelection || !isAdded()) {
             return;
         }
-        boolean pingBinder = Shizuku.pingBinder();
+        logger.info("1 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
+                shizukuBinderReady);
+        boolean pingBinder = shizukuBinderReady || Shizuku.pingBinder();
+        logger.info("2 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
+                shizukuBinderReady, pingBinder);
         int selfPermission = pingBinder ? tryGetShizukuPermission() : PackageManager.PERMISSION_DENIED;
-        logger.info("Retrying Shizuku status: pingBinder={}, selfPermission={}", pingBinder, selfPermission);
+        int shizukuVersion = pingBinder ? tryGetShizukuVersion() : -1;
+        logger.info("3 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
+                shizukuBinderReady, pingBinder, shizukuVersion, selfPermission);
         if (!pingBinder) {
             View view = getView();
             Toast.makeText(getContext(), "Shizuku service is not available", Toast.LENGTH_LONG).show();
+            revertStorageTypeToPlain(view);
+            return;
+        }
+        shizukuBinderReady = true;
+        if (Shizuku.isPreV11() || shizukuVersion < 11) {
+            View view = getView();
+            Toast.makeText(getContext(), "Shizuku version is not supported", Toast.LENGTH_LONG).show();
             revertStorageTypeToPlain(view);
             return;
         }
@@ -422,6 +479,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                 storageType = StorageType.ROOT;
             } else if (crb == R.id.radioStorageShizuku) {
                 if (requestShizukuPermissionIfNeeded()) {
+                    pendingShizukuSelection = false;
                     storageType = StorageType.SHIZUKU;
                 } else {
                     return;

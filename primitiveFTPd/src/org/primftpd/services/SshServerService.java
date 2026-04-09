@@ -200,7 +200,7 @@ public class SshServerService extends AbstractServerService
 				return new QuickShareSshFileSystemView(
 						SshServerService.this,
 						quickShareBean.getTmpDir(),
-						session);
+						session);//AI change user to session
 			} else {
 				switch (prefsBean.getStorageType()) {
 					case PLAIN:
