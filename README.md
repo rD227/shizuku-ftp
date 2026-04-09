@@ -13,8 +13,10 @@ Now the function works
 # What still needs to be done:
 
 Is the old jump interface Fragment or View?
+
 I'm not too familiar with it and they do look difficult
-I've got you and you can't start
+
+I'm a bit at a loss where to start
 
 # Original README 
 # Primitive FTPd
