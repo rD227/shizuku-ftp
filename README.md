@@ -21,6 +21,7 @@ I'm a bit at a loss where to start
 1.
 the Shizuku sometimes isn't available (I don't know why) 
 
+I was able to use it last night.......
 2.
 When didn't generate the key and try to start the (s)ftp 
 
