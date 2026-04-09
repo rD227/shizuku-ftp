@@ -5,7 +5,7 @@
 [简体中文](OtherLanguageREADME/README.zh-CN.md) | [Original_README](OtherLanguageREADME/Original_README.md)
 
 # Shizuku-FTP
-Now the function works
+Now the Shizuku function works
 ~~This kind of server-side lack of beautification is actually nothing~~
 
 # What still needs to be done:
@@ -16,8 +16,22 @@ I'm not too familiar with it and they do look difficult
 
 I'm a bit at a loss where to start
 
+# The Problem:
+
+1.
+the Shizuku sometimes isn't available (I don't know why) 
+
+2.
+When didn't generate the key and try to start the (s)ftp 
+
+It will jump out the window 
+
+the it will crash after generate the key
+
 # The Original README.md 
 
 You can go there to see original version of the README
+
 And you can go there to help them translate (to other language)
+
 And so on
