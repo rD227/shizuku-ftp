@@ -28,6 +28,11 @@ It will jump out the window
 
 the it will crash after generate the key
 
+(Didn't click the Round button in the first
+
+try to generate key first will finish the problem
+)
+
 # The Original README.md 
 
 You can go there to see original version of the README
