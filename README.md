@@ -34,6 +34,12 @@ the it will crash after generate the key
 try to generate key first will finish the problem
 )
 
+3.
+It seems that the root manager that needs to call out the pop-up window to authorize root cannot call out the root authorization pop-up window after selecting root.
+
+（Okay, I don't know how to reproduce this problem. I cleared the data and restarted, selected root, generated the key, set the password, and I was able to get it again.
+
+
 # The Original README.md 
 
 You can go there to see original version of the README

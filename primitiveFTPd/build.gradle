@@ -16,7 +16,7 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
-        applicationId = "org.primftpd"
+        applicationId = "org.primftpd.shizuku"
         versionCode = 70
         versionName = "8.1-SNAPSHOT"
 
@@ -140,7 +140,7 @@ dependencies {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.primftpd'
+            groupId = 'org.primftpd.shizuku'
             artifactId = 'app'
             version = 'latest-SNAPSHOT'
             artifact file('build/outputs/apk/debug/primitiveFTPd-debug.apk')

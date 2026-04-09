@@ -19,6 +19,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -89,6 +91,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
     private static final int REQUEST_CODE_SAF_PERM = 1234;
     private static final int REQUEST_CODE_SHIZUKU_PERM = 1235;
+    private static final long SHIZUKU_RETRY_DELAY_MS = 400L;
 
     public static final String DIALOG_TAG = "dialogs";
 
@@ -106,8 +109,11 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     private TextView clientActionView3;
 
     private boolean onStartOngoing = false;
+    private boolean pendingShizukuSelection = false;
 
     private String chosenIp;
+
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
             (requestCode, grantResult) -> {
@@ -115,17 +121,13 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                     return;
                 }
                 View view = getView();
+                logger.info("Shizuku permission callback grantResult={}", grantResult);
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(getContext(), "Shizuku permission granted", Toast.LENGTH_SHORT).show();
+                    finalizeShizukuSelection();
                 } else {
                     Toast.makeText(getContext(), "Shizuku permission denied", Toast.LENGTH_LONG).show();
-                    SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
-                    LoadPrefsUtil.storeStorageType(prefs, StorageType.PLAIN);
-                    loadPrefs();
-                    if (view != null) {
-                        RadioButton plainRadio = view.findViewById(R.id.radioStoragePlain);
-                        plainRadio.setChecked(true);
-                    }
+                    revertStorageTypeToPlain(view);
                 }
             };
 
@@ -203,6 +205,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         // server state change events
         EventBus.getDefault().unregister(this);
         Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+        mainHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -301,19 +304,98 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         return intent;
     }
 
+    private int tryGetShizukuPermission() {
+        try {
+            return Shizuku.checkSelfPermission();
+        } catch (IllegalStateException e) {
+            logger.info("Shizuku checkSelfPermission failed before binder is ready: {}", e.toString());
+            return PackageManager.PERMISSION_DENIED;
+        }
+    }
+
     private boolean requestShizukuPermissionIfNeeded() {
-        if (!Shizuku.pingBinder()) {
-            Toast.makeText(getContext(), "Shizuku service is not available", Toast.LENGTH_LONG).show();
+        if (pendingShizukuSelection) {
+            logger.info("Ignoring duplicate Shizuku selection while pending");
             return false;
         }
-        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+
+        boolean pingBinder = Shizuku.pingBinder();
+        boolean showRationale = false;
+        int selfPermission = PackageManager.PERMISSION_DENIED;
+
+        if (pingBinder) {
+            selfPermission = tryGetShizukuPermission();
+            showRationale = Shizuku.shouldShowRequestPermissionRationale();
+        }
+
+        logger.info("Shizuku status: pingBinder={}, selfPermission={}, showRationale={}",
+                pingBinder, selfPermission, showRationale);
+
+        if (!pingBinder) {
+            pendingShizukuSelection = true;
+            mainHandler.removeCallbacks(this::retryPendingShizukuSelection);
+            mainHandler.postDelayed(this::retryPendingShizukuSelection, SHIZUKU_RETRY_DELAY_MS);
+            Toast.makeText(getContext(), "Waiting for Shizuku service...", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (selfPermission == PackageManager.PERMISSION_GRANTED) {
             return true;
         }
-        if (Shizuku.shouldShowRequestPermissionRationale()) {
-            Toast.makeText(getContext(), "Please grant Shizuku permission", Toast.LENGTH_LONG).show();
-        }
+        pendingShizukuSelection = true;
         Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
         return false;
+    }
+
+    private void retryPendingShizukuSelection() {
+        if (!pendingShizukuSelection || !isAdded()) {
+            return;
+        }
+        boolean pingBinder = Shizuku.pingBinder();
+        int selfPermission = pingBinder ? tryGetShizukuPermission() : PackageManager.PERMISSION_DENIED;
+        logger.info("Retrying Shizuku status: pingBinder={}, selfPermission={}", pingBinder, selfPermission);
+        if (!pingBinder) {
+            View view = getView();
+            Toast.makeText(getContext(), "Shizuku service is not available", Toast.LENGTH_LONG).show();
+            revertStorageTypeToPlain(view);
+            return;
+        }
+        if (selfPermission == PackageManager.PERMISSION_GRANTED) {
+            finalizeShizukuSelection();
+            return;
+        }
+        Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
+    }
+
+    private void finalizeShizukuSelection() {
+        pendingShizukuSelection = false;
+        if (!isAdded()) {
+            return;
+        }
+        SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
+        LoadPrefsUtil.storeStorageType(prefs, StorageType.SHIZUKU);
+        loadPrefs();
+        checkSafAccess();
+        View view = getView();
+        if (view != null) {
+            RadioButton shizukuRadio = view.findViewById(R.id.radioStorageShizuku);
+            if (!shizukuRadio.isChecked()) {
+                shizukuRadio.setChecked(true);
+            }
+        }
+    }
+
+    private void revertStorageTypeToPlain(View view) {
+        pendingShizukuSelection = false;
+        if (!isAdded()) {
+            return;
+        }
+        SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
+        LoadPrefsUtil.storeStorageType(prefs, StorageType.PLAIN);
+        loadPrefs();
+        if (view != null) {
+            RadioButton plainRadio = view.findViewById(R.id.radioStoragePlain);
+            plainRadio.setChecked(true);
+        }
     }
 
     @Override
@@ -333,8 +415,10 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         int crb = group.getCheckedRadioButtonId();
         try {
             if (crb == R.id.radioStoragePlain) {
+                pendingShizukuSelection = false;
                 storageType = StorageType.PLAIN;
             } else if (crb == R.id.radioStorageRoot) {
+                pendingShizukuSelection = false;
                 storageType = StorageType.ROOT;
             } else if (crb == R.id.radioStorageShizuku) {
                 if (requestShizukuPermissionIfNeeded()) {
@@ -343,16 +427,19 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                     return;
                 }
             } else if (crb == R.id.radioStorageSaf) {
+                pendingShizukuSelection = false;
                 storageType = StorageType.SAF;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
                 }
             } else if (crb == R.id.radioStorageRoSaf) {
+                pendingShizukuSelection = false;
                 storageType = StorageType.RO_SAF;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
                 }
             } else if (crb == R.id.radioStorageVirtual) {
+                pendingShizukuSelection = false;
                 storageType = StorageType.VIRTUAL;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
