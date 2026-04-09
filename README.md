@@ -1,11 +1,22 @@
 # Just fork it （I've now detached myself from the fork, which is more convenient.）
 
 # I have never made app before...Maybe it will cost me a few month
-# Upgrade 
-# Change it to material3
+~~Upgrade~~ 
+~~Change it to material3~~
 
-#Why they didn't use newer version of platform(?
+[简体中文](OtherLanguageREADME/README.zh-CN.md)
 
+# Shizuku-FTP
+Now the function works
+~~This kind of server-side lack of beautification is actually nothing~~
+
+# What still needs to be done:
+
+Is the old jump interface Fragment or View?
+I'm not too familiar with it and they do look difficult
+I've got you and you can't start
+
+# Original README 
 # Primitive FTPd
 
 FTP and SFTP server app for Android with external SD-card access.
