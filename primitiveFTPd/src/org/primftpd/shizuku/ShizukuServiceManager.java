@@ -6,7 +6,6 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-//import org.primftpd.shizuku.aidl.IShizukuFileService;
 import org.primftpd.shizuku.aidl.FileInfo;
 import org.primftpd.shizuku.aidl.FileOperationResult;
 import org.primftpd.shizuku.aidl.IShizukuFileService;
@@ -34,22 +33,23 @@ public class ShizukuServiceManager {
 
     private final Shizuku.UserServiceArgs serviceArgs = new Shizuku.UserServiceArgs(
             new ComponentName(
-                    "org.primftpd",
+                    "org.primftpd.shizuku",
                     ShizukuUserService.class.getName()
             )
     )
     .daemon(false)
     .processNameSuffix("shizuku_file_service")
-    .debuggable(false)
+    .debuggable(true)
     .version(1);
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             synchronized (bindLock) {
+                logger.info("=== Shizuku onServiceConnected called ===");
                 service = IShizukuFileService.Stub.asInterface(binder);
                 isBound = true;
-                logger.info("Shizuku service connected");
+                logger.info("=== Shizuku service connected successfully, isBound={} ===", isBound);
                 bindLock.notifyAll();
             }
         }
@@ -57,15 +57,16 @@ public class ShizukuServiceManager {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             synchronized (bindLock) {
+                logger.warn("=== Shizuku service disconnected ===");
                 service = null;
                 isBound = false;
-                logger.warn("Shizuku service disconnected");
             }
         }
     };
 
     public ShizukuServiceManager(Context context) {
         this.context = context.getApplicationContext();
+        logger.info("=== ShizukuServiceManager created, context={} ===", context.getPackageName());
     }
 
     /**
@@ -73,9 +74,11 @@ public class ShizukuServiceManager {
      */
     public boolean isShizukuAvailable() {
         try {
-            return Shizuku.pingBinder();
+            boolean available = Shizuku.pingBinder();
+            logger.info("=== Shizuku pingBinder result: {} ===", available);
+            return available;
         } catch (Throwable t) {
-            logger.warn("Shizuku pingBinder failed", t);
+            logger.error("=== Shizuku pingBinder failed ===", t);
             return false;
         }
     }
@@ -85,24 +88,31 @@ public class ShizukuServiceManager {
      */
     public boolean bindService() {
         synchronized (bindLock) {
+            logger.info("=== bindService called, isBound={} ===", isBound);
+
             if (isBound) {
+                logger.info("=== Already bound, returning true ===");
                 return true;
             }
 
             if (!isShizukuAvailable()) {
-                logger.error("Shizuku is not available");
+                logger.error("=== Shizuku is not available, cannot bind ===");
                 return false;
             }
 
             try {
+
+
                 Shizuku.bindUserService(serviceArgs, serviceConnection);
-                logger.info("Binding to Shizuku service...");
+                logger.info("=== Shizuku.bindUserService called, waiting for connection... ===");
                 
                 // Wait for connection (with timeout)
                 bindLock.wait(5000);
+
+                logger.info("=== Wait finished, isBound={} ===", isBound);
                 return isBound;
             } catch (Exception e) {
-                logger.error("Failed to bind Shizuku service", e);
+                logger.error("=== Failed to bind Shizuku service ===", e);
                 return false;
             }
         }
@@ -114,6 +124,7 @@ public class ShizukuServiceManager {
     public void unbindService() {
         synchronized (bindLock) {
             if (!isBound) {
+                logger.info("=== unbindService called but not bound ===");
                 return;
             }
 
@@ -121,9 +132,9 @@ public class ShizukuServiceManager {
                 Shizuku.unbindUserService(serviceArgs, serviceConnection, true);
                 service = null;
                 isBound = false;
-                logger.info("Unbound from Shizuku service");
+                logger.info("=== Unbound from Shizuku service ===");
             } catch (Exception e) {
-                logger.error("Failed to unbind Shizuku service", e);
+                logger.error("=== Failed to unbind Shizuku service ===", e);
             }
         }
     }
@@ -133,6 +144,7 @@ public class ShizukuServiceManager {
      */
     private boolean ensureBound() {
         synchronized (bindLock) {
+            logger.debug("=== ensureBound: isBound={}, service={} ===", isBound, service != null);
             if (isBound && service != null) {
                 return true;
             }
@@ -143,29 +155,38 @@ public class ShizukuServiceManager {
     // File operation APIs
 
     public FileInfo stat(String absolutePath) {
+        logger.info("=== stat called for: {} ===", absolutePath);
+
         if (!ensureBound()) {
-            logger.error("Service not bound for stat: {}", absolutePath);
+            logger.error("=== Service not bound for stat: {} ===", absolutePath);
             return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
         }
 
         try {
-            return service.stat(absolutePath);
+            FileInfo result = service.stat(absolutePath);
+            logger.info("=== stat result: exists={}, isDir={}, name={} ===",
+                    result.exists(), result.isDirectory(), result.getName());
+            return result;
         } catch (RemoteException e) {
-            logger.error("stat failed for: {}", absolutePath, e);
+            logger.error("=== stat failed for: {} ===", absolutePath, e);
             return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
         }
     }
 
     public List<FileInfo> listFiles(String absolutePath) {
+        logger.info("=== listFiles called for: {} ===", absolutePath);
+
         if (!ensureBound()) {
-            logger.error("Service not bound for listFiles: {}", absolutePath);
+            logger.error("=== Service not bound for listFiles: {} ===", absolutePath);
             return new ArrayList<>();
         }
 
         try {
-            return service.listFiles(absolutePath);
+            List<FileInfo> result = service.listFiles(absolutePath);
+            logger.info("=== listFiles result: {} files ===", result.size());
+            return result;
         } catch (RemoteException e) {
-            logger.error("listFiles failed for: {}", absolutePath, e);
+            logger.error("=== listFiles failed for: {} ===", absolutePath, e);
             return new ArrayList<>();
         }
     }
@@ -178,7 +199,7 @@ public class ShizukuServiceManager {
         try {
             return service.exists(absolutePath);
         } catch (RemoteException e) {
-            logger.error("exists failed for: {}", absolutePath, e);
+            logger.error("=== exists failed for: {} ===", absolutePath, e);
             return false;
         }
     }
@@ -191,7 +212,7 @@ public class ShizukuServiceManager {
         try {
             return service.mkdir(absolutePath);
         } catch (RemoteException e) {
-            logger.error("mkdir failed for: {}", absolutePath, e);
+            logger.error("=== mkdir failed for: {} ===", absolutePath, e);
             return FileOperationResult.failure(e.getMessage());
         }
     }
@@ -204,7 +225,7 @@ public class ShizukuServiceManager {
         try {
             return service.delete(absolutePath);
         } catch (RemoteException e) {
-            logger.error("delete failed for: {}", absolutePath, e);
+            logger.error("=== delete failed for: {} ===", absolutePath, e);
             return FileOperationResult.failure(e.getMessage());
         }
     }
@@ -217,7 +238,7 @@ public class ShizukuServiceManager {
         try {
             return service.rename(oldPath, newPath);
         } catch (RemoteException e) {
-            logger.error("rename failed from {} to {}", oldPath, newPath, e);
+            logger.error("=== rename failed from {} to {} ===", oldPath, newPath, e);
             return FileOperationResult.failure(e.getMessage());
         }
     }
@@ -230,7 +251,7 @@ public class ShizukuServiceManager {
         try {
             return service.readFile(absolutePath, offset, length);
         } catch (RemoteException e) {
-            logger.error("readFile failed for: {}", absolutePath, e);
+            logger.error("=== readFile failed for: {} ===", absolutePath, e);
             return new byte[0];
         }
     }
@@ -243,7 +264,7 @@ public class ShizukuServiceManager {
         try {
             return service.writeFile(absolutePath, data, offset, append);
         } catch (RemoteException e) {
-            logger.error("writeFile failed for: {}", absolutePath, e);
+            logger.error("=== writeFile failed for: {} ===", absolutePath, e);
             return FileOperationResult.failure(e.getMessage());
         }
     }
@@ -256,7 +277,7 @@ public class ShizukuServiceManager {
         try {
             return service.setLastModified(absolutePath, timestamp);
         } catch (RemoteException e) {
-            logger.error("setLastModified failed for: {}", absolutePath, e);
+            logger.error("=== setLastModified failed for: {} ===", absolutePath, e);
             return FileOperationResult.failure(e.getMessage());
         }
     }
