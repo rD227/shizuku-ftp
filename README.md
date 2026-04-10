@@ -43,13 +43,16 @@ I'm a bit at a loss where to start
 # The Problem:
 
 1.
-the Shizuku sometimes isn't available (I don't know why) 
+~~the Shizuku sometimes isn't available (I don't know why)~~ 
 
-**Because gpt5.4 try to use root to finish it**
+~~**Because gpt5.4 try to use root to finish it**~~
 
 ~~Finally I know I need to learn it by myself~~
 
-I was able to use it last night.......
+It was able to use it now.......(Only ftp-shizuku)
+
+sftp-Shizuku can't be used
+
 2.
 When didn't generate the key and try to start the (s)ftp 
 
