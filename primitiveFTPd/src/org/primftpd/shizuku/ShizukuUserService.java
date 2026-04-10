@@ -1,4 +1,6 @@
-package org.primftpd.shizuku.service;
+package org.primftpd.shizuku;
+
+import androidx.annotation.Keep;
 
 import org.primftpd.shizuku.aidl.IShizukuFileService;
 import org.primftpd.shizuku.aidl.FileInfo;
@@ -17,6 +19,7 @@ import java.util.List;
  * Shizuku UserService implementation running in privileged process.
  * This service has root-level file access via Shizuku framework.
  */
+@Keep
 public class ShizukuUserService extends IShizukuFileService.Stub {
 
     private static final int SERVICE_VERSION = 1;

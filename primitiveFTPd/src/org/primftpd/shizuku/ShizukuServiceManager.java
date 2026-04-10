@@ -9,13 +9,13 @@ import android.os.RemoteException;
 import org.primftpd.shizuku.aidl.FileInfo;
 import org.primftpd.shizuku.aidl.FileOperationResult;
 import org.primftpd.shizuku.aidl.IShizukuFileService;
-import org.primftpd.shizuku.service.ShizukuUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.chainfire.libsuperuser.BuildConfig;
 import rikka.shizuku.Shizuku;
 
 /**
@@ -33,7 +33,7 @@ public class ShizukuServiceManager {
 
     private final Shizuku.UserServiceArgs serviceArgs = new Shizuku.UserServiceArgs(
             new ComponentName(
-                    "org.primftpd.shizuku",
+                    BuildConfig.APPLICATION_ID,
                     ShizukuUserService.class.getName()
             )
     )
@@ -89,7 +89,7 @@ public class ShizukuServiceManager {
     public boolean bindService() {
         synchronized (bindLock) {
             logger.info("=== bindService called, isBound={} ===", isBound);
-
+            
             if (isBound) {
                 logger.info("=== Already bound, returning true ===");
                 return true;
@@ -101,14 +101,15 @@ public class ShizukuServiceManager {
             }
 
             try {
-
-
+                logger.info("=== Calling Shizuku.bindUserService with class: {} ===",
+                        ShizukuUserService.class.getName());
+                
                 Shizuku.bindUserService(serviceArgs, serviceConnection);
                 logger.info("=== Shizuku.bindUserService called, waiting for connection... ===");
                 
                 // Wait for connection (with timeout)
                 bindLock.wait(5000);
-
+                
                 logger.info("=== Wait finished, isBound={} ===", isBound);
                 return isBound;
             } catch (Exception e) {
@@ -156,7 +157,7 @@ public class ShizukuServiceManager {
 
     public FileInfo stat(String absolutePath) {
         logger.info("=== stat called for: {} ===", absolutePath);
-
+        
         if (!ensureBound()) {
             logger.error("=== Service not bound for stat: {} ===", absolutePath);
             return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
@@ -164,7 +165,7 @@ public class ShizukuServiceManager {
 
         try {
             FileInfo result = service.stat(absolutePath);
-            logger.info("=== stat result: exists={}, isDir={}, name={} ===",
+            logger.info("=== stat result: exists={}, isDir={}, name={} ===", 
                     result.exists(), result.isDirectory(), result.getName());
             return result;
         } catch (RemoteException e) {
