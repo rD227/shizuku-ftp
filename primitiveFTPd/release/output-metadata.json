@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "org.primftpd",
+  "applicationId": "org.primftpd.shizuku",
   "variantName": "release",
   "elements": [
     {
