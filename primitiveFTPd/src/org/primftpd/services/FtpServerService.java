@@ -36,8 +36,8 @@ public class FtpServerService extends AbstractServerService
 
 	@Override
 	protected ServerServiceHandler createServiceHandler(
-		Looper serviceLooper,
-		AbstractServerService service)
+			Looper serviceLooper,
+			AbstractServerService service)
 	{
 		return new ServerServiceHandler(serviceLooper, service, getServiceName());
 	}
@@ -107,72 +107,77 @@ public class FtpServerService extends AbstractServerService
 		// user manager & file system
 		serverFactory.setUserManager(new AndroidPrefsUserManager(prefsBean));
 		serverFactory.setFileSystem(user -> {
-			logger.info("FTP setFileSystem callback, storageType: {}", prefsBean.getStorageType());
+			logger.info("SHIZUKU_DEBUG <<< FTP setFileSystem storageType={}", prefsBean.getStorageType());
 			if (quickShareBean != null) {
-				logger.debug("launching server in quick share mode");
+				logger.info("SHIZUKU_DEBUG <<< FTP using QuickShareFtpFileSystemView");
 				return new QuickShareFtpFileSystemView(
 						FtpServerService.this,
 						quickShareBean.getTmpDir(),
 						user);
 			} else {
 				switch (prefsBean.getStorageType()) {
-					case PLAIN:
-						return new FsFtpFileSystemView(
-								FtpServerService.this,
-								prefsBean.getStartDir(),
-								user);
-					case ROOT:
-						return new RootFtpFileSystemView(
-								FtpServerService.this,
-								shell,
-								prefsBean.getStartDir(),
-								user);
-					case SHIZUKU:
-						logger.info("Creating ShizukuFtpFileSystemView for FTP");
-						return new ShizukuFtpFileSystemView(
-								FtpServerService.this,
-								shell,
-								prefsBean.getStartDir(),
-								user);
-					case SAF:
-						return new SafFtpFileSystemView(
-								FtpServerService.this,
-								Uri.parse(prefsBean.getSafUrl()),
-								user);
-					case RO_SAF:
-						return new RoSafFtpFileSystemView(
-								FtpServerService.this,
-								Uri.parse(prefsBean.getSafUrl()),
-								user);
-					case VIRTUAL:
-						return new VirtualFtpFileSystemView(
-								FtpServerService.this,
-								new FsFtpFileSystemView(
-										FtpServerService.this,
-										prefsBean.getStartDir(),
-										user),
-								new RootFtpFileSystemView(
+						case PLAIN:
+							logger.info("SHIZUKU_DEBUG <<< FTP using FsFtpFileSystemView");
+							return new FsFtpFileSystemView(
+									FtpServerService.this,
+									prefsBean.getStartDir(),
+									user);
+						case ROOT:
+							logger.info("SHIZUKU_DEBUG <<< FTP using RootFtpFileSystemView");
+							return new RootFtpFileSystemView(
+									FtpServerService.this,
+									shell,
+									prefsBean.getStartDir(),
+									user);
+						case SHIZUKU:
+							logger.info("SHIZUKU_DEBUG <<< FTP using ShizukuFtpFileSystemView");
+							return new ShizukuFtpFileSystemView(
 										FtpServerService.this,
 										shell,
 										prefsBean.getStartDir(),
-										user),
-								new SafFtpFileSystemView(
+										user);
+						case SAF:
+							logger.info("SHIZUKU_DEBUG <<< FTP using SafFtpFileSystemView");
+							return new SafFtpFileSystemView(
 										FtpServerService.this,
 										Uri.parse(prefsBean.getSafUrl()),
-										user),
-								new RoSafFtpFileSystemView(
+										user);
+						case RO_SAF:
+							logger.info("SHIZUKU_DEBUG <<< FTP using RoSafFtpFileSystemView");
+							return new RoSafFtpFileSystemView(
 										FtpServerService.this,
 										Uri.parse(prefsBean.getSafUrl()),
-										user),
-								new ShizukuFtpFileSystemView(
+										user);
+						case VIRTUAL:
+							logger.info("SHIZUKU_DEBUG <<< FTP using VirtualFtpFileSystemView");
+							return new VirtualFtpFileSystemView(
 										FtpServerService.this,
-										shell,
+										new FsFtpFileSystemView(
+													FtpServerService.this,
+													prefsBean.getStartDir(),
+													user),
+										new RootFtpFileSystemView(
+													FtpServerService.this,
+													shell,
+													prefsBean.getStartDir(),
+													user),
+										new SafFtpFileSystemView(
+													FtpServerService.this,
+													Uri.parse(prefsBean.getSafUrl()),
+													user),
+										new RoSafFtpFileSystemView(
+													FtpServerService.this,
+													Uri.parse(prefsBean.getSafUrl()),
+													user),
+										new ShizukuFtpFileSystemView(
+													FtpServerService.this,
+													shell,
+													prefsBean.getStartDir(),
+													user),
 										prefsBean.getStartDir(),
-										user),
-								prefsBean.getStartDir(),
-								user
-						);
-				}
+										user
+									);
+					}
 			}
 			return null;
 		});
@@ -190,7 +195,6 @@ public class FtpServerService extends AbstractServerService
 			ftpServer.start();
 			return true;
 		} catch (Throwable e) {
-			// note: createServer() throws RuntimeExceptions, too
 			ftpServer = null;
 			handleServerStartError(e);
 			return false;

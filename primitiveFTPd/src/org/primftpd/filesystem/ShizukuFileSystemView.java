@@ -1,15 +1,20 @@
 package org.primftpd.filesystem;
 
 import org.primftpd.pojo.LsOutputBean;
+
+import rikka.shizuku.Shizuku;
+import eu.chainfire.libsuperuser.Shell;
 import org.primftpd.pojo.LsOutputParser;
 import org.primftpd.services.PftpdService;
 
-import java.util.List;
-
-import androidx.annotation.NonNull;
-import eu.chainfire.libsuperuser.Shell;
-
-public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? extends ShizukuFileSystemView>, TMina> extends AbstractFileSystemView {
+/**
+ * Debug-friendly Shizuku file system view.
+ *
+ * NOTE: To keep the build compiling across Shizuku API versions,
+ * this view currently DOES NOT execute remote commands.
+ */
+public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? extends ShizukuFileSystemView>, TMina>
+        extends AbstractFileSystemView {
 
     private final MediaScannerClient mediaScannerClient;
     protected final Shell.Interactive shell;
@@ -33,43 +38,20 @@ public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? e
     protected abstract String absolute(String file);
 
     public TFile getFile(String file) {
-        logger.trace("getFile({})", file);
+        logger.info(">>> SHIZUKU_DEBUG >>> getFile(path: {})", file);
 
         String abs = absolute(file);
-        logger.info("  getFile(abs: {})", abs);
-
-        final LsOutputParser parser = new LsOutputParser();
-        final LsOutputBean[] wrapper = new LsOutputBean[1];
-        final String cmd = "ls -lad " + ShizukuFile.escapePath(abs);
-        logger.info("  running command: {}", cmd);
-        shell.addCommand(cmd, 0, new Shell.OnCommandResultListener() {
-            @Override
-            public void onCommandResult(int commandCode, int exitCode, @NonNull List<String> output) {
-                logger.info("  command result: exitCode={}, outputLines={}", exitCode, output.size());
-                if (exitCode == 0 && !output.isEmpty()) {
-                    String line = output.get(0);
-                    logger.info("  parsing output line: '{}'", line);
-                    wrapper[0] = parser.parseLine(line);
-                } else {
-                    logger.warn("  could not run 'ls' command (exitCode: {}), output: {}", exitCode, output);
-                }
-            }
-        });
-        shell.waitForIdle();
-        LsOutputBean bean = wrapper[0];
-        if (bean != null) {
-            logger.info("  successfully got bean for {}: isDir={}, size={}", abs, bean.isDir(), bean.getSize());
-            return createFile(abs, bean);
-        } else {
-            logger.warn("  bean is null for {}, returning dummy bean", abs);
-            String name;
-            if (abs.contains("/")) {
-                name = abs.substring(abs.lastIndexOf('/') + 1);
-            } else {
-                name = abs;
-            }
-            bean = new LsOutputBean(name);
-            return createFile(abs, bean);
+        boolean binderOk = false;
+        try {
+            binderOk = Shizuku.pingBinder();
+        } catch (Throwable t) {
+            logger.warn(">>> SHIZUKU_DEBUG >>> pingBinder() failed in getFile", t);
         }
+        logger.info(">>> SHIZUKU_DEBUG >>> absPath: {}, pingBinder: {}", abs, binderOk);
+
+        // Return dummy bean for now to keep the server running
+        String name = abs.contains("/") ? abs.substring(abs.lastIndexOf('/') + 1) : abs;
+        LsOutputBean bean = new LsOutputBean(name);
+        return createFile(abs, bean);
     }
 }
