@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.provider.DocumentsContract;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -91,7 +92,8 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
     private static final int REQUEST_CODE_SAF_PERM = 1234;
     private static final int REQUEST_CODE_SHIZUKU_PERM = 1235;
-    private static final long SHIZUKU_RETRY_DELAY_MS = 5000L;
+    private static final long SHIZUKU_RETRY_DELAY_MS = 500L;
+    private static final int SHIZUKU_MAX_RETRY_COUNT = 8;
 
     public static final String DIALOG_TAG = "dialogs";
 
@@ -111,6 +113,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     private boolean onStartOngoing = false;
     private boolean pendingShizukuSelection = false;
     private boolean shizukuBinderReady = false;
+    private int shizukuRetryCount = 0;
 
     private String chosenIp;
 
@@ -119,6 +122,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     private final Shizuku.OnBinderReceivedListener binderReceivedListener = () -> {
         shizukuBinderReady = true;
         logger.info("Shizuku binder received");
+        logShizukuState("binderReceivedListener");
         if (pendingShizukuSelection) {
             mainHandler.removeCallbacks(this::retryPendingShizukuSelection);
             mainHandler.post(this::retryPendingShizukuSelection);
@@ -128,6 +132,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     private final Shizuku.OnBinderDeadListener binderDeadListener = () -> {
         shizukuBinderReady = false;
         logger.info("Shizuku binder dead");
+        logShizukuState("binderDeadListener");
     };
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
@@ -137,6 +142,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                 }
                 View view = getView();
                 logger.info("Shizuku permission callback grantResult={}", grantResult);
+                logShizukuState("permissionResult");
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(getContext(), "Shizuku permission granted", Toast.LENGTH_SHORT).show();
                     finalizeShizukuSelection();
@@ -150,21 +156,15 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         return R.layout.main;
     }
 
-    /**
-     * Called when the activity is first created.
-     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // basic setup
         super.onCreateView(inflater, container, savedInstanceState);
 
         logger.debug("onCreateView()");
 
-        // layout
         View view = inflater.inflate(getLayoutId(), container, false);
 
-        // calc keys fingerprints
         PftpdFragment fragment = this;
         try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             executorService.execute(() -> {
@@ -174,39 +174,32 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             });
         }
 
-        // create addresses label
         ((TextView) view.findViewById(R.id.addressesLabel)).setText(
                 String.format("%s (%s)", getText(R.string.ipAddrLabel), getText(R.string.ifacesLabel))
         );
 
-        // create ports label
         ((TextView) view.findViewById(R.id.portsLabel)).setText(
                 String.format("%s / %s / %s",
                         getText(R.string.protocolLabel), getText(R.string.portLabel), getText(R.string.state))
         );
 
-        // listen for events
         EventBus.getDefault().register(this);
 
-        // start on open ?
         SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
         Boolean startOnOpen = LoadPrefsUtil.startOnOpen(prefs);
         if (startOnOpen) {
-            keyFingerprintProvider.calcPubkeyFingerprints(getContext()); // see GH issue #204
+            keyFingerprintProvider.calcPubkeyFingerprints(getContext());
             ServicesStartStopUtil.startServers(this);
         }
 
-        // init views (laoding & client action texts)
         addressesLoading = view.findViewById(R.id.addressesLoading);
         clientActionView1 = view.findViewById(R.id.clientActionsLine1);
         clientActionView2 = view.findViewById(R.id.clientActionsLine2);
         clientActionView3 = view.findViewById(R.id.clientActionsLine3);
 
-        // make links clickable
         ((TextView) view.findViewById(R.id.radioStoragePlain)).setMovementMethod(LinkMovementMethod.getInstance());
         ((TextView) view.findViewById(R.id.safExplain)).setMovementMethod(LinkMovementMethod.getInstance());
 
-        // create sample authorized_keys files
         new SampleAuthKeysFileCreator().createSampleAuthorizedKeysFiles(getContext());
 
         return view;
@@ -215,8 +208,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        // server state change events
         EventBus.getDefault().unregister(this);
         mainHandler.removeCallbacksAndMessages(null);
     }
@@ -232,12 +223,11 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         Shizuku.addBinderDeadListener(binderDeadListener);
         Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
         shizukuBinderReady = Shizuku.pingBinder();
-        logger.info("Shizuku binder ready onStart={}", shizukuBinderReady);
+        logShizukuState("onStart");
 
         loadPrefs();
         showLogindata();
 
-        // init storage type radio
         View view = getView();
         if (view == null) {
             return;
@@ -285,18 +275,12 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
         logger.debug("onResume()");
 
-        // register listener to reprint interfaces table when network connections change
-        // android sends those events when registered in code but not when registered in manifest
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         requireActivity().registerReceiver(this.networkStateReceiver, filter);
 
-        // e.g. necessary when ports preferences have been changed
         displayServersState();
-
-        // check if chosen SAF directory can be accessed
         checkSafAccess();
 
-        // validate bind IP
         View view = getView();
         if (view == null) {
             return;
@@ -307,7 +291,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                     String msg = "IP " + prefsBean.getBindIp() +
                             " is currently not assigned to an interface. May lead to a crash.";
                     view.post(() ->
-                        Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show()
+                            Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show()
                     );
                 }
             });
@@ -319,17 +303,54 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         super.onPause();
 
         logger.debug("onPause()");
-
-        // unregister broadcast receiver
         requireActivity().unregisterReceiver(this.networkStateReceiver);
     }
 
     Intent buildSafIntend() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         return intent;
+    }
+
+    private void logShizukuState(String source) {
+        Context context = getContext();
+        String packageName = context != null ? context.getPackageName() : "null";
+        boolean pingBinder;
+        try {
+            pingBinder = Shizuku.pingBinder();
+        } catch (Throwable t) {
+            logger.warn("Shizuku pingBinder failed in {}", source, t);
+            pingBinder = false;
+        }
+
+        int version = -1;
+        try {
+            if (pingBinder) {
+                version = Shizuku.getVersion();
+            }
+        } catch (Throwable t) {
+            logger.warn("Shizuku getVersion failed in {}", source, t);
+        }
+
+        int permission = PackageManager.PERMISSION_DENIED;
+        try {
+            if (pingBinder) {
+                permission = Shizuku.checkSelfPermission();
+            }
+        } catch (Throwable t) {
+            logger.warn("Shizuku checkSelfPermission failed in {}", source, t);
+        }
+
+        logger.info("Shizuku state [{}]: package={}, uid={}, binderReadyField={}, pingBinder={}, version={}, permission={}, pending={}, retryCount={}",
+                source,
+                packageName,
+                Process.myUid(),
+                shizukuBinderReady,
+                pingBinder,
+                version,
+                permission,
+                pendingShizukuSelection,
+                shizukuRetryCount);
     }
 
     private int tryGetShizukuPermission() {
@@ -355,6 +376,9 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             logger.info("Ignoring duplicate Shizuku selection while pending");
             return false;
         }
+
+        shizukuRetryCount = 0;
+        logShizukuState("requestShizukuPermissionIfNeeded.start");
 
         boolean pingBinder = shizukuBinderReady || Shizuku.pingBinder();
         int shizukuVersion = pingBinder ? tryGetShizukuVersion() : -1;
@@ -386,6 +410,7 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         }
 
         pendingShizukuSelection = true;
+        logger.info("Requesting Shizuku permission");
         Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
         return false;
     }
@@ -394,37 +419,54 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         if (!pendingShizukuSelection || !isAdded()) {
             return;
         }
-        logger.info("1 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
-                shizukuBinderReady);
+
+        shizukuRetryCount++;
+        logShizukuState("retryPendingShizukuSelection." + shizukuRetryCount);
+
         boolean pingBinder = shizukuBinderReady || Shizuku.pingBinder();
-        logger.info("2 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
-                shizukuBinderReady, pingBinder);
         int selfPermission = pingBinder ? tryGetShizukuPermission() : PackageManager.PERMISSION_DENIED;
         int shizukuVersion = pingBinder ? tryGetShizukuVersion() : -1;
-        logger.info("3 Retrying Shizuku status: binderReady={}, pingBinder={}, version={}, selfPermission={}",
-                shizukuBinderReady, pingBinder, shizukuVersion, selfPermission);
+
         if (!pingBinder) {
+            if (shizukuRetryCount < SHIZUKU_MAX_RETRY_COUNT) {
+                mainHandler.postDelayed(this::retryPendingShizukuSelection, SHIZUKU_RETRY_DELAY_MS);
+                return;
+            }
             View view = getView();
             Toast.makeText(getContext(), "Shizuku service is not available", Toast.LENGTH_LONG).show();
             revertStorageTypeToPlain(view);
             return;
         }
+
         shizukuBinderReady = true;
+
         if (Shizuku.isPreV11() || shizukuVersion < 11) {
             View view = getView();
             Toast.makeText(getContext(), "Shizuku version is not supported", Toast.LENGTH_LONG).show();
             revertStorageTypeToPlain(view);
             return;
         }
+
         if (selfPermission == PackageManager.PERMISSION_GRANTED) {
             finalizeShizukuSelection();
             return;
         }
-        Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
+
+        if (shizukuRetryCount < SHIZUKU_MAX_RETRY_COUNT) {
+            logger.info("Retrying Shizuku permission request");
+            Shizuku.requestPermission(REQUEST_CODE_SHIZUKU_PERM);
+            mainHandler.postDelayed(this::retryPendingShizukuSelection, SHIZUKU_RETRY_DELAY_MS);
+        } else {
+            View view = getView();
+            Toast.makeText(getContext(), "Shizuku permission was not granted", Toast.LENGTH_LONG).show();
+            revertStorageTypeToPlain(view);
+        }
     }
 
     private void finalizeShizukuSelection() {
         pendingShizukuSelection = false;
+        shizukuRetryCount = 0;
+        logShizukuState("finalizeShizukuSelection");
         if (!isAdded()) {
             return;
         }
@@ -443,6 +485,8 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
 
     private void revertStorageTypeToPlain(View view) {
         pendingShizukuSelection = false;
+        shizukuRetryCount = 0;
+        logShizukuState("revertStorageTypeToPlain");
         if (!isAdded()) {
             return;
         }
@@ -466,16 +510,17 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         view.findViewById(R.id.safUri).setVisibility(View.GONE);
 
         StorageType storageType = null;
-
         Intent intent = buildSafIntend();
 
         int crb = group.getCheckedRadioButtonId();
         try {
             if (crb == R.id.radioStoragePlain) {
                 pendingShizukuSelection = false;
+                shizukuRetryCount = 0;
                 storageType = StorageType.PLAIN;
             } else if (crb == R.id.radioStorageRoot) {
                 pendingShizukuSelection = false;
+                shizukuRetryCount = 0;
                 storageType = StorageType.ROOT;
             } else if (crb == R.id.radioStorageShizuku) {
                 if (requestShizukuPermissionIfNeeded()) {
@@ -486,18 +531,21 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                 }
             } else if (crb == R.id.radioStorageSaf) {
                 pendingShizukuSelection = false;
+                shizukuRetryCount = 0;
                 storageType = StorageType.SAF;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
                 }
             } else if (crb == R.id.radioStorageRoSaf) {
                 pendingShizukuSelection = false;
+                shizukuRetryCount = 0;
                 storageType = StorageType.RO_SAF;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
                 }
             } else if (crb == R.id.radioStorageVirtual) {
                 pendingShizukuSelection = false;
+                shizukuRetryCount = 0;
                 storageType = StorageType.VIRTUAL;
                 if (!onStartOngoing) {
                     startActivityForResult(intent, REQUEST_CODE_SAF_PERM);
@@ -540,7 +588,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                         (Intent.FLAG_GRANT_READ_URI_PERMISSION
                                 | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
-                // release old permissions
                 FragmentActivity activity = requireActivity();
                 String oldUrl = prefsBean.getSafUrl();
                 if (!StringUtils.isBlank(oldUrl)) {
@@ -548,13 +595,11 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                         activity.getContentResolver()
                                 .releasePersistableUriPermission(Uri.parse(oldUrl), modeFlags);
                     } catch (SecurityException e) {
-                        logger.info(
-                                "SecurityException while calling releasePersistableUriPermission()");
+                        logger.info("SecurityException while calling releasePersistableUriPermission()");
                         logger.trace("", e);
                     }
                 }
 
-                // persist permissions
                 try {
                     activity.grantUriPermission(activity.getPackageName(), uri, modeFlags);
                     activity.getContentResolver().takePersistableUriPermission(uri, modeFlags);
@@ -563,17 +608,10 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                     logger.trace("", e);
                 }
 
-                // store uri
                 SharedPreferences prefs = LoadPrefsUtil.getPrefs(getContext());
                 LoadPrefsUtil.storeSafUrl(prefs, uriStr);
-
-                // display uri
                 showSafUrl(uriStr);
-
-                // update prefs
                 loadPrefs();
-
-                // note: onResume() is about to be called
             }
         }
     }
@@ -587,7 +625,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         RadioButton safRadio = view.findViewById(R.id.radioStorageSaf);
         if (prefsBean.getStorageType() == StorageType.SAF
                 || prefsBean.getStorageType() == StorageType.RO_SAF) {
-            // let's see if the OS has persisted something for us
             List<UriPermission> persistedUriPermissions =
                     requireActivity().getContentResolver().getPersistedUriPermissions();
             for (UriPermission uriPerm : persistedUriPermissions) {
@@ -615,7 +652,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                 cursor.moveToFirst();
 
             } catch (UnsupportedOperationException e) {
-                // this seems to be the normal case for directory uris
             } catch (SecurityException | NullPointerException e) {
                 logger.debug("checkSafAccess failed: {}", e.toString());
                 logger.trace("", e);
@@ -627,7 +663,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             }
         }
         if (hideWarning) {
-            // remove warning if it was present
             safRadio.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
         } else {
             final boolean darkMode = UiModeUtil.isDarkMode(getResources());
@@ -643,26 +678,18 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         return config.getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
     }
 
-    /**
-     * Creates table containing network interfaces.
-     */
     protected void showAddresses() {
         View view = getView();
         if (view == null) {
             return;
         }
 
-        // clear old entries
         LinearLayout container = view.findViewById(R.id.addressesContainer);
         container.removeAllViews();
-
-        // show spinner
         addressesLoading.setVisibility(View.VISIBLE);
 
         try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
-            executorService.execute(() ->
-                doShowAddresses(view, container)
-            );
+            executorService.execute(() -> doShowAddresses(view, container));
         }
     }
 
@@ -678,7 +705,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         if (chooseBindIp) {
             radioGroup = new RadioGroup(this.getContext());
         } else {
-            // reset chosenIp, if user has diabled the preference again
             this.chosenIp = null;
         }
         radioGroupHolder[0] = radioGroup;
@@ -752,14 +778,14 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                             getText(serversRunning.ftp
                                     ? R.string.serverStarted
                                     : R.string.serverStopped)
-                            + " / " + "ftp");
+                            + " / ftp");
 
             ((TextView) view.findViewById(R.id.sftpTextView))
                     .setText(prefsBean.getSecurePortStr() + " / " +
                             getText(serversRunning.ssh
                                     ? R.string.serverStarted
                                     : R.string.serverStopped)
-                            + " / " + "sftp");
+                            + " / sftp");
         }
     }
 
@@ -793,7 +819,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             isGranted -> showLogindata());
 
     private void displayNormalStorageAccess() {
-        // Android 10 and lower
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             displayPermission(
                     R.id.hasNormalStorageAccessTextView,
@@ -804,7 +829,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
     }
 
     private void displayFullStorageAccess() {
-        // Android 11+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             View view = getView();
             if (view == null) {
@@ -928,10 +952,8 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         if (view == null) {
             return;
         }
-        // find algo to show
         HostKeyAlgorithm chosenAlgo = keyFingerprintProvider.findPreferredHostKeyAlog(this.getContext());
 
-        // show info about chosen algo and it's key
         ((TextView) view.findViewById(R.id.keyFingerprintMd5Label))
                 .setText("MD5 (" + chosenAlgo.getDisplayName() + ")");
         ((TextView) view.findViewById(R.id.keyFingerprintSha1Label))
@@ -950,16 +972,13 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
                     .setText(keyFingerprintBean.getFingerprintSha256());
         }
 
-        // create onRefreshListener
-        PftpdFragment pftpdFragment = this;
         View refreshButton = view.findViewById(R.id.keyFingerprintsLabel);
         refreshButton.setOnClickListener(v -> {
             logger.trace("refreshButton OnClickListener");
-            GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment(/*pftpdFragment*/);
+            GenKeysAskDialogFragment askDiag = new GenKeysAskDialogFragment();
             askDiag.show(requireActivity().getSupportFragmentManager(), DIALOG_TAG);
         });
 
-        // link to keys fingerprints activity
         TextView showAllKeysFingerprints = view.findViewById(R.id.allKeysFingerprintsLabel);
         CharSequence text = showAllKeysFingerprints.getText();
         SpannableString spannable = new SpannableString(text);
@@ -1037,19 +1056,12 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             running = serversRunning.atLeastOneRunning();
         }
 
-        // should be triggered by onCreateOptionsMenu() to avoid icon flicker
-        // when invoked via notification
         updateFallbackButtonStates(running);
 
-        // by checking ButtonStates we get info which services are running
-        // that is displayed in portsTable
-        // as there are no icons when this runs first time,
-        // we don't get serversRunning, yet
         if (serversRunning != null) {
             showPortsAndServerState();
         }
 
-        // if running, query server info
         if (Boolean.TRUE.equals(running)) {
             logger.debug("posting ServerInfoRequestEvent");
             EventBus.getDefault().post(new ServerInfoRequestEvent());
@@ -1080,7 +1092,6 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
             atLeastOneRunning = running;
         }
 
-        // update fallback buttons
         View view = getView();
         if (view != null) {
             Button fallbackButtonToggle = view.findViewById(R.id.fallbackButtonToggleServer);
