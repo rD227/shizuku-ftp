@@ -4,18 +4,17 @@ import org.apache.sshd.common.Session;
 import org.apache.sshd.common.file.FileSystemView;
 import org.apache.sshd.common.file.SshFile;
 import org.primftpd.services.PftpdService;
+import org.primftpd.shizuku.ShizukuServiceManager;
 
 import java.io.File;
-
-import eu.chainfire.libsuperuser.Shell;
 
 public class ShizukuSshFileSystemView extends ShizukuFileSystemView<ShizukuSshFile, SshFile> implements FileSystemView {
 
     private final File homeDir;
     private final Session session;
 
-    public ShizukuSshFileSystemView(PftpdService pftpdService, Shell.Interactive shell, File homeDir, Session session) {
-        super(pftpdService, shell);
+    public ShizukuSshFileSystemView(PftpdService pftpdService, ShizukuServiceManager serviceManager, File homeDir, Session session) {
+        super(pftpdService, serviceManager);
         this.homeDir = homeDir;
         this.session = session;
     }

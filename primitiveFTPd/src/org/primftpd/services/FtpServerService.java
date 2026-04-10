@@ -20,6 +20,7 @@ import org.primftpd.filesystem.SafFtpFileSystemView;
 import org.primftpd.filesystem.ShizukuFtpFileSystemView;
 import org.primftpd.filesystem.VirtualFtpFileSystemView;
 import org.primftpd.io.PrimNioListener;
+import org.primftpd.shizuku.ShizukuServiceManager;
 import org.primftpd.util.RemoteIpChecker;
 import org.primftpd.util.StringUtils;
 
@@ -104,7 +105,6 @@ public class FtpServerService extends AbstractServerService
 		FtpServerFactory serverFactory = new FtpServerFactory();
 		serverFactory.addListener("default", createListener(listenerFactory));
 
-		// user manager & file system
 		serverFactory.setUserManager(new AndroidPrefsUserManager(prefsBean));
 		serverFactory.setFileSystem(user -> {
 			logger.info("SHIZUKU_DEBUG <<< FTP setFileSystem storageType={}", prefsBean.getStorageType());
@@ -133,7 +133,7 @@ public class FtpServerService extends AbstractServerService
 							logger.info("SHIZUKU_DEBUG <<< FTP using ShizukuFtpFileSystemView");
 							return new ShizukuFtpFileSystemView(
 										FtpServerService.this,
-										shell,
+										new ShizukuServiceManager(),
 										prefsBean.getStartDir(),
 										user);
 						case SAF:
@@ -171,7 +171,7 @@ public class FtpServerService extends AbstractServerService
 													user),
 										new ShizukuFtpFileSystemView(
 													FtpServerService.this,
-													shell,
+													new ShizukuServiceManager(),
 													prefsBean.getStartDir(),
 													user),
 										prefsBean.getStartDir(),
@@ -182,14 +182,12 @@ public class FtpServerService extends AbstractServerService
 			return null;
 		});
 
-		// connection settings with some security improvements
 		ConnectionConfigFactory conCfg = new ConnectionConfigFactory();
 		conCfg.setAnonymousLoginEnabled(prefsBean.isAnonymousLogin());
 		conCfg.setMaxLoginFailures(5);
 		conCfg.setLoginFailureDelay(2000);
 		serverFactory.setConnectionConfig(conCfg.createConnectionConfig());
 
-		// do start server
 		ftpServer = serverFactory.createServer();
 		try {
 			ftpServer.start();

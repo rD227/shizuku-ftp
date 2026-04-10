@@ -34,6 +34,7 @@ import org.primftpd.filesystem.ShizukuSshFileSystemView;
 import org.primftpd.filesystem.VirtualSshFileSystemView;
 import org.primftpd.pojo.KeyParser;
 import org.primftpd.prefs.StorageType;
+import org.primftpd.shizuku.ShizukuServiceManager;
 import org.primftpd.util.Defaults;
 import org.primftpd.util.RemoteIpChecker;
 import org.primftpd.util.StringUtils;
@@ -217,7 +218,7 @@ public class SshServerService extends AbstractServerService
 							logger.info("SHIZUKU_DEBUG <<< SFTP using ShizukuSshFileSystemView");
 							return new ShizukuSshFileSystemView(
 									SshServerService.this,
-									shell,
+									new ShizukuServiceManager(),
 									prefsBean.getStartDir(),
 									session);
 						case SAF:
@@ -255,7 +256,7 @@ public class SshServerService extends AbstractServerService
 											session),
 									new ShizukuSshFileSystemView(
 											SshServerService.this,
-											shell,
+											new ShizukuServiceManager(),
 											prefsBean.getStartDir(),
 											session),
 									prefsBean.getStartDir(),
