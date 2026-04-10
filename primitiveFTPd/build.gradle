@@ -32,6 +32,7 @@ android {
     }
     buildFeatures {
         compose = true
+        aidl = true
     }
     sourceSets {
         main {
@@ -43,6 +44,9 @@ android {
             }
             kotlin {
                 srcDirs = ['src']
+            }
+            aidl {
+                srcDirs = ['src/main/aidl']
             }
             res {
                 srcDir 'res'

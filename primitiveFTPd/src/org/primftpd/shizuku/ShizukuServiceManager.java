@@ -1,44 +1,271 @@
 package org.primftpd.shizuku;
 
-import org.primftpd.pojo.LsOutputBean;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.os.RemoteException;
+
+//import org.primftpd.shizuku.aidl.IShizukuFileService;
+import org.primftpd.shizuku.aidl.FileInfo;
+import org.primftpd.shizuku.aidl.FileOperationResult;
+import org.primftpd.shizuku.aidl.IShizukuFileService;
+import org.primftpd.shizuku.service.ShizukuUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import rikka.shizuku.Shizuku;
 
 /**
- * Phase-1 manager abstraction for future Shizuku UserService binding.
- *
- * At this stage it does not bind a real UserService yet. It exists to remove
- * the fake dependency on root shell from the Shizuku file-system classes.
+ * Manager for Shizuku UserService binding and communication.
+ * Handles service lifecycle and provides file operation APIs.
  */
 public class ShizukuServiceManager {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final IPrivilegedFileService localFallback = new ShizukuFileService();
+    private static final Logger logger = LoggerFactory.getLogger(ShizukuServiceManager.class);
+    
+    private final Context context;
+    private IShizukuFileService service;
+    private boolean isBound = false;
+    private final Object bindLock = new Object();
 
-    public boolean isBinderAvailable() {
+    private final Shizuku.UserServiceArgs serviceArgs = new Shizuku.UserServiceArgs(
+            new ComponentName(
+                    "org.primftpd",
+                    ShizukuUserService.class.getName()
+            )
+    )
+    .daemon(false)
+    .processNameSuffix("shizuku_file_service")
+    .debuggable(false)
+    .version(1);
+
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            synchronized (bindLock) {
+                service = IShizukuFileService.Stub.asInterface(binder);
+                isBound = true;
+                logger.info("Shizuku service connected");
+                bindLock.notifyAll();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            synchronized (bindLock) {
+                service = null;
+                isBound = false;
+                logger.warn("Shizuku service disconnected");
+            }
+        }
+    };
+
+    public ShizukuServiceManager(Context context) {
+        this.context = context.getApplicationContext();
+    }
+
+    /**
+     * Check if Shizuku binder is available
+     */
+    public boolean isShizukuAvailable() {
         try {
             return Shizuku.pingBinder();
         } catch (Throwable t) {
-            logger.warn(">>> SHIZUKU_DEBUG >>> pingBinder failed in manager", t);
+            logger.warn("Shizuku pingBinder failed", t);
             return false;
         }
     }
 
-    public LsOutputBean stat(String absolutePath) {
-        logger.info(">>> SHIZUKU_DEBUG >>> manager.stat(path={}, binderAvailable={})",
-                absolutePath,
-                isBinderAvailable());
-        return localFallback.stat(absolutePath);
+    /**
+     * Bind to Shizuku UserService
+     */
+    public boolean bindService() {
+        synchronized (bindLock) {
+            if (isBound) {
+                return true;
+            }
+
+            if (!isShizukuAvailable()) {
+                logger.error("Shizuku is not available");
+                return false;
+            }
+
+            try {
+                Shizuku.bindUserService(serviceArgs, serviceConnection);
+                logger.info("Binding to Shizuku service...");
+                
+                // Wait for connection (with timeout)
+                bindLock.wait(5000);
+                return isBound;
+            } catch (Exception e) {
+                logger.error("Failed to bind Shizuku service", e);
+                return false;
+            }
+        }
     }
 
-    public List<LsOutputBean> list(String absolutePath) {
-        logger.info(">>> SHIZUKU_DEBUG >>> manager.list(path={}, binderAvailable={})",
-                absolutePath,
-                isBinderAvailable());
-        return localFallback.list(absolutePath);
+    /**
+     * Unbind from Shizuku UserService
+     */
+    public void unbindService() {
+        synchronized (bindLock) {
+            if (!isBound) {
+                return;
+            }
+
+            try {
+                Shizuku.unbindUserService(serviceArgs, serviceConnection, true);
+                service = null;
+                isBound = false;
+                logger.info("Unbound from Shizuku service");
+            } catch (Exception e) {
+                logger.error("Failed to unbind Shizuku service", e);
+            }
+        }
+    }
+
+    /**
+     * Ensure service is bound before operation
+     */
+    private boolean ensureBound() {
+        synchronized (bindLock) {
+            if (isBound && service != null) {
+                return true;
+            }
+            return bindService();
+        }
+    }
+
+    // File operation APIs
+
+    public FileInfo stat(String absolutePath) {
+        if (!ensureBound()) {
+            logger.error("Service not bound for stat: {}", absolutePath);
+            return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
+        }
+
+        try {
+            return service.stat(absolutePath);
+        } catch (RemoteException e) {
+            logger.error("stat failed for: {}", absolutePath, e);
+            return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
+        }
+    }
+
+    public List<FileInfo> listFiles(String absolutePath) {
+        if (!ensureBound()) {
+            logger.error("Service not bound for listFiles: {}", absolutePath);
+            return new ArrayList<>();
+        }
+
+        try {
+            return service.listFiles(absolutePath);
+        } catch (RemoteException e) {
+            logger.error("listFiles failed for: {}", absolutePath, e);
+            return new ArrayList<>();
+        }
+    }
+
+    public boolean exists(String absolutePath) {
+        if (!ensureBound()) {
+            return false;
+        }
+
+        try {
+            return service.exists(absolutePath);
+        } catch (RemoteException e) {
+            logger.error("exists failed for: {}", absolutePath, e);
+            return false;
+        }
+    }
+
+    public FileOperationResult mkdir(String absolutePath) {
+        if (!ensureBound()) {
+            return FileOperationResult.failure("Service not bound");
+        }
+
+        try {
+            return service.mkdir(absolutePath);
+        } catch (RemoteException e) {
+            logger.error("mkdir failed for: {}", absolutePath, e);
+            return FileOperationResult.failure(e.getMessage());
+        }
+    }
+
+    public FileOperationResult delete(String absolutePath) {
+        if (!ensureBound()) {
+            return FileOperationResult.failure("Service not bound");
+        }
+
+        try {
+            return service.delete(absolutePath);
+        } catch (RemoteException e) {
+            logger.error("delete failed for: {}", absolutePath, e);
+            return FileOperationResult.failure(e.getMessage());
+        }
+    }
+
+    public FileOperationResult rename(String oldPath, String newPath) {
+        if (!ensureBound()) {
+            return FileOperationResult.failure("Service not bound");
+        }
+
+        try {
+            return service.rename(oldPath, newPath);
+        } catch (RemoteException e) {
+            logger.error("rename failed from {} to {}", oldPath, newPath, e);
+            return FileOperationResult.failure(e.getMessage());
+        }
+    }
+
+    public byte[] readFile(String absolutePath, long offset, int length) {
+        if (!ensureBound()) {
+            return new byte[0];
+        }
+
+        try {
+            return service.readFile(absolutePath, offset, length);
+        } catch (RemoteException e) {
+            logger.error("readFile failed for: {}", absolutePath, e);
+            return new byte[0];
+        }
+    }
+
+    public FileOperationResult writeFile(String absolutePath, byte[] data, long offset, boolean append) {
+        if (!ensureBound()) {
+            return FileOperationResult.failure("Service not bound");
+        }
+
+        try {
+            return service.writeFile(absolutePath, data, offset, append);
+        } catch (RemoteException e) {
+            logger.error("writeFile failed for: {}", absolutePath, e);
+            return FileOperationResult.failure(e.getMessage());
+        }
+    }
+
+    public FileOperationResult setLastModified(String absolutePath, long timestamp) {
+        if (!ensureBound()) {
+            return FileOperationResult.failure("Service not bound");
+        }
+
+        try {
+            return service.setLastModified(absolutePath, timestamp);
+        } catch (RemoteException e) {
+            logger.error("setLastModified failed for: {}", absolutePath, e);
+            return FileOperationResult.failure(e.getMessage());
+        }
+    }
+
+    private String extractName(String absolutePath) {
+        if (absolutePath == null || absolutePath.isEmpty()) {
+            return "";
+        }
+        int lastSlash = absolutePath.lastIndexOf('/');
+        return lastSlash >= 0 ? absolutePath.substring(lastSlash + 1) : absolutePath;
     }
 }

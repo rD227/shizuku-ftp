@@ -133,7 +133,7 @@ public class FtpServerService extends AbstractServerService
 							logger.info("SHIZUKU_DEBUG <<< FTP using ShizukuFtpFileSystemView");
 							return new ShizukuFtpFileSystemView(
 										FtpServerService.this,
-										new ShizukuServiceManager(),
+										new ShizukuServiceManager(FtpServerService.this),
 										prefsBean.getStartDir(),
 										user);
 						case SAF:
@@ -171,7 +171,7 @@ public class FtpServerService extends AbstractServerService
 													user),
 										new ShizukuFtpFileSystemView(
 													FtpServerService.this,
-													new ShizukuServiceManager(),
+													new ShizukuServiceManager(FtpServerService.this),
 													prefsBean.getStartDir(),
 													user),
 										prefsBean.getStartDir(),
