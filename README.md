@@ -18,7 +18,7 @@ Don't click the launch button directly to generate the key
 
 If this bug is not fixed, it will crash.
 
-You should click on the upper left corner and click Authentication
+You should click in the upper left corner and click Authentication
 
 Set password
 
@@ -34,11 +34,11 @@ Let’s open it again later ()
 
 Need to fix sftp Shizuku
 
-Is the old jump interface Fragment or View?
+Ignore power saving optimization
 
-I'm not too familiar with it and they do look difficult
+~~I'm not too familiar with it and they do look difficult~~
 
-I'm a bit at a loss where to start
+~~I don't know where to start I'm a bit at a loss where to start~~
 
 # The Problem:
 
