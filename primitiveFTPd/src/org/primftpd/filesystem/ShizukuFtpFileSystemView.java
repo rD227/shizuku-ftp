@@ -4,10 +4,9 @@ import org.apache.ftpserver.ftplet.FileSystemView;
 import org.apache.ftpserver.ftplet.FtpFile;
 import org.apache.ftpserver.ftplet.User;
 import org.primftpd.services.PftpdService;
+import org.primftpd.shizuku.ShizukuServiceManager;
 
 import java.io.File;
-
-import eu.chainfire.libsuperuser.Shell;
 
 public class ShizukuFtpFileSystemView extends ShizukuFileSystemView<ShizukuFtpFile, FtpFile> implements FileSystemView {
 
@@ -16,8 +15,8 @@ public class ShizukuFtpFileSystemView extends ShizukuFileSystemView<ShizukuFtpFi
 
     private ShizukuFtpFile workingDir;
 
-    public ShizukuFtpFileSystemView(PftpdService pftpdService, Shell.Interactive shell, File homeDir, User user) {
-        super(pftpdService, shell);
+    public ShizukuFtpFileSystemView(PftpdService pftpdService, ShizukuServiceManager serviceManager, File homeDir, User user) {
+        super(pftpdService, serviceManager);
         this.homeDir = homeDir;
         this.user = user;
         this.workingDir = getHomeDirectory();

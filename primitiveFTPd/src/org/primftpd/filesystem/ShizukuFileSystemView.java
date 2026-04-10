@@ -1,36 +1,33 @@
 package org.primftpd.filesystem;
 
 import org.primftpd.pojo.LsOutputBean;
-
-import rikka.shizuku.Shizuku;
-import eu.chainfire.libsuperuser.Shell;
-import org.primftpd.pojo.LsOutputParser;
 import org.primftpd.services.PftpdService;
+import org.primftpd.shizuku.ShizukuServiceManager;
 
 /**
- * Debug-friendly Shizuku file system view.
+ * Phase-1 Shizuku file system view.
  *
- * NOTE: To keep the build compiling across Shizuku API versions,
- * this view currently DOES NOT execute remote commands.
+ * This no longer depends on libsuperuser root shell. Instead, it talks to a
+ * manager abstraction that will later bind to a real Shizuku UserService.
  */
 public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? extends ShizukuFileSystemView>, TMina>
         extends AbstractFileSystemView {
 
     private final MediaScannerClient mediaScannerClient;
-    protected final Shell.Interactive shell;
+    protected final ShizukuServiceManager serviceManager;
 
-    public ShizukuFileSystemView(PftpdService pftpdService, Shell.Interactive shell) {
+    public ShizukuFileSystemView(PftpdService pftpdService, ShizukuServiceManager serviceManager) {
         super(pftpdService);
         this.mediaScannerClient = new MediaScannerClient(pftpdService.getContext());
-        this.shell = shell;
+        this.serviceManager = serviceManager;
     }
 
     public final MediaScannerClient getMediaScannerClient() {
         return mediaScannerClient;
     }
 
-    public final Shell.Interactive getShell() {
-        return shell;
+    public final ShizukuServiceManager getServiceManager() {
+        return serviceManager;
     }
 
     protected abstract TFile createFile(String absPath, LsOutputBean bean);
@@ -41,17 +38,17 @@ public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? e
         logger.info(">>> SHIZUKU_DEBUG >>> getFile(path: {})", file);
 
         String abs = absolute(file);
-        boolean binderOk = false;
-        try {
-            binderOk = Shizuku.pingBinder();
-        } catch (Throwable t) {
-            logger.warn(">>> SHIZUKU_DEBUG >>> pingBinder() failed in getFile", t);
-        }
-        logger.info(">>> SHIZUKU_DEBUG >>> absPath: {}, pingBinder: {}", abs, binderOk);
+        LsOutputBean bean = serviceManager.stat(abs);
+        logger.info(">>> SHIZUKU_DEBUG >>> absPath: {}, beanName: {}, exists: {}, dir: {}",
+                abs,
+                bean != null ? bean.getName() : "null",
+                bean != null && bean.isExists(),
+                bean != null && bean.isDir());
 
-        // Return dummy bean for now to keep the server running
-        String name = abs.contains("/") ? abs.substring(abs.lastIndexOf('/') + 1) : abs;
-        LsOutputBean bean = new LsOutputBean(name);
+        if (bean == null) {
+            String name = abs.contains("/") ? abs.substring(abs.lastIndexOf('/') + 1) : abs;
+            bean = new LsOutputBean(name);
+        }
         return createFile(abs, bean);
     }
 }
