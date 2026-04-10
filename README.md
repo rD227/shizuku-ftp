@@ -8,7 +8,17 @@
 Now the Shizuku function works
 ~~This kind of server-side lack of beautification is actually nothing~~
 
+# Fix ERROR
+
+FTP Shizuku is actually can be used
+
+
+
 # What still needs to be done:
+Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
+Let’s open it again later ()
+
+Need to fix sftp Shizuku
 
 Is the old jump interface Fragment or View?
 
