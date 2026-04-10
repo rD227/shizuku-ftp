@@ -131,11 +131,9 @@ public class SshServerService extends AbstractServerService
 			sshServer.setHost(bindIp);
 		}
 
-		// causes exception when not set
 		sshServer.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());
 
 		PftpdService pftpdService = this;
-        //这个匿名内部类没有用lambda表达式 //Chinese note is unimportant && needn't read
 		sshServer.setSessionFactory(new SessionFactory() {
 			@Override
 			protected AbstractSession createSession(IoSession ioSession) throws Exception {
@@ -152,23 +150,21 @@ public class SshServerService extends AbstractServerService
 		sshServer.setSubsystemFactories(factoryList);
 
 		// PasswordAuthenticator based on android preferences
-		if (StringUtils.isNotEmpty(prefsBean.getPassword())
-				|| prefsBean.isAnonymousLogin())
+		if (StringUtils.isNotEmpty(prefsBean.getPassword()) || prefsBean.isAnonymousLogin())
 		{
 			final AndroidPrefsUserManager userManager = new AndroidPrefsUserManager(prefsBean);
-            //这是一个匿名内部类，没有new，由lambda自动推断
 			sshServer.setPasswordAuthenticator((username, password, session) -> {
-			Authentication authentication = prefsBean.isAnonymousLogin()
-				? new AnonymousAuthentication()
-				: new UsernamePasswordAuthentication(username, password);
-			logger.debug("auth type '{}' for user: {}", authentication.getClass().getName(), username);
-			try {
-				userManager.authenticate(authentication);
-			} catch (AuthenticationFailedException e) {
-				logger.debug("AuthenticationFailed", e);
-				return false;
-			}
-			return true;
+				Authentication authentication = prefsBean.isAnonymousLogin()
+						? new AnonymousAuthentication()
+						: new UsernamePasswordAuthentication(username, password);
+				logger.debug("auth type '{}' for user: {}", authentication.getClass().getName(), username);
+				try {
+					userManager.authenticate(authentication);
+				} catch (AuthenticationFailedException e) {
+					logger.debug("AuthenticationFailed", e);
+					return false;
+				}
+				return true;
 			});
 		}
 
@@ -187,84 +183,88 @@ public class SshServerService extends AbstractServerService
 				sshServer.setPublickeyAuthenticator(new PubKeyAuthenticator(pubKeys));
 			} else {
 				Toast.makeText(
-					getApplicationContext(),
-					getText(R.string.couldNotReadKeyAuthKey),
-					Toast.LENGTH_SHORT).show();
+						getApplicationContext(),
+						getText(R.string.couldNotReadKeyAuthKey),
+						Toast.LENGTH_SHORT).show();
 			}
 		}
 
 		// android filesystem view
 		sshServer.setFileSystemFactory(session -> {
-			logger.info("SFTP setFileSystemFactory callback, storageType: {}", prefsBean.getStorageType());
+			logger.info("SHIZUKU_DEBUG <<< SFTP setFileSystem storageType={}", prefsBean.getStorageType());
 			if (quickShareBean != null) {
-				logger.debug("launching server in quick share mode");
+				logger.info("SHIZUKU_DEBUG <<< SFTP using QuickShareSshFileSystemView");
 				return new QuickShareSshFileSystemView(
 						SshServerService.this,
 						quickShareBean.getTmpDir(),
 						session);
 			} else {
 				switch (prefsBean.getStorageType()) {
-					case PLAIN:
-						return new FsSshFileSystemView(
-								SshServerService.this,
-								prefsBean.getStartDir(),
-								session);
-					case ROOT:
-						return new RootSshFileSystemView(
-								SshServerService.this,
-								shell,
-								prefsBean.getStartDir(),
-								session);
-					case SHIZUKU:
-						logger.info("Creating ShizukuSshFileSystemView for SFTP");
-						return new ShizukuSshFileSystemView(
-								SshServerService.this,
-								// It (SshServerService) extended to AbstractService, AbstractService implement pftpdService
-								shell,
-								prefsBean.getStartDir(),
-								session);
-					case SAF:
-						return new SafSshFileSystemView(
-								SshServerService.this,
-								Uri.parse(prefsBean.getSafUrl()),
-								session);
-					case RO_SAF:
-						return new RoSafSshFileSystemView(
-								SshServerService.this,
-								Uri.parse(prefsBean.getSafUrl()),
-								session);
-					case VIRTUAL:
-						return new VirtualSshFileSystemView(
-								SshServerService.this,
-								new FsSshFileSystemView(
-										SshServerService.this,
-										prefsBean.getStartDir(),
-										session),
-								new RootSshFileSystemView(
-										SshServerService.this,
-										shell,
-										prefsBean.getStartDir(),
-										session),
-								new SafSshFileSystemView(
-										SshServerService.this,
-										Uri.parse(prefsBean.getSafUrl()),
-										session),
-								new RoSafSshFileSystemView(
-										SshServerService.this,
-										Uri.parse(prefsBean.getSafUrl()),
-										session),
-								new ShizukuSshFileSystemView(
-										SshServerService.this,
-										shell,
-										prefsBean.getStartDir(),
-										session),
-								prefsBean.getStartDir(),
-								session
-						);
+						case PLAIN:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using FsSshFileSystemView");
+							return new FsSshFileSystemView(
+									SshServerService.this,
+									prefsBean.getStartDir(),
+									session);
+						case ROOT:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using RootSshFileSystemView");
+							return new RootSshFileSystemView(
+									SshServerService.this,
+									shell,
+									prefsBean.getStartDir(),
+									session);
+						case SHIZUKU:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using ShizukuSshFileSystemView");
+							return new ShizukuSshFileSystemView(
+									SshServerService.this,
+									shell,
+									prefsBean.getStartDir(),
+									session);
+						case SAF:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using SafSshFileSystemView");
+							return new SafSshFileSystemView(
+									SshServerService.this,
+									Uri.parse(prefsBean.getSafUrl()),
+									session);
+						case RO_SAF:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using RoSafSshFileSystemView");
+							return new RoSafSshFileSystemView(
+									SshServerService.this,
+									Uri.parse(prefsBean.getSafUrl()),
+									session);
+						case VIRTUAL:
+							logger.info("SHIZUKU_DEBUG <<< SFTP using VirtualSshFileSystemView");
+							return new VirtualSshFileSystemView(
+									SshServerService.this,
+									new FsSshFileSystemView(
+											SshServerService.this,
+											prefsBean.getStartDir(),
+											session),
+									new RootSshFileSystemView(
+											SshServerService.this,
+											shell,
+											prefsBean.getStartDir(),
+											session),
+									new SafSshFileSystemView(
+											SshServerService.this,
+											Uri.parse(prefsBean.getSafUrl()),
+											session),
+									new RoSafSshFileSystemView(
+											SshServerService.this,
+											Uri.parse(prefsBean.getSafUrl()),
+											session),
+									new ShizukuSshFileSystemView(
+											SshServerService.this,
+											shell,
+											prefsBean.getStartDir(),
+											session),
+									prefsBean.getStartDir(),
+									session
+							);
+					}
 				}
-			}
-			return null;
-		});
+				return null;
+			});
 
 		// ed25519
 		List<NamedFactory<Signature>> origSigFactories = sshServer.getSignatureFactories();
@@ -273,30 +273,16 @@ public class SshServerService extends AbstractServerService
 		sigFactories.add(new SignatureEd25519.Factory());
 		sshServer.setSignatureFactories(sigFactories);
 
-		// idle timeout
-		// sec -> ms
-		sshServer.getProperties().put(SshServer.IDLE_TIMEOUT, String.valueOf(prefsBean.getIdleTimeout() * 1000));
+		sshServer.getProperties().put(org.apache.sshd.SshServer.IDLE_TIMEOUT, String.valueOf(prefsBean.getIdleTimeout() * 1000));
 
 		try {
-			// XXX preference to enable shell? seems to need root to access /dev/tty
-//			sshServer.setShellFactory(new ProcessShellFactory(new String[] {
-//				"/system/bin/sh",
-//				"-i",
-//				"-l"
-//			}));
-
-			// read keys here, cannot open private files on server callback
 			final List<KeyPair> keys = loadKeys();
-
-			// keys may not be present when started via widget
 			if (!keys.isEmpty()) {
-				// setKeyPairProvider
 				sshServer.setKeyPairProvider(new AbstractKeyPairProvider() {
 					private KeyPair ed25519KeyPair = null;
 
 					@Override
 					public Iterable<KeyPair> loadKeys() {
-						// just return keys that have been loaded before
 						return keys;
 					}
 
@@ -355,7 +341,6 @@ public class SshServerService extends AbstractServerService
 				privkeyFis = openFileInput(hka.getFilenamePrivateKey());
 				PrivateKey privateKey = hka.readPrivateKey(privkeyFis);
 
-				// return key pair
 				keyPairList.add(new KeyPair(publicKey, privateKey));
 			} catch (Exception e) {
 				logger.debug("could not read key: " + e.getClass().getName() + " " + e.getMessage());

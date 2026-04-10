@@ -43,12 +43,13 @@ public class ShizukuSshFile extends ShizukuFile<SshFile, ShizukuSshFileSystemVie
 
     @Override
     public void truncate() {
-        runCommand("truncate -c -s 0 " + escapePath(absPath));
+        // disabled in current debug stub
     }
 
     @Override
     public boolean create() throws IOException {
-        return runCommand("touch " + escapePath(absPath));
+        // disabled in current debug stub
+        return false;
     }
 
     @Override
