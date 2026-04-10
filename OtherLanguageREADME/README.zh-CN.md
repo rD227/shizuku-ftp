@@ -1,4 +1,4 @@
-[English](README.md)
+[English](/README.md)
 
 # Shizuku-FTP
 现在 Shizuku 功能能用了
@@ -21,15 +21,18 @@
 
 然后点击启动
 
-# 还需要做的：
+# 还需要做什么：
+精简软件包大小：测试时发现ClassNotFoundException。我以为是优化问题，所以关掉了很多优化。
+稍后再打开吧()
 
-旧的跳转界面是 Fragment，或者View？
+需要修复 sftp Shizuku
 
-我不太熟悉，而且它们看起来确实很难（
+忽略省电优化（请求
 
-我有点无从下手
+~~我不太熟悉而且看起来确实很难~~
 
-# 需要做的
+~~我有点不知道从哪里开始~~
+
 精简软件包体积：我在测试时发现了ClassNotFoundException，我以为是优化问题，所以关了很多优化，
 到时候再开吧（）
 
