@@ -1,14 +1,12 @@
 package org.primftpd.filesystem;
 
-import org.primftpd.pojo.LsOutputBean;
 import org.primftpd.services.PftpdService;
 import org.primftpd.shizuku.ShizukuServiceManager;
+import org.primftpd.shizuku.aidl.FileInfo;
 
 /**
- * Phase-1 Shizuku file system view.
- *
- * This no longer depends on libsuperuser root shell. Instead, it talks to a
- * manager abstraction that will later bind to a real Shizuku UserService.
+ * Shizuku file system view using privileged UserService.
+ * No longer depends on libsuperuser root shell.
  */
 public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? extends ShizukuFileSystemView>, TMina>
         extends AbstractFileSystemView {
@@ -30,25 +28,22 @@ public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? e
         return serviceManager;
     }
 
-    protected abstract TFile createFile(String absPath, LsOutputBean bean);
+    protected abstract TFile createFile(String absPath, FileInfo fileInfo);
 
     protected abstract String absolute(String file);
 
     public TFile getFile(String file) {
-        logger.info(">>> SHIZUKU_DEBUG >>> getFile(path: {})", file);
+        logger.trace("getFile(path: {})", file);
 
         String abs = absolute(file);
-        LsOutputBean bean = serviceManager.stat(abs);
-        logger.info(">>> SHIZUKU_DEBUG >>> absPath: {}, beanName: {}, exists: {}, dir: {}",
+        FileInfo fileInfo = serviceManager.stat(abs);
+        
+        logger.trace("absPath: {}, name: {}, exists: {}, isDir: {}",
                 abs,
-                bean != null ? bean.getName() : "null",
-                bean != null && bean.isExists(),
-                bean != null && bean.isDir());
+                fileInfo.getName(),
+                fileInfo.exists(),
+                fileInfo.isDirectory());
 
-        if (bean == null) {
-            String name = abs.contains("/") ? abs.substring(abs.lastIndexOf('/') + 1) : abs;
-            bean = new LsOutputBean(name);
-        }
-        return createFile(abs, bean);
+        return createFile(abs, fileInfo);
     }
 }

@@ -2,7 +2,7 @@ package org.primftpd.filesystem;
 
 import org.apache.ftpserver.ftplet.FtpFile;
 import org.apache.ftpserver.ftplet.User;
-import org.primftpd.pojo.LsOutputBean;
+import org.primftpd.shizuku.aidl.FileInfo;
 
 import java.util.List;
 
@@ -10,14 +10,14 @@ public class ShizukuFtpFile extends ShizukuFile<FtpFile, ShizukuFtpFileSystemVie
 
     private final User user;
 
-    public ShizukuFtpFile(ShizukuFtpFileSystemView fileSystemView, String absPath, LsOutputBean bean, User user) {
-        super(fileSystemView, absPath, bean);
+    public ShizukuFtpFile(ShizukuFtpFileSystemView fileSystemView, String absPath, FileInfo fileInfo, User user) {
+        super(fileSystemView, absPath, fileInfo);
         this.user = user;
     }
 
     @Override
-    protected FtpFile createFile(String absPath, LsOutputBean bean) {
-        return new ShizukuFtpFile(getFileSystemView(), absPath, bean, user);
+    protected FtpFile createFile(String absPath, FileInfo fileInfo) {
+        return new ShizukuFtpFile(getFileSystemView(), absPath, fileInfo, user);
     }
 
     @Override

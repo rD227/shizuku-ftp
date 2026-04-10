@@ -2,7 +2,8 @@ package org.primftpd.filesystem;
 
 import org.apache.sshd.common.Session;
 import org.apache.sshd.common.file.SshFile;
-import org.primftpd.pojo.LsOutputBean;
+import org.primftpd.shizuku.aidl.FileInfo;
+import org.primftpd.shizuku.aidl.FileOperationResult;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,14 +12,14 @@ public class ShizukuSshFile extends ShizukuFile<SshFile, ShizukuSshFileSystemVie
 
     private final Session session;
 
-    public ShizukuSshFile(ShizukuSshFileSystemView fileSystemView, String absPath, LsOutputBean bean, Session session) {
-        super(fileSystemView, absPath, bean);
+    public ShizukuSshFile(ShizukuSshFileSystemView fileSystemView, String absPath, FileInfo fileInfo, Session session) {
+        super(fileSystemView, absPath, fileInfo);
         this.session = session;
     }
 
     @Override
-    protected SshFile createFile(String absPath, LsOutputBean bean) {
-        return new ShizukuSshFile(getFileSystemView(), absPath, bean, session);
+    protected SshFile createFile(String absPath, FileInfo fileInfo) {
+        return new ShizukuSshFile(getFileSystemView(), absPath, fileInfo, session);
     }
 
     @Override
@@ -42,14 +43,22 @@ public class ShizukuSshFile extends ShizukuFile<SshFile, ShizukuSshFileSystemVie
     }
 
     @Override
-    public void truncate() {
-        // disabled in current debug stub
+    public void truncate() throws IOException {
+        logger.info("truncate: path={}", absPath);
+        // Create empty file
+        FileOperationResult result = getFileSystemView().getServiceManager()
+                .writeFile(absPath, new byte[0], 0, false);
+        if (!result.isSuccess()) {
+            throw new IOException("Truncate failed: " + result.getErrorMessage());
+        }
     }
 
     @Override
     public boolean create() throws IOException {
-        // disabled in current debug stub
-        return false;
+        logger.info("create: path={}", absPath);
+        FileOperationResult result = getFileSystemView().getServiceManager()
+                .writeFile(absPath, new byte[0], 0, false);
+        return result.isSuccess();
     }
 
     @Override

@@ -5,6 +5,7 @@ import org.apache.sshd.common.file.FileSystemView;
 import org.apache.sshd.common.file.SshFile;
 import org.primftpd.services.PftpdService;
 import org.primftpd.shizuku.ShizukuServiceManager;
+import org.primftpd.shizuku.aidl.FileInfo;
 
 import java.io.File;
 
@@ -20,8 +21,8 @@ public class ShizukuSshFileSystemView extends ShizukuFileSystemView<ShizukuSshFi
     }
 
     @Override
-    protected ShizukuSshFile createFile(String absPath, org.primftpd.pojo.LsOutputBean bean) {
-        return new ShizukuSshFile(this, absPath, bean, session);
+    protected ShizukuSshFile createFile(String absPath, FileInfo fileInfo) {
+        return new ShizukuSshFile(this, absPath, fileInfo, session);
     }
 
     @Override

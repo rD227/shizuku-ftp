@@ -2,10 +2,15 @@ package org.primftpd.filesystem;
 
 import org.apache.sshd.common.file.SshFile;
 import org.primftpd.events.ClientActionEvent;
+import org.primftpd.shizuku.aidl.FileInfo;
+import org.primftpd.shizuku.aidl.FileOperationResult;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,23 +18,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import eu.chainfire.libsuperuser.Shell;
-import org.primftpd.pojo.LsOutputBean;
-
 /**
- * Debug stub: avoids executing Shizuku remote commands to keep build compatible.
+ * Shizuku-based file implementation using privileged UserService.
+ * Replaces libsuperuser root shell approach.
  */
 public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSystemView>
         extends AbstractFile<TFileSystemView> {
 
-    protected final LsOutputBean bean;
+    protected final FileInfo fileInfo;
 
-    public ShizukuFile(TFileSystemView fileSystemView, String absPath, LsOutputBean bean) {
-        super(fileSystemView, absPath, bean.getName());
-        this.bean = bean;
+    public ShizukuFile(TFileSystemView fileSystemView, String absPath, FileInfo fileInfo) {
+        super(fileSystemView, absPath, fileInfo.getName());
+        this.fileInfo = fileInfo;
     }
 
-    protected abstract TMina createFile(String absPath, LsOutputBean bean);
+    protected abstract TMina createFile(String absPath, FileInfo fileInfo);
 
     @Override
     public ClientActionEvent.Storage getClientActionStorage() {
@@ -38,116 +41,130 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
     @Override
     public boolean isDirectory() {
-        return bean.isDir();
+        return fileInfo.isDirectory();
     }
 
     @Override
     public boolean doesExist() {
-        return bean.isExists();
+        return fileInfo.exists();
     }
 
     @Override
     public boolean isReadable() {
-        return bean.isUserReadable();
+        return fileInfo.canRead();
     }
 
     @Override
     public long getLastModified() {
-        return bean.getTimestamp();
+        return fileInfo.getLastModified();
     }
 
     @Override
     public long getSize() {
-        return bean.getSize();
+        return fileInfo.getSize();
     }
 
     @Override
     public boolean isFile() {
-        return bean.isFile();
+        return fileInfo.isFile();
     }
 
     @Override
     public boolean isWritable() {
-        return bean.isUserWritable();
+        return fileInfo.canWrite();
     }
 
     @Override
     public boolean isRemovable() {
-        return true;
+        return fileInfo.canWrite();
     }
 
     @Override
     public boolean setLastModified(long time) {
-        logger.info(">>> SHIZUKU_DEBUG >>> setLastModified (disabled), path={}", absPath);
-        return false;
+        logger.info("setLastModified: path={}, time={}", absPath, time);
+        FileOperationResult result = getFileSystemView().getServiceManager().setLastModified(absPath, time);
+        return result.isSuccess();
     }
 
     @Override
     public boolean mkdir() {
-        logger.info(">>> SHIZUKU_DEBUG >>> mkdir (disabled), path={}", absPath);
+        logger.info("mkdir: path={}", absPath);
         postClientAction(ClientActionEvent.ClientAction.CREATE_DIR);
-        return false;
+        FileOperationResult result = getFileSystemView().getServiceManager().mkdir(absPath);
+        return result.isSuccess();
     }
 
     @Override
     public boolean delete() {
-        logger.info(">>> SHIZUKU_DEBUG >>> delete (disabled), path={}", absPath);
+        logger.info("delete: path={}", absPath);
         postClientAction(ClientActionEvent.ClientAction.DELETE);
-        return false;
+        FileOperationResult result = getFileSystemView().getServiceManager().delete(absPath);
+        return result.isSuccess();
     }
 
     @Override
     public boolean move(AbstractFile<TFileSystemView> destination) {
-        logger.info(">>> SHIZUKU_DEBUG >>> move (disabled), src={}, dst={}", absPath, destination.getAbsolutePath());
+        logger.info("move: src={}, dst={}", absPath, destination.getAbsolutePath());
         postClientAction(ClientActionEvent.ClientAction.RENAME);
-        return false;
+        FileOperationResult result = getFileSystemView().getServiceManager()
+                .rename(absPath, destination.getAbsolutePath());
+        return result.isSuccess();
     }
 
-    //@Override
     public List<TMina> listFiles() {
-        logger.info(">>> SHIZUKU_DEBUG >>> listFiles (disabled), path={}", absPath);
+        logger.info("listFiles: path={}", absPath);
         postClientAction(ClientActionEvent.ClientAction.LIST_DIR);
-        return List.of();
+        
+        List<FileInfo> files = getFileSystemView().getServiceManager().listFiles(absPath);
+        List<TMina> result = new ArrayList<>(files.size());
+        
+        for (FileInfo info : files) {
+            result.add(createFile(info.getAbsolutePath(), info));
+        }
+        
+        return result;
     }
 
     @Override
     public OutputStream createOutputStream(long offset) throws IOException {
-        logger.info(">>> SHIZUKU_DEBUG >>> createOutputStream (disabled), path={}, offset={}", absPath, offset);
+        logger.info("createOutputStream: path={}, offset={}", absPath, offset);
         postClientAction(ClientActionEvent.ClientAction.UPLOAD);
-        throw new IOException("Shizuku disabled in debug mode");
+        
+        return new ShizukuOutputStream(absPath, offset);
     }
 
     @Override
     public InputStream createInputStream(long offset) throws IOException {
-        logger.info(">>> SHIZUKU_DEBUG >>> createInputStream (disabled), path={}, offset={}", absPath, offset);
+        logger.info("createInputStream: path={}, offset={}", absPath, offset);
         postClientAction(ClientActionEvent.ClientAction.DOWNLOAD);
-        throw new IOException("Shizuku disabled in debug mode");
+        
+        return new ShizukuInputStream(absPath, offset);
     }
 
     public String readSymbolicLink() {
-        return bean.getLinkTarget();
+        return fileInfo.getSymlinkTarget();
     }
 
     public Object getAttribute(SshFile.Attribute attribute, boolean followLinks) throws IOException {
         switch (attribute) {
             case Owner:
-                return bean.getUser();
+                return "root"; // Shizuku runs as root
             case Group:
-                return bean.getGroup();
+                return "root";
             case IsSymbolicLink:
-                return bean.isLink();
+                return fileInfo.isSymlink();
             case Permissions:
-                Set<SshFile.Permission> tmp = new HashSet<>();
-                if (bean.isUserReadable()) tmp.add(SshFile.Permission.UserRead);
-                if (bean.isUserWritable()) tmp.add(SshFile.Permission.UserWrite);
-                if (bean.isUserExecutable()) tmp.add(SshFile.Permission.UserExecute);
-                if (bean.isGroupReadable()) tmp.add(SshFile.Permission.GroupRead);
-                if (bean.isGroupWritable()) tmp.add(SshFile.Permission.GroupWrite);
-                if (bean.isGroupExecutable()) tmp.add(SshFile.Permission.GroupExecute);
-                if (bean.isOtherReadable()) tmp.add(SshFile.Permission.OthersRead);
-                if (bean.isOtherWritable()) tmp.add(SshFile.Permission.OthersWrite);
-                if (bean.isOtherExecutable()) tmp.add(SshFile.Permission.OthersExecute);
-                return tmp.isEmpty() ? EnumSet.noneOf(SshFile.Permission.class) : EnumSet.copyOf(tmp);
+                Set<SshFile.Permission> perms = new HashSet<>();
+                if (fileInfo.canRead()) {
+                    perms.add(SshFile.Permission.UserRead);
+                }
+                if (fileInfo.canWrite()) {
+                    perms.add(SshFile.Permission.UserWrite);
+                }
+                if (fileInfo.canExecute()) {
+                    perms.add(SshFile.Permission.UserExecute);
+                }
+                return perms.isEmpty() ? EnumSet.noneOf(SshFile.Permission.class) : EnumSet.copyOf(perms);
             default:
                 return null;
         }
@@ -156,8 +173,115 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     public Map<SshFile.Attribute, Object> getAttributes(boolean followLinks) throws IOException {
         Map<SshFile.Attribute, Object> attributes = new HashMap<>();
         for (SshFile.Attribute attr : SshFile.Attribute.values()) {
-            attributes.put(attr, getAttribute(attr, followLinks));
+            Object value = getAttribute(attr, followLinks);
+            if (value != null) {
+                attributes.put(attr, value);
+            }
         }
         return attributes;
+    }
+
+    /**
+     * OutputStream implementation for Shizuku file writing
+     */
+    private class ShizukuOutputStream extends OutputStream {
+        private final String path;
+        private final long offset;
+        private final ByteArrayOutputStream buffer;
+
+        ShizukuOutputStream(String path, long offset) {
+            this.path = path;
+            this.offset = offset;
+            this.buffer = new ByteArrayOutputStream();
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            buffer.write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            buffer.write(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            byte[] data = buffer.toByteArray();
+            FileOperationResult result = getFileSystemView().getServiceManager()
+                    .writeFile(path, data, offset, offset > 0);
+            
+            if (!result.isSuccess()) {
+                throw new IOException("Write failed: " + result.getErrorMessage());
+            }
+            
+            super.close();
+        }
+    }
+
+    /**
+     * InputStream implementation for Shizuku file reading
+     */
+    private class ShizukuInputStream extends InputStream {
+        private final String path;
+        private long position;
+        private byte[] buffer;
+        private int bufferPos;
+        private static final int CHUNK_SIZE = 64 * 1024; // 64KB chunks
+
+        ShizukuInputStream(String path, long offset) {
+            this.path = path;
+            this.position = offset;
+            this.buffer = null;
+            this.bufferPos = 0;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (buffer == null || bufferPos >= buffer.length) {
+                fillBuffer();
+                if (buffer == null || buffer.length == 0) {
+                    return -1;
+                }
+            }
+            return buffer[bufferPos++] & 0xFF;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (b == null) {
+                throw new NullPointerException();
+            }
+            if (off < 0 || len < 0 || len > b.length - off) {
+                throw new IndexOutOfBoundsException();
+            }
+            if (len == 0) {
+                return 0;
+            }
+
+            int totalRead = 0;
+            while (totalRead < len) {
+                if (buffer == null || bufferPos >= buffer.length) {
+                    fillBuffer();
+                    if (buffer == null || buffer.length == 0) {
+                        return totalRead == 0 ? -1 : totalRead;
+                    }
+                }
+
+                int available = buffer.length - bufferPos;
+                int toRead = Math.min(available, len - totalRead);
+                System.arraycopy(buffer, bufferPos, b, off + totalRead, toRead);
+                bufferPos += toRead;
+                totalRead += toRead;
+            }
+
+            return totalRead;
+        }
+
+        private void fillBuffer() throws IOException {
+            buffer = getFileSystemView().getServiceManager().readFile(path, position, CHUNK_SIZE);
+            bufferPos = 0;
+            position += buffer.length;
+        }
     }
 }

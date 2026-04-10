@@ -218,7 +218,7 @@ public class SshServerService extends AbstractServerService
 							logger.info("SHIZUKU_DEBUG <<< SFTP using ShizukuSshFileSystemView");
 							return new ShizukuSshFileSystemView(
 									SshServerService.this,
-									new ShizukuServiceManager(),
+									new ShizukuServiceManager(SshServerService.this),
 									prefsBean.getStartDir(),
 									session);
 						case SAF:
@@ -256,7 +256,7 @@ public class SshServerService extends AbstractServerService
 											session),
 									new ShizukuSshFileSystemView(
 											SshServerService.this,
-											new ShizukuServiceManager(),
+											new ShizukuServiceManager(SshServerService.this),
 											prefsBean.getStartDir(),
 											session),
 									prefsBean.getStartDir(),

@@ -5,6 +5,7 @@ import org.apache.ftpserver.ftplet.FtpFile;
 import org.apache.ftpserver.ftplet.User;
 import org.primftpd.services.PftpdService;
 import org.primftpd.shizuku.ShizukuServiceManager;
+import org.primftpd.shizuku.aidl.FileInfo;
 
 import java.io.File;
 
@@ -23,8 +24,8 @@ public class ShizukuFtpFileSystemView extends ShizukuFileSystemView<ShizukuFtpFi
     }
 
     @Override
-    protected ShizukuFtpFile createFile(String absPath, org.primftpd.pojo.LsOutputBean bean) {
-        return new ShizukuFtpFile(this, absPath, bean, user);
+    protected ShizukuFtpFile createFile(String absPath, FileInfo fileInfo) {
+        return new ShizukuFtpFile(this, absPath, fileInfo, user);
     }
 
     @Override
