@@ -33,7 +33,7 @@ public class ShizukuServiceManager {
 
     private final Shizuku.UserServiceArgs serviceArgs = new Shizuku.UserServiceArgs(
             new ComponentName(
-                    BuildConfig.APPLICATION_ID,
+                    "org.primftpd.shizuku",
                     ShizukuUserService.class.getName()
             )
     )
