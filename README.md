@@ -12,7 +12,21 @@ Now the Shizuku function works
 
 FTP Shizuku is actually can be used
 
+# use
 
+Don't click the launch button directly to generate the key
+
+If this bug is not fixed, it will crash.
+
+You should click on the upper left corner and click Authentication
+
+Set password
+
+Then you need to choose an authentication method when starting
+
+Click the upper right corner, click Network status and select Shizuku
+
+Then click Start
 
 # What still needs to be done:
 Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
