@@ -38,21 +38,6 @@ import java.util.Date;
 
 import eu.chainfire.libsuperuser.Shell;
 
-//WARNING: 'getDefaultSharedPreferences(android.content.Context)' 已弃用
-//LINE: 201
-
-/**
- * Abstract base class for {@link Service}s wrapping servers.
- * <div>
- * Implements:
- * <ul>
- * 		<li>android lifecycle</li>
- * 		<li>statusbar notifications</li>
- * 		<li>bonjour/zeroconf announcements</li>
- * </ul>
- * </div>
- *
- */
 public abstract class AbstractServerService
 	extends Service implements PftpdService
 {
@@ -111,7 +96,7 @@ public abstract class AbstractServerService
 	public void onCreate() {
 		HandlerThread thread = new HandlerThread(
 			"ServiceStartArguments",
-			Process.THREAD_PRIORITY_BACKGROUND);//It's background proprietary （priority)
+			Process.THREAD_PRIORITY_BACKGROUND);
 		thread.start();
 
 		// listen for events
@@ -127,7 +112,6 @@ public abstract class AbstractServerService
 
 		if (intent == null) {
 			logger.warn("intent is null in onStartCommand()");
-
 			return START_REDELIVER_INTENT;
 		}
 
@@ -138,6 +122,10 @@ public abstract class AbstractServerService
 				ServicesStartStopUtil.EXTRA_FINGERPRINT_PROVIDER);
 		quickShareBean = (QuickShareBean)extras.get(ServicesStartStopUtil.EXTRA_QUICK_SHARE_BEAN);
 		chosenIp = extras.getString(ServicesStartStopUtil.EXTRA_CHOSEN_IP);
+
+		logger.info("Service '{}' onStartCommand. storageType: {}", 
+				getServiceName(), 
+				prefsBean != null ? prefsBean.getStorageType() : "null");
 
 		// 1. MUST call startForeground immediately on main thread to avoid ForegroundServiceDidNotStartInTimeException
 		// Do this before sending async message to background thread.

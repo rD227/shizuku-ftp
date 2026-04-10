@@ -107,6 +107,7 @@ public class FtpServerService extends AbstractServerService
 		// user manager & file system
 		serverFactory.setUserManager(new AndroidPrefsUserManager(prefsBean));
 		serverFactory.setFileSystem(user -> {
+			logger.info("FTP setFileSystem callback, storageType: {}", prefsBean.getStorageType());
 			if (quickShareBean != null) {
 				logger.debug("launching server in quick share mode");
 				return new QuickShareFtpFileSystemView(
@@ -127,6 +128,7 @@ public class FtpServerService extends AbstractServerService
 								prefsBean.getStartDir(),
 								user);
 					case SHIZUKU:
+						logger.info("Creating ShizukuFtpFileSystemView for FTP");
 						return new ShizukuFtpFileSystemView(
 								FtpServerService.this,
 								shell,

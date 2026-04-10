@@ -195,12 +195,13 @@ public class SshServerService extends AbstractServerService
 
 		// android filesystem view
 		sshServer.setFileSystemFactory(session -> {
+			logger.info("SFTP setFileSystemFactory callback, storageType: {}", prefsBean.getStorageType());
 			if (quickShareBean != null) {
 				logger.debug("launching server in quick share mode");
 				return new QuickShareSshFileSystemView(
 						SshServerService.this,
 						quickShareBean.getTmpDir(),
-						session);//AI change user to session
+						session);
 			} else {
 				switch (prefsBean.getStorageType()) {
 					case PLAIN:
@@ -215,6 +216,7 @@ public class SshServerService extends AbstractServerService
 								prefsBean.getStartDir(),
 								session);
 					case SHIZUKU:
+						logger.info("Creating ShizukuSshFileSystemView for SFTP");
 						return new ShizukuSshFileSystemView(
 								SshServerService.this,
 								// It (SshServerService) extended to AbstractService, AbstractService implement pftpdService
