@@ -34,6 +34,7 @@ import eu.chainfire.libsuperuser.Shell;
 public class FtpServerService extends AbstractServerService
 {
 	private FtpServer ftpServer;
+	private ShizukuServiceManager shizukuServiceManager;
 
 	@Override
 	protected ServerServiceHandler createServiceHandler(
@@ -75,10 +76,28 @@ public class FtpServerService extends AbstractServerService
 		} else {
 			logger.info("ssh server already null");
 		}
+
+		if (shizukuServiceManager != null) {
+			shizukuServiceManager.unbindService();
+			shizukuServiceManager = null;
+		}
 	}
 
 	@Override
 	protected boolean launchServer(final Shell.Interactive shell) {
+		// Initialize Shizuku service manager if needed
+		if (prefsBean.getStorageType() == org.primftpd.prefs.StorageType.SHIZUKU ||
+			prefsBean.getStorageType() == org.primftpd.prefs.StorageType.VIRTUAL) {
+			logger.info("=== Initializing ShizukuServiceManager for FTP ===");
+			shizukuServiceManager = new ShizukuServiceManager(this);
+			if (!shizukuServiceManager.bindService()) {
+				logger.error("=== Failed to bind Shizuku service ===");
+				handleServerStartError(new RuntimeException("Failed to bind Shizuku service"));
+				return false;
+			}
+			logger.info("=== ShizukuServiceManager bound successfully ===");
+		}
+
 		ListenerFactory listenerFactory = new ListenerFactory();
 		listenerFactory.setPort(prefsBean.getPort());
 		String bindIp = getBindIp();
@@ -130,10 +149,10 @@ public class FtpServerService extends AbstractServerService
 									prefsBean.getStartDir(),
 									user);
 						case SHIZUKU:
-							logger.info("SHIZUKU_DEBUG <<< FTP using ShizukuFtpFileSystemView");
+							logger.info("SHIZUKU_DEBUG <<< FTP using ShizukuFtpFileSystemView with shared manager");
 							return new ShizukuFtpFileSystemView(
 										FtpServerService.this,
-										new ShizukuServiceManager(FtpServerService.this),
+										shizukuServiceManager,
 										prefsBean.getStartDir(),
 										user);
 						case SAF:
@@ -171,7 +190,7 @@ public class FtpServerService extends AbstractServerService
 													user),
 										new ShizukuFtpFileSystemView(
 													FtpServerService.this,
-													new ShizukuServiceManager(FtpServerService.this),
+													shizukuServiceManager,
 													prefsBean.getStartDir(),
 													user),
 										prefsBean.getStartDir(),

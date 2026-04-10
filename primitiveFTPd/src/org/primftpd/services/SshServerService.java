@@ -57,6 +57,7 @@ import eu.chainfire.libsuperuser.Shell;
 public class SshServerService extends AbstractServerService
 {
 	private SshServer sshServer;
+	private ShizukuServiceManager shizukuServiceManager;
 
 	@Override
 	protected ServerServiceHandler createServiceHandler(
@@ -120,11 +121,29 @@ public class SshServerService extends AbstractServerService
 			logger.info("exception on server.close().", e);
 		}
 		sshServer = null;
+
+		if (shizukuServiceManager != null) {
+			shizukuServiceManager.unbindService();
+			shizukuServiceManager = null;
+		}
 	}
 
 	@Override
 	protected boolean launchServer(final Shell.Interactive shell)
 	{
+		// Initialize Shizuku service manager if needed
+		if (prefsBean.getStorageType() == StorageType.SHIZUKU ||
+			prefsBean.getStorageType() == StorageType.VIRTUAL) {
+			logger.info("=== Initializing ShizukuServiceManager for SFTP ===");
+			shizukuServiceManager = new ShizukuServiceManager(this);
+			if (!shizukuServiceManager.bindService()) {
+				logger.error("=== Failed to bind Shizuku service ===");
+				handleServerStartError(new RuntimeException("Failed to bind Shizuku service"));
+				return false;
+			}
+			logger.info("=== ShizukuServiceManager bound successfully ===");
+		}
+
 		sshServer = SshServer.setUpDefaultServer();
 		sshServer.setPort(prefsBean.getSecurePort());
 		String bindIp = getBindIp();
@@ -215,10 +234,10 @@ public class SshServerService extends AbstractServerService
 									prefsBean.getStartDir(),
 									session);
 						case SHIZUKU:
-							logger.info("SHIZUKU_DEBUG <<< SFTP using ShizukuSshFileSystemView");
+							logger.info("SHIZUKU_DEBUG <<< SFTP using ShizukuSshFileSystemView with shared manager");
 							return new ShizukuSshFileSystemView(
 									SshServerService.this,
-									new ShizukuServiceManager(SshServerService.this),
+									shizukuServiceManager,
 									prefsBean.getStartDir(),
 									session);
 						case SAF:
@@ -234,7 +253,7 @@ public class SshServerService extends AbstractServerService
 									Uri.parse(prefsBean.getSafUrl()),
 									session);
 						case VIRTUAL:
-							logger.info("SHIZUKU_DEBUG <<< SFTP using VirtualSshFileSystemView");
+							logger.info("SHIZUKU_DEBUG <<< SFTP using VirtualSshFileSystemView with shared manager");
 							return new VirtualSshFileSystemView(
 									SshServerService.this,
 									new FsSshFileSystemView(
@@ -256,7 +275,7 @@ public class SshServerService extends AbstractServerService
 											session),
 									new ShizukuSshFileSystemView(
 											SshServerService.this,
-											new ShizukuServiceManager(SshServerService.this),
+											shizukuServiceManager,
 											prefsBean.getStartDir(),
 											session),
 									prefsBean.getStartDir(),

@@ -32,8 +32,17 @@ public class ShizukuSshFileSystemView extends ShizukuFileSystemView<ShizukuSshFi
 
     @Override
     public SshFile getFile(SshFile baseDir, String file) {
+        logger.trace("getFile(baseDir: {}, file: {})", baseDir.getAbsolutePath(), file);
+        if (file == null || file.isEmpty()) {
+            return getFile(baseDir.getAbsolutePath());
+        }
+        if (file.charAt(0) == '/') {
+            return getFile(file);
+        }
         return getFile(baseDir.getAbsolutePath() + "/" + file);
     }
+
+
 
     @Override
     public FileSystemView getNormalizedView() {
