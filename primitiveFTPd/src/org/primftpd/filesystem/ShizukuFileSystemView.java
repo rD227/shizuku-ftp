@@ -36,27 +36,32 @@ public abstract class ShizukuFileSystemView<TFile extends ShizukuFile<TMina, ? e
         logger.trace("getFile({})", file);
 
         String abs = absolute(file);
-        logger.trace("  getFile(abs: {})", abs);
+        logger.info("  getFile(abs: {})", abs);
 
         final LsOutputParser parser = new LsOutputParser();
         final LsOutputBean[] wrapper = new LsOutputBean[1];
         final String cmd = "ls -lad " + ShizukuFile.escapePath(abs);
-        logger.trace("  running command: {}", cmd);
+        logger.info("  running command: {}", cmd);
         shell.addCommand(cmd, 0, new Shell.OnCommandResultListener() {
             @Override
             public void onCommandResult(int commandCode, int exitCode, @NonNull List<String> output) {
+                logger.info("  command result: exitCode={}, outputLines={}", exitCode, output.size());
                 if (exitCode == 0 && !output.isEmpty()) {
-                    wrapper[0] = parser.parseLine(output.get(0));
+                    String line = output.get(0);
+                    logger.info("  parsing output line: '{}'", line);
+                    wrapper[0] = parser.parseLine(line);
                 } else {
-                    logger.debug("could not run 'ls' command (exitCode: {})", exitCode);
+                    logger.warn("  could not run 'ls' command (exitCode: {}), output: {}", exitCode, output);
                 }
             }
         });
         shell.waitForIdle();
         LsOutputBean bean = wrapper[0];
         if (bean != null) {
+            logger.info("  successfully got bean for {}: isDir={}, size={}", abs, bean.isDir(), bean.getSize());
             return createFile(abs, bean);
         } else {
+            logger.warn("  bean is null for {}, returning dummy bean", abs);
             String name;
             if (abs.contains("/")) {
                 name = abs.substring(abs.lastIndexOf('/') + 1);

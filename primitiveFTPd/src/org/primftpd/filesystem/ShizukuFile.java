@@ -52,6 +52,7 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
             @Override
             public void onCommandResult(int commandCode, int exitCode) {
+                logger.debug("cmd: '{}', exitCode: {}", cmd, exitCode);
                 result[0] = exitCode == 0;
             }
         });
@@ -61,55 +62,55 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
     @Override
     public ClientActionEvent.Storage getClientActionStorage() {
-        return ClientActionEvent.Storage.VIRTUAL;
+        return ClientActionEvent.Storage.SHIZUKU;
     }
 
     @Override
     public boolean isDirectory() {
         boolean result = bean.isDir();
-        logger.trace("[{}] isDirectory() -> {}", name, result);
+        logger.trace("[{}] isDirectory() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public boolean doesExist() {
         boolean result = bean.isExists();
-        logger.trace("[{}] doesExist() -> {}", name, result);
+        logger.trace("[{}] doesExist() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public boolean isReadable() {
         boolean result = bean.isUserReadable();
-        logger.trace("[{}] isReadable() -> {}", name, result);
+        logger.trace("[{}] isReadable() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public long getLastModified() {
         long result = bean.getTimestamp();
-        logger.trace("[{}] getLastModified() -> {}", name, result);
+        logger.trace("[{}] getLastModified() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public long getSize() {
         long result = bean.getSize();
-        logger.trace("[{}] getSize() -> {}", name, result);
+        logger.trace("[{}] getSize() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public boolean isFile() {
         boolean result = bean.isFile();
-        logger.trace("[{}] isFile() -> {}", name, result);
+        logger.trace("[{}] isFile() -> {}", absPath, result);
         return result;
     }
 
     @Override
     public boolean isWritable() {
         boolean result = bean.isUserWritable();
-        logger.trace("[{}] isWritable() -> {}", name, result);
+        logger.trace("[{}] isWritable() -> {}", absPath, result);
         return result;
     }
 
@@ -151,15 +152,17 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     }
 
     public List<TMina> listFiles() {
-        logger.trace("[{}] listFiles()", name);
+        logger.info("[{}] listFiles()", absPath);
         postClientAction(ClientActionEvent.ClientAction.LIST_DIR);
 
         final List<TMina> result = new ArrayList<>();
         final LsOutputParser parser = new LsOutputParser();
         final List<LsOutputBean> beans = new ArrayList<>();
-        getFileSystemView().getShell().addCommand("ls -la " + escapePath(absPath), 0, new Shell.OnCommandLineListener() {
+        final String cmd = "ls -la " + escapePath(absPath);
+        getFileSystemView().getShell().addCommand(cmd, 0, new Shell.OnCommandLineListener() {
             @Override
             public void onSTDOUT(@NonNull String s) {
+                logger.trace("ls stdout: {}", s);
                 LsOutputBean child = parser.parseLine(s);
                 if (child != null && !".".equals(child.getName()) && !"..".equals(child.getName())) {
                     beans.add(child);
@@ -168,11 +171,12 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
             @Override
             public void onSTDERR(@NonNull String s) {
-                logger.debug("stderr: {}", s);
+                logger.warn("ls stderr: {}", s);
             }
 
             @Override
             public void onCommandResult(int commandCode, int exitCode) {
+                logger.info("ls cmd: '{}', exitCode: {}, found: {} beans", cmd, exitCode, beans.size());
             }
         });
         getFileSystemView().getShell().waitForIdle();
@@ -188,12 +192,15 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     @Override
     public OutputStream createOutputStream(long offset) throws IOException {
         postClientAction(ClientActionEvent.ClientAction.UPLOAD);
+        logger.info("[{}] createOutputStream(offset={})", absPath, offset);
         if (!bean.isExists()) {
             runCommand("touch " + escapePath(absPath));
         }
-        OutputStream os = new BufferedOutputStream(new ProcessBuilder("sh", "-c",
+        // FIXME: Still using 'su'! This will fail on Shizuku-only devices.
+        logger.warn("Attempting to use 'su' for stream in ShizukuFile for {}", absPath);
+        OutputStream os = new ProcessBuilder("sh", "-c",
                 "su -c \"dd of=" + absPath.replace("\"", "\\\"") + " bs=4096 seek=" + Math.max(0, offset / 4096) + " conv=notrunc\"")
-                .start().getOutputStream());
+                .start().getOutputStream();
         return new BufferedOutputStream(os) {
             @Override
             public void close() throws IOException {
@@ -206,18 +213,21 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     @Override
     public InputStream createInputStream(long offset) throws IOException {
         postClientAction(ClientActionEvent.ClientAction.DOWNLOAD);
+        logger.info("[{}] createInputStream(offset={})", absPath, offset);
+        // FIXME: Still using 'su'! This will fail on Shizuku-only devices.
+        logger.warn("Attempting to use 'su' for stream in ShizukuFile for {}", absPath);
         return new BufferedInputStream(new ProcessBuilder("sh", "-c",
                 "su -c \"dd if=" + absPath.replace("\"", "\\\"") + " bs=4096 skip=" + Math.max(0, offset / 4096) + "\"")
                 .start().getInputStream());
     }
 
     public String readSymbolicLink() {
-        logger.trace("[{}] readSymbolicLink()", name);
+        logger.trace("[{}] readSymbolicLink()", absPath);
         return bean.getLinkTarget();
     }
 
     public Object getAttribute(SshFile.Attribute attribute, boolean followLinks) throws IOException {
-        logger.trace("[{}] getAttribute({})", name, attribute);
+        logger.trace("[{}] getAttribute({})", absPath, attribute);
         switch (attribute) {
             case Owner:
                 return bean.getUser();

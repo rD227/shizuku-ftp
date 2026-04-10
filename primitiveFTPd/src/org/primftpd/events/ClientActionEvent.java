@@ -13,6 +13,7 @@ public class ClientActionEvent {
         ROOT,
         SAF,
         ROSAF,
+        SHIZUKU,
         QUICKSHARE,
         VIRTUAL
     }
@@ -40,6 +41,8 @@ public class ClientActionEvent {
                 return Storage.FS;
             case ROOT:
                 return Storage.ROOT;
+            case SHIZUKU:
+                return Storage.SHIZUKU;
             case SAF:
                 return Storage.SAF;
             case RO_SAF:
