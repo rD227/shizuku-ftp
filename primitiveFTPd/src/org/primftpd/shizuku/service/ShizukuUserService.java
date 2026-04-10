@@ -1,7 +1,5 @@
 package org.primftpd.shizuku.service;
 
-import android.os.RemoteException;
-
 import org.primftpd.shizuku.aidl.IShizukuFileService;
 import org.primftpd.shizuku.aidl.FileInfo;
 import org.primftpd.shizuku.aidl.FileOperationResult;
@@ -12,8 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +21,12 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
 
     private static final int SERVICE_VERSION = 1;
 
+    public ShizukuUserService() {
+        super();
+    }
+
     @Override
-    public FileInfo stat(String absolutePath) throws RemoteException {
+    public FileInfo stat(String absolutePath) {
         try {
             File file = new File(absolutePath);
             String name = file.getName();
@@ -64,12 +64,12 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                     symlinkTarget
             );
         } catch (Exception e) {
-            throw new RemoteException("stat failed: " + e.getMessage());
+            return FileInfo.nonExistent(absolutePath, extractName(absolutePath));
         }
     }
 
     @Override
-    public List<FileInfo> listFiles(String absolutePath) throws RemoteException {
+    public List<FileInfo> listFiles(String absolutePath) {
         try {
             File dir = new File(absolutePath);
             List<FileInfo> result = new ArrayList<>();
@@ -89,21 +89,21 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
 
             return result;
         } catch (Exception e) {
-            throw new RemoteException("listFiles failed: " + e.getMessage());
+            return new ArrayList<>();
         }
     }
 
     @Override
-    public boolean exists(String absolutePath) throws RemoteException {
+    public boolean exists(String absolutePath) {
         try {
             return new File(absolutePath).exists();
         } catch (Exception e) {
-            throw new RemoteException("exists failed: " + e.getMessage());
+            return false;
         }
     }
 
     @Override
-    public FileOperationResult mkdir(String absolutePath) throws RemoteException {
+    public FileOperationResult mkdir(String absolutePath) {
         try {
             File dir = new File(absolutePath);
             if (dir.exists()) {
@@ -118,7 +118,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     }
 
     @Override
-    public FileOperationResult delete(String absolutePath) throws RemoteException {
+    public FileOperationResult delete(String absolutePath) {
         try {
             File file = new File(absolutePath);
             if (!file.exists()) {
@@ -148,7 +148,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     }
 
     @Override
-    public FileOperationResult rename(String oldPath, String newPath) throws RemoteException {
+    public FileOperationResult rename(String oldPath, String newPath) {
         try {
             File oldFile = new File(oldPath);
             File newFile = new File(newPath);
@@ -169,11 +169,11 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     }
 
     @Override
-    public byte[] readFile(String absolutePath, long offset, int length) throws RemoteException {
+    public byte[] readFile(String absolutePath, long offset, int length) {
         try {
             File file = new File(absolutePath);
             if (!file.exists() || !file.isFile()) {
-                throw new RemoteException("File does not exist or is not a file");
+                return new byte[0];
             }
 
             try (FileInputStream fis = new FileInputStream(file)) {
@@ -183,6 +183,10 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                 
                 int toRead = length > 0 ? Math.min(length, (int)(file.length() - offset)) 
                                        : (int)(file.length() - offset);
+                if (toRead <= 0) {
+                    return new byte[0];
+                }
+                
                 byte[] buffer = new byte[toRead];
                 int bytesRead = fis.read(buffer);
                 
@@ -194,12 +198,12 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                 return buffer;
             }
         } catch (Exception e) {
-            throw new RemoteException("readFile failed: " + e.getMessage());
+            return new byte[0];
         }
     }
 
     @Override
-    public FileOperationResult writeFile(String absolutePath, byte[] data, long offset, boolean append) throws RemoteException {
+    public FileOperationResult writeFile(String absolutePath, byte[] data, long offset, boolean append) {
         try {
             File file = new File(absolutePath);
             File parent = file.getParentFile();
@@ -220,7 +224,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     }
 
     @Override
-    public FileOperationResult setLastModified(String absolutePath, long timestamp) throws RemoteException {
+    public FileOperationResult setLastModified(String absolutePath, long timestamp) {
         try {
             File file = new File(absolutePath);
             if (!file.exists()) {
@@ -236,12 +240,20 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     }
 
     @Override
-    public int getVersion() throws RemoteException {
+    public int getVersion() {
         return SERVICE_VERSION;
     }
 
     @Override
-    public void destroy() throws RemoteException {
+    public void destroy() {
         System.exit(0);
+    }
+
+    private String extractName(String absolutePath) {
+        if (absolutePath == null || absolutePath.isEmpty()) {
+            return "";
+        }
+        int lastSlash = absolutePath.lastIndexOf('/');
+        return lastSlash >= 0 ? absolutePath.substring(lastSlash + 1) : absolutePath;
     }
 }
