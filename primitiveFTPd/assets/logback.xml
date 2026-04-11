@@ -25,7 +25,7 @@
         </rollingPolicy>
     </appender>
 
-    <root level="TRACE">
+    <root level="INFO">
         <appender-ref ref="LOGCAT" />
         <appender-ref ref="CSV_FILE" />
     </root>

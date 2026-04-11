@@ -31,7 +31,9 @@ Then click Start
 
 # What still needs to be done:
 
-The write function of Shizuku-ftp is can't use 
+~~The write function of Shizuku-ftp is can't use~~
+
+fix the logger problem
 
 Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
 Let’s open it again later ()
