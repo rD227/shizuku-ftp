@@ -165,25 +165,65 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
         
         try {
             switch (attribute) {
+                case Size:
+                    return fileInfo.getSize();
+                    
+                case Uid:
+                    return 0; // root uid
+                    
                 case Owner:
-                    return "root"; // Shizuku runs as root
+                    return "root";
+                    
+                case Gid:
+                    return 0; // root gid
+                    
                 case Group:
                     return "root";
+                    
+                case IsDirectory:
+                    return fileInfo.isDirectory();
+                    
+                case IsRegularFile:
+                    return fileInfo.isFile();
+                    
                 case IsSymbolicLink:
                     return fileInfo.isSymlink();
+                    
                 case Permissions:
                     Set<SshFile.Permission> perms = new HashSet<>();
                     if (fileInfo.canRead()) {
                         perms.add(SshFile.Permission.UserRead);
+                        perms.add(SshFile.Permission.GroupRead);
+                        perms.add(SshFile.Permission.OthersRead);
                     }
                     if (fileInfo.canWrite()) {
                         perms.add(SshFile.Permission.UserWrite);
+                        perms.add(SshFile.Permission.GroupWrite);
                     }
-                    if (fileInfo.canExecute()) {
+                    if (fileInfo.canExecute() || fileInfo.isDirectory()) {
                         perms.add(SshFile.Permission.UserExecute);
+                        perms.add(SshFile.Permission.GroupExecute);
+                        perms.add(SshFile.Permission.OthersExecute);
                     }
                     return perms.isEmpty() ? EnumSet.noneOf(SshFile.Permission.class) : EnumSet.copyOf(perms);
+                    
+                case CreationTime:
+                    // Android doesn't support creation time, use last modified
+                    return fileInfo.getLastModified();
+                    
+                case LastModifiedTime:
+                    return fileInfo.getLastModified();
+                    
+                case LastAccessTime:
+                    // Android doesn't track access time, use last modified
+                    return fileInfo.getLastModified();
+                    
+                case NLink:
+                    // Number of hard links, default to 1
+                    return 1;
+                    
                 default:
+                    logger.warn("[ShizukuFile] Unknown attribute requested: {}", attribute);
                     return null;
             }
         } catch (Exception e) {
