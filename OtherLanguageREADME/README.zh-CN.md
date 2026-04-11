@@ -46,9 +46,12 @@
 稍后我会修复它
 
 3.
-~~看起来 需要呼出弹窗授权root的root管理器，无法在选择root后呼出root授权弹窗~~
+尝试改了https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml
+但是似乎还是把生成的日志放在旧的android/data/app下，改回来了
 
-好的我不知道怎么复现这个问题了，清除数据又重新启动，选择root，再生成密钥，设置密码，又能获取
+4.
+似乎本地日志功能不生效，只能选择Android然后logcat
+
 
 # 原始 README.md
 
