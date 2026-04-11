@@ -5,10 +5,11 @@
 [简体中文](OtherLanguageREADME/README.zh-CN.md) | [Original_README](OtherLanguageREADME/Original_README.md)
 
 # Shizuku-FTP
+
 Now the Shizuku function works
 ~~This kind of server-side lack of beautification is actually nothing~~
 
-# Fix ERROR
+# Fixed ERROR
 
 FTP Shizuku is actually can be used
 
@@ -29,12 +30,16 @@ Click the upper right corner, click Network status and select Shizuku
 Then click Start
 
 # What still needs to be done:
+
+The write function of Shizuku-ftp is can't use 
+
 Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
 Let’s open it again later ()
 
 Need to fix sftp Shizuku
 
 Ignore power saving optimization
+(The initial value of "How long to idle before stopping the server" seems to be 30 minutes. The problem should be this)
 
 ~~I'm not too familiar with it and they do look difficult~~
 
@@ -52,6 +57,8 @@ Ignore power saving optimization
 It was able to use it now.......(Only ftp-shizuku)
 
 sftp-Shizuku can't be used
+
+
 
 2.
 When didn't generate the key and try to start the (s)ftp 
