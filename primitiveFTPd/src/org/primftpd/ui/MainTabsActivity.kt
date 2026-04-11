@@ -717,7 +717,7 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
         )
     ) {
         Text(
-            text = if (isRunning) "停止" else "启动",
+            text = if (isRunning) "stop" else "start",
             style = MaterialTheme.typography.headlineSmall
         )
     }
