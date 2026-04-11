@@ -13,6 +13,8 @@ Now the Shizuku function works
 
 FTP Shizuku is actually can be used
 
+SFTP Shizuku is actually can be used (The initial path is probably can't be used, you can manually specify)
+
 # use
 
 Don't click the launch button directly to generate the key
@@ -33,12 +35,12 @@ Then click Start
 
 ~~The write function of Shizuku-ftp is can't use~~
 
-fix the logger problem
+fix the logger problem（Previews logger (of mine) need to be changed
 
 Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
 Let’s open it again later ()
 
-Need to fix sftp Shizuku
+~~Need to fix sftp Shizuku~~
 
 Ignore power saving optimization
 (The initial value of "How long to idle before stopping the server" seems to be 30 minutes. The problem should be this)
@@ -56,9 +58,9 @@ Ignore power saving optimization
 
 ~~Finally, I know I need to learn it by myself~~
 
-It was able to use it now.......(Only ftp-shizuku)
+It was able to use it now.......
 
-sftp-Shizuku can't be used
+~~sftp-Shizuku can't be used~~
 
 
 
@@ -67,7 +69,7 @@ When didn't generate the key and try to start the (s)ftp
 
 It will jump out the window 
 
-the it will crash after generate the key
+then it will crash after generate the key
 
 (Didn't click the Round button in the first
 
@@ -79,8 +81,8 @@ Try changing https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616
 
 But it seems that the generated logs are disappear
 
-4.
-It seems that the local logging function does not take effect. You can only choose Android and then logcat.
+~~4.~~
+~~It seems that the local logging function does not take effect. You can only choose Android and then logcat.~~
 
 # The Original README.md 
 
