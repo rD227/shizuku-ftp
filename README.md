@@ -75,14 +75,12 @@ try to generate key first will finish the problem
 )
 
 3.
-尝试改了https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml
-但是似乎还是把生成的日志放在旧的android/data/app下，改回来了
+Try changing https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml
+
+But it seems that the generated logs are disappear
 
 4.
-It seems that the root manager that needs to call out the pop-up window to authorize root cannot call out the root authorization pop-up window after selecting root.
-
-（Okay, I don't know how to reproduce this problem. I cleared the data and restarted, selected root, generated the key, set the password, and I was able to get it again.
-
+It seems that the local logging function does not take effect. You can only choose Android and then logcat.
 
 # The Original README.md 
 
