@@ -33,6 +33,8 @@ Then click Start
 
 # What still needs to be done:
 
+I didn’t seem to pay attention to the version number issue before
+
 ~~The write function of Shizuku-ftp is can't use~~
 
 fix the logger problem（Previews logger (of mine) need to be changed
