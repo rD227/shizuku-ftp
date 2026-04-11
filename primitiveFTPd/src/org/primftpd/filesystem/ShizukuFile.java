@@ -71,7 +71,7 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
     @Override
     public boolean isWritable() {
-        return fileInfo.canWrite();
+        return true;
     }
 
     @Override

@@ -52,7 +52,7 @@ Ignore power saving optimization
 
 ~~**Because gpt5.4 try to use root to finish it**~~
 
-~~Finally I know I need to learn it by myself~~
+~~Finally, I know I need to learn it by myself~~
 
 It was able to use it now.......(Only ftp-shizuku)
 
