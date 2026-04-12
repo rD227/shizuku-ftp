@@ -294,7 +294,8 @@ fun MainScreen(
                 )
                 Text(
                     text = if (isServerRunning) "Server is running" else "Server has stopped",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 MenuButton(
                     iconRes = R.drawable.link,
