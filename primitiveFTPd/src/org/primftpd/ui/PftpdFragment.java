@@ -985,10 +985,15 @@ public class PftpdFragment extends Fragment implements RecreateLogger, RadioGrou
         spannable.setSpan(new UnderlineSpan(), 0, text.length(), 0);
         showAllKeysFingerprints.setText(spannable);
         showAllKeysFingerprints.setOnClickListener(v -> {
-            TabLayout tabLayout = view.getRootView().findViewById(R.id.tabs);
-            TabLayout.Tab tab = tabLayout.getTabAt(MainTabsActivity.INDEX_FINGERPRINTS);
-            if (tab != null) {
-                tab.select();
+            try {
+                // 在 Compose 环境中，直接通过 Activity 导航
+                if (getActivity() instanceof MainTabsActivity) {
+                    // 这里需要通过其他方式导航，因为 Compose 不使用 TabLayout
+                    logger.info("Navigate to fingerprints screen - not implemented in Compose yet");
+                    Toast.makeText(getContext(), "Please use the menu to access fingerprints", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                logger.error("Failed to navigate to fingerprints", e);
             }
         });
     }

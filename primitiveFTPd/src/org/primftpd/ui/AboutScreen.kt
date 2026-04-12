@@ -85,14 +85,14 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             
             // Project links
-            SectionTitle("项目链接")
+            SectionTitle("   \uD83D\uDCC2")
             LinkItem("GitHub", "https://github.com/wolpi/prim-ftpd", context)
             LinkItem("F-Droid", "https://f-droid.org/repository/browse/?fdid=org.primftpd", context)
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Dependencies
-            SectionTitle("依赖库")
+            SectionTitle("Libraries")
             LinkItem("Apache MINA", "https://mina.apache.org", context)
             LinkItem("Bouncy Castle", "https://bouncycastle.org/", context)
             LinkItem("SLF4J", "https://www.slf4j.org/", context)
@@ -172,7 +172,7 @@ private fun getVersionInfo(context: Context): String {
     }
 }
 
-@Preview(showBackground = true, name = "About Screen", locale = zh)
+@Preview(showBackground = true, name = "About Screen", locale = "zh", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun AboutScreenPreview() {
     ShizukuFtpTheme {
