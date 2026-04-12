@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">primitive ftpd</string>
+    <string name="app_name" translatable="false">Shizuku-ftp</string>
     <string name="ifacesLabel">Network Interface</string>
     <string name="ipAddrLabel">IP Address</string>
     <string name="ifacesError">Error: </string>

@@ -86,6 +86,9 @@ But it seems that the generated logs are disappear
 ~~4.~~
 ~~It seems that the local logging function does not take effect. You can only choose Android and then logcat.~~
 
+5.
+Some logger isn't original logger
+
 # The Original README.md 
 
 You can go there to see original version of the README

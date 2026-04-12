@@ -74,7 +74,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                     symlinkTarget
             );
             
-            Log.d(TAG, "[stat] Success: exists=" + result.exists() + 
+            Log.d(TAG, "[stat] Success: exists=" + result.exists() +
                     ", isFile=" + result.isFile() + 
                     ", isDir=" + result.isDirectory() + 
                     ", size=" + result.getSize());
