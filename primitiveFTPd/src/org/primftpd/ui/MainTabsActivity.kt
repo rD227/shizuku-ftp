@@ -562,65 +562,6 @@ fun FragmentContainerScreen(
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AboutScreen(onBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("关于")
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            onBack()
-                        }
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text(
-                text = "Primitive FTPd",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "2026.04.04",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-            Text(text = "这是全屏关于页内容。")
-            /*
-            // show other links
-            (view.findViewById<View?>(R.id.githubLabel) as TextView).setText("GitHub")
-            (view.findViewById<View?>(R.id.githubTextView) as TextView).setText(AboutFragment.URL_GITHUB)
-
-            (view.findViewById<View?>(R.id.fdroidLabel) as TextView).setText("F-Droid")
-            (view.findViewById<View?>(R.id.fdroidTextView) as TextView).setText(AboutFragment.URL_FDROID)
-
-            (view.findViewById<View?>(R.id.minaTextView) as TextView).setText(AboutFragment.URL_MINA)
-            (view.findViewById<View?>(R.id.bouncyCastleTextView) as TextView).setText(AboutFragment.URL_BC)
-            (view.findViewById<View?>(R.id.slf4jTextView) as TextView).setText(AboutFragment.URL_SLF4J)
-            (view.findViewById<View?>(R.id.filepickerTextView) as TextView).setText(AboutFragment.URL_FILEPICKER)
-            (view.findViewById<View?>(R.id.libsuperuserTextView) as TextView).setText(AboutFragment.URL_LIBSUPERUSER)
-            (view.findViewById<View?>(R.id.eventbusTextView) as TextView).setText(AboutFragment.URL_EVENTBUS)
-
-             */
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -792,13 +733,3 @@ fun LeftMenuOpenPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "About Screen")
-@Composable
-fun AboutScreenPreview() {
-    ShizukuFtpTheme {
-        AboutScreen(
-            onBack = {
-            }
-        )
-    }
-}
