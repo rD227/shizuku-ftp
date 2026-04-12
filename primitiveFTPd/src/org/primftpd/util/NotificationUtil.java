@@ -101,7 +101,7 @@ public class NotificationUtil {
         // use main icon as large one
         Bitmap largeIcon = BitmapFactory.decodeResource(
                 ctxt.getResources(),
-                R.drawable.ic_launcher);
+                R.mipmap.ic_launcher);
 
         long when = System.currentTimeMillis();
 
