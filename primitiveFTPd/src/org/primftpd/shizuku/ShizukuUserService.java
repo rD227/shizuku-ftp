@@ -38,7 +38,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
         
         try {
             File file = new File(absolutePath);
-            String name = file.getName();
+            String name = file.getName();// /emulated/storage/0/name -> name // / -> ""
             if (name.isEmpty()) {
                 name = absolutePath;
             }
