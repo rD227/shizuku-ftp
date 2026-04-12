@@ -1,4 +1,4 @@
-package org.primftpd.ui;
+/*package org.primftpd.ui;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -70,8 +70,9 @@ public class AboutFragment extends DialogFragment
 
             versionView.setText(version);
         }
-
+*/
         // show licence
+        /*
         TextView lisenseView = view.findViewById(R.id.licenceTextView);
         lisenseView.setText("APL \n"+URL_APL);
 
@@ -91,6 +92,8 @@ public class AboutFragment extends DialogFragment
         return view;
     }
 
+         */
+/*
     @Override
     public void onResume() {
         super.onResume();
@@ -100,3 +103,4 @@ public class AboutFragment extends DialogFragment
         }
     }
 }
+*/

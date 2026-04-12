@@ -113,15 +113,6 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             }
                         )
                     }
-                    /*
-                    composable("fingerprints") {
-                        FingerprintsScreen(//can be del
-                            onBack = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                     */
                     composable("qr") {
                         /*
                         QrScreen(
@@ -157,10 +148,17 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             {navController.popBackStack()}
                             )
                     }
+                    composable("VerificationKey"){
+                        FragmentContainerScreen(
+                            "Verification Key",
+                            {org.primftpd.ui.PubKeyAuthKeysFragment(true)/*what is true?*/},
+                            {navController.popBackStack()}
+                            )
+                    }
                     composable("fingerPrint"){
                         FragmentContainerScreen(
                             "fingerPrint",
-                            {org.primftpd.ui.PubKeyAuthKeysFragment(true)},
+                            {org.primftpd.ui.KeysFingerprintsFragment()},
                             {navController.popBackStack()}
                             )
                     }
@@ -410,7 +408,6 @@ fun MainScreen(
                         text = "Finger print",
                         onClick = {
                             rightMenuVisible = false
-                            //onNavigate("fingerprints")
                             onNavigate("fingerPrint")
                         }
                     )
@@ -418,6 +415,8 @@ fun MainScreen(
                         icon = ImageVector.vectorResource(id = R.drawable.thinkey),
                         text = "Verification Key",
                         onClick = {
+                            rightMenuVisible = false
+                            onNavigate("VerificationKey")
                         }
                     )
                     RowClick(
@@ -699,7 +698,7 @@ fun ShizukuFtpTheme(
 
 @Preview(showBackground = true,
     name = "Main Screen",
-    //uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 fun MainScreenPreview() {
@@ -716,7 +715,7 @@ fun MainScreenPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Left Menu Open")
+@Preview(showBackground = true, name = "Right Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {
     ShizukuFtpTheme {
@@ -728,7 +727,7 @@ fun LeftMenuOpenPreview() {
             },
             onNavigate = {
             },
-            initialLeftVisible = true
+            initialRightVisible = true
         )
     }
 }
