@@ -66,7 +66,7 @@ It was able to use it now.......
 
 
 
-2.
+~~2.
 When didn't generate the key and try to start the (s)ftp 
 
 It will jump out the window 
@@ -76,18 +76,18 @@ then it will crash after generate the key
 (Didn't click the Round button in the first
 
 try to generate key first will finish the problem
-)
+)~~
 
-3.
-Try changing https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml
+~~3.
+Try changing https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml~~
 
-But it seems that the generated logs are disappear
+~~But it seems that the generated logs are disappear~~
 
 ~~4.~~
 ~~It seems that the local logging function does not take effect. You can only choose Android and then logcat.~~
 
 5.
-Some logger isn't original logger
+Some logger isn't original logger (Shouldn't ignore it when generating key)
 
 # The Original README.md 
 
