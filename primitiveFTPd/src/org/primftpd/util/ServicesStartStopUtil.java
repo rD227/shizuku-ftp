@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -41,6 +43,7 @@ public class ServicesStartStopUtil {
     public static final String EXTRA_CHOSEN_IP = "chosen.ip";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServicesStartStopUtil.class);
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
 
     /**
@@ -108,11 +111,14 @@ public class ServicesStartStopUtil {
         }
         String chosenIp = fragment != null ? fragment.getChosenIp() : null;
 
+        final Context finalContext = context;
         if (!isPasswordOk(prefsBean)) {
-            Toast.makeText(
-                context,
-                R.string.haveToSetAuthMechanism,
-                Toast.LENGTH_LONG).show();
+            MAIN_HANDLER.post(() -> {
+                Toast.makeText(
+                    finalContext,
+                    R.string.haveToSetAuthMechanism,
+                    Toast.LENGTH_LONG).show();
+            });
 
             if (fragment == null) {
                 // Launch the main activity so that the user may set their password.
@@ -146,10 +152,13 @@ public class ServicesStartStopUtil {
                         startServerByIntent(intent, context);
                     } catch (Exception e) {
                         LOGGER.error("could not start sftp server", e);
-                        Toast.makeText(
-                                context,
-                                "could not start sftp server, " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        final String errorMsg = e.getMessage();
+                        MAIN_HANDLER.post(() -> {
+                            Toast.makeText(
+                                    finalContext,
+                                    "could not start sftp server, " + errorMsg,
+                                    Toast.LENGTH_SHORT).show();
+                        });
                     }
                 }
             }
@@ -166,10 +175,13 @@ public class ServicesStartStopUtil {
                         startServerByIntent(intent, context);
                     } catch (Exception e) {
                         LOGGER.error("could not start ftp server", e);
-                        Toast.makeText(
-                                context,
-                                "could not start ftp server, " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        final String errorMsg = e.getMessage();
+                        MAIN_HANDLER.post(() -> {
+                            Toast.makeText(
+                                    finalContext,
+                                    "could not start ftp server, " + errorMsg,
+                                    Toast.LENGTH_SHORT).show();
+                        });
                     }
                 }
             }

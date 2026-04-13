@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.ViewGroup;
 
 import org.primftpd.R;
@@ -27,6 +29,7 @@ public class GenKeysAskDialogFragment extends DialogFragment {
     public static final String KEY_START_SERVER = "START_SERVER";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private boolean startServerOnFinish = false;
 
@@ -102,12 +105,15 @@ public class GenKeysAskDialogFragment extends DialogFragment {
                         }
                     }
                 }
-                //        pftpdFragment.showKeyFingerprints(); is be deled. It maybe can't monitor the event and refresh the UI
-                //WARNING :
+                
                 keyFingerprintProvider.calcPubkeyFingerprints(ctxt);
 
+                // 在主线程中启动服务器，避免 Toast 在后台线程崩溃
                 if (startServerOnFinish) {
-                    ServicesStartStopUtil.startServers(ctxt);
+                    mainHandler.post(() -> {
+                        logger.debug("Starting servers on main thread after key generation");
+                        ServicesStartStopUtil.startServers(ctxt);
+                    });
                 }
             } finally {
                 executorService.shutdown();
