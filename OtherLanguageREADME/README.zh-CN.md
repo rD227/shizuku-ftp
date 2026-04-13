@@ -42,17 +42,17 @@
 
 # 问题(优先写的英文版)
 
-1. sftp-Shizuku 不能用，稍后我会修复它
+~~1. 不能用，稍后我会修复它~~
 
-2. 当没生成密钥，直接点击启动，会导致崩溃，应该 参考 #使用 来解决这个问题
-稍后我会修复它
+~~2. 当没生成密钥，直接点击启动，会导致崩溃，应该 参考 #使用 来解决这个问题
+稍后我会修复它~~
 
-3.
+~~3.
 尝试改了https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml
-但是似乎还是把生成的日志放在旧的android/data/app下，改回来了
+但是似乎还是把生成的日志放在旧的android/data/app下，改回来了~~
 
-4.
-似乎本地日志功能不生效，只能选择Android然后logcat
+~~4.
+似乎本地日志功能不生效，只能选择Android然后logcat~~
 
 
 # 原始 README.md
