@@ -33,19 +33,19 @@ Then click Start
 
 # What still needs to be done:
 
-I didn’t seem to pay attention to the version number issue before
+~~I didn’t seem to pay attention to the version number issue before~~
 
 ~~The write function of Shizuku-ftp is can't use~~
 
-fix the logger problem（Previews logger (of mine) need to be changed
+~~fix the logger problem（Previews logger (of mine) need to be changed~~
 
 Streamlined software package size: I found ClassNotFoundException during testing. I thought it was an optimization problem, so I turned off a lot of optimizations.
 Let’s open it again later ()
 
 ~~Need to fix sftp Shizuku~~
 
-Ignore power saving optimization
-(The initial value of "How long to idle before stopping the server" seems to be 30 minutes. The problem should be this)
+~~Ignore power saving optimization
+(The initial value of "How long to idle before stopping the server" seems to be 30 minutes. The problem should be this)~~
 
 ~~I'm not too familiar with it and they do look difficult~~
 
