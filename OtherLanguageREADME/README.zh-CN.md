@@ -1,4 +1,4 @@
-[English](/README.md)
+[English](/README.md) | [Original_README](OtherLanguageREADME/Original_README.md)
 
 # Shizuku-FTP
 
