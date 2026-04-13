@@ -15,6 +15,10 @@ FTP Shizuku is actually can be used
 
 SFTP Shizuku is actually can be used (The initial path is probably can't be used, you can manually specify)
 
+If you click on start and click on another fingerprint, you will be prompted to choose an authentication method.
+
+This way it will be intercepted instead of crashing. I have not understood this yet.
+
 # use
 
 Don't click the launch button directly to generate the key
