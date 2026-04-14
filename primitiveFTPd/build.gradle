@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
         versionCode = 70
-        versionName = "v0.2.4-SNAPSHOT"
+        versionName = "v0.2.5-SNAPSHOT"
 
         minSdk = libs.versions.minSdk.get().toInteger()
         targetSdk = libs.versions.targetSdk.get().toInteger()
@@ -31,7 +31,7 @@ android {
             shrinkResources = false
         }
         release {
-            debuggable = true
+            //debuggable = true
             minifyEnabled = true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard.cfg'
