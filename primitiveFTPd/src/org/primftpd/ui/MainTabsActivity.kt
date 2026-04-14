@@ -152,7 +152,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         )*/
                         FragmentContainerScreen(
                             "扫码了",
-                            {org.primftpd.ui.QrFragment()},
+                            {org.primftpd.ui.QrFragment(pftpdFragment)},
                             {navController.popBackStack()}
                         )
                     }
