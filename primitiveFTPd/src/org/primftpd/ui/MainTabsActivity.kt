@@ -25,8 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -118,7 +116,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         }
                     )
                 }
-                
+
                 NavHost(
                     navController = navController,
                     startDestination = "main"
@@ -668,10 +666,10 @@ fun PasswordInputDialog(
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                imageVector = if (passwordVisible) 
-                                    Icons.Filled.Visibility 
-                                else 
-                                    Icons.Filled.VisibilityOff,
+                                imageVector = if (passwordVisible)
+                                    ImageVector.vectorResource(id = R.drawable.visiable)
+                                else
+                                    ImageVector.vectorResource(id = R.drawable.baseline_disabled_visible_24),
                                 contentDescription = if (passwordVisible) "Hide password"
                                      else "Show password"
                             )

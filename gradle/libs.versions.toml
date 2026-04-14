@@ -87,7 +87,7 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 # Navigation 和 Icons
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
-androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended"}
+#androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended"}
 # I add the lib in here but idk why here didn't see it's color ( It's gray ( And It seems that it was working
 
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
