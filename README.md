@@ -21,6 +21,8 @@ This way it will be intercepted instead of crashing. I have not understood this 
 
 # use
 
+(Now you don’t very need to look at this to use it, and the method of opening it is more friendly)
+
 Don't click the launch button directly to generate the key
 
 If this bug is not fixed, it will crash.

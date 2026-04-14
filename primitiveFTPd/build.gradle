@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
         versionCode = 70
-        versionName = "v0.2.3-SNAPSHOT"
+        versionName = "v0.2.4-SNAPSHOT"
 
         minSdk = libs.versions.minSdk.get().toInteger()
         targetSdk = libs.versions.targetSdk.get().toInteger()
@@ -116,6 +116,8 @@ dependencies {
     implementation libs.androidx.ui.tooling.preview
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.compose.material.icons.core
+    implementation libs.androidx.compose.material.icons.extended
+
     coreLibraryDesugaring(libs.google.desugar)
     implementation libs.google.material
 

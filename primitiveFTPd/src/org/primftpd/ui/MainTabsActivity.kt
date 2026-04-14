@@ -1,6 +1,7 @@
 package org.primftpd.ui
 
 //import androidx.compose.material.icons.filled.ArrowBack
+import android.R.string.yes
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Build
@@ -24,6 +25,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,8 +38,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -51,7 +57,9 @@ import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
 import org.primftpd.prefs.LoadPrefsUtil
+import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
+import androidx.core.content.edit
 
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
@@ -77,6 +85,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
     //private var logger: Logger = LoggerFactory.getLogger(javaClass)
     private var isServerRunning by mutableStateOf(false)
+    private var showPasswordDialog by mutableStateOf(false)
     private lateinit var pftpdFragment: PftpdFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +97,28 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         setContent {
             ShizukuFtpTheme {
                 val navController = rememberNavController()
+                
+                // 密码输入弹窗
+                if (showPasswordDialog) {
+                    PasswordInputDialog(
+                        onDismiss = { showPasswordDialog = false },
+                        onSave = { password ->
+                            // 加密并保存密码到 SharedPreferences
+                            val prefs = LoadPrefsUtil.getPrefs(this)
+                            val encryptedPassword = EncryptionUtil.encrypt(password)
+                            prefs.edit {
+                                putString(
+                                    LoadPrefsUtil.PREF_KEY_PASSWORD,
+                                    encryptedPassword
+                                )
+                            }
+                            showPasswordDialog = false
+                            // 保存后重新启动服务
+                            ServicesStartStopUtil.startServers(this)
+                        }
+                    )
+                }
+                
                 NavHost(
                     navController = navController,
                     startDestination = "main"
@@ -189,12 +220,18 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         return super.onCreateOptionsMenu(menu)
     }
 
-
     private fun handleStart() {
-
         val context = this
         val prefs = LoadPrefsUtil.getPrefs(context)
         val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
+
+        // 检查密码是否设置（如果需要密码认证）
+        if (prefsBean.serverToStart.isPasswordMandatory(prefsBean) && 
+            org.primftpd.util.StringUtils.isBlank(prefsBean.password)) {
+            // 弹出密码输入框
+            showPasswordDialog = true
+            return
+        }
 
         // 仅当需要启动 SFTP 时才检查密钥
         if (prefsBean.serverToStart.startSftp()) {
@@ -594,6 +631,77 @@ fun FingerprintsScreen(onBack: () -> Unit) {
     }
 }
 
+// --- 密码输入弹窗 ---
+@Composable
+fun PasswordInputDialog(
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.prefTitlePassword),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text =  stringResource(R.string.generateKeysMessage),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.prefTitlePassword)) },
+                    placeholder = { Text("Please input password") },//useless?
+                    visualTransformation = if (passwordVisible) 
+                        VisualTransformation.None 
+                    else 
+                        PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) 
+                                    Icons.Filled.Visibility 
+                                else 
+                                    Icons.Filled.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Hide password"
+                                     else "Show password"
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (password.isNotBlank()) {
+                        onSave(password)
+                    }
+                },
+                enabled = password.isNotBlank()
+            ) {
+                //Text(stringResource(R.string.yes)
+                Text("Save and Start")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
 
 // --- Helpers ---
 
@@ -714,7 +822,7 @@ fun MainScreenPreview() {
         )
     }
 }
-
+/*
 @Preview(showBackground = true, name = "Right Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {
@@ -731,4 +839,14 @@ fun LeftMenuOpenPreview() {
         )
     }
 }
-
+*/
+@Preview(showBackground = true, name = "Password Dialog")
+@Composable
+fun PasswordDialogPreview() {
+    ShizukuFtpTheme {
+        PasswordInputDialog(
+            onDismiss = {},
+            onSave = {}
+        )
+    }
+}
