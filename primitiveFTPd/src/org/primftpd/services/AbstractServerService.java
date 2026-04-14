@@ -16,6 +16,7 @@ import android.os.Process;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import org.apache.ftpserver.impl.IODataConnectionFactory;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -80,11 +81,14 @@ public abstract class AbstractServerService
 
 	protected void handleServerStartError(Throwable e)
 	{
+		//final Logger log = LoggerFactory
+		//		.getLogger(IODataConnectionFactory.class);
 		logger.error("could not start server", e);
 
 		String msg = getText(R.string.serverCouldNotBeStarted).toString();
 		msg += e.getLocalizedMessage();
 		Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+		//log.error(msg);
 	}
 
 	@Override

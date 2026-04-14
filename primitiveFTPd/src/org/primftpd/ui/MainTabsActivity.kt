@@ -129,6 +129,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             },
                             onStopServer = {
                                 handleStop()
+                                //logger.info("onStopServer() called")
                             },
                             onNavigate = { route ->
                                 navController.navigate(route)
