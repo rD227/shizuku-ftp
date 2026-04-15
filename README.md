@@ -9,6 +9,10 @@
 Now the Shizuku function works
 ~~This kind of server-side lack of beautification is actually nothing~~
 
+**If you like this project, you can star it!**
+
+~~I will work hard~~
+
 # Fixed ERROR
 
 FTP Shizuku is actually can be used
@@ -20,6 +24,15 @@ If you click on start and click on another fingerprint, you will be prompted to 
 This way it will be intercepted instead of crashing. I have not understood this yet.
 
 # What still needs to be done:
+
+**Newly discovered** things that could be BUGs:
+
+Transferring in sftp mode, **my test sftp tool fails to write files to the server**
+(Same device access (My testing environment : using the same device to access the server), or is it meant to be?) 
+
+Because the [original project](https://github.com/wolpi/prim-ftpd) is also can't be used ~~Maybe it's my files browser ~~
+
+But you can use [tailscale](https://github.com/tailscale/tailscale) to connect to the server
 
 The transfer won't actively overwrite the same file or directory, and needs to be fixed.
 
@@ -88,7 +101,7 @@ try to generate key first will finish the problem
 )~~
 
 ~~3.
-Try changing https://github.com/rD227/shizuku-ftp/blob/aef60727d67f351b5033ae616781aad6cb5e84d8/primitiveFTPd/assets/logback.xml~~
+Try changing logback.xml~~
 
 ~~But it seems that the generated logs are disappear~~
 
