@@ -30,7 +30,7 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     public ShizukuFile(TFileSystemView fileSystemView, String absPath, FileInfo fileInfo) {
         super(fileSystemView, absPath, fileInfo.getName());
         this.fileInfo = fileInfo;
-        logger.debug("[ShizukuFile] Created: path={}, exists={}, isDir={}", 
+        logger.debug("[ShizukuFile] Created: path={}, exists={}, isDir={}",
                 absPath, fileInfo.exists(), fileInfo.isDirectory());
     }
 
@@ -120,18 +120,18 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     public List<TMina> listFiles() {
         logger.info("[ShizukuFile] listFiles: path={}", absPath);
         postClientAction(ClientActionEvent.ClientAction.LIST_DIR);
-        
+
         try {
             List<FileInfo> files = getFileSystemView().getServiceManager().listFiles(absPath);
             logger.info("[ShizukuFile] listFiles got {} files", files.size());
             List<TMina> result = new ArrayList<>(files.size());
-            
+
             for (FileInfo info : files) {
-                logger.debug("[ShizukuFile] listFiles item: name={}, path={}", 
+                logger.debug("[ShizukuFile] listFiles item: name={}, path={}",
                         info.getName(), info.getAbsolutePath());
                 result.add(createFile(info.getAbsolutePath(), info));
             }
-            
+
             return result;
         } catch (Exception e) {
             logger.error("[ShizukuFile] listFiles failed for: " + absPath, e);
@@ -143,16 +143,16 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
     public OutputStream createOutputStream(long offset) throws IOException {
         logger.info("[ShizukuFile] createOutputStream: path={}, offset={}", absPath, offset);
         postClientAction(ClientActionEvent.ClientAction.UPLOAD);
-        
+
         return new ShizukuOutputStream(absPath, offset);
     }
 
     @Override
     public InputStream createInputStream(long offset) throws IOException {
-        logger.info("[ShizukuFile] createInputStream: path={}, offset={}, size={}", 
+        logger.info("[ShizukuFile] createInputStream: path={}, offset={}, size={}",
                 absPath, offset, fileInfo.getSize());
         postClientAction(ClientActionEvent.ClientAction.DOWNLOAD);
-        
+
         return new ShizukuInputStream(absPath, offset);
     }
 
@@ -162,33 +162,33 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
     public Object getAttribute(SshFile.Attribute attribute, boolean followLinks) throws IOException {
         logger.debug("[ShizukuFile] getAttribute: path={}, attr={}", absPath, attribute);
-        
+
         try {
             switch (attribute) {
                 case Size:
                     return fileInfo.getSize();
-                    
+
                 case Uid:
                     return 0; // root uid
-                    
+
                 case Owner:
                     return "root";
-                    
+
                 case Gid:
                     return 0; // root gid
-                    
+
                 case Group:
                     return "root";
-                    
+
                 case IsDirectory:
                     return fileInfo.isDirectory();
-                    
+
                 case IsRegularFile:
                     return fileInfo.isFile();
-                    
+
                 case IsSymbolicLink:
                     return fileInfo.isSymlink();
-                    
+
                 case Permissions:
                     Set<SshFile.Permission> perms = new HashSet<>();
                     if (fileInfo.canRead()) {
@@ -206,22 +206,22 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
                         perms.add(SshFile.Permission.OthersExecute);
                     }
                     return perms.isEmpty() ? EnumSet.noneOf(SshFile.Permission.class) : EnumSet.copyOf(perms);
-                    
+
                 case CreationTime:
                     // Android doesn't support creation time, use last modified
                     return fileInfo.getLastModified();
-                    
+
                 case LastModifiedTime:
                     return fileInfo.getLastModified();
-                    
+
                 case LastAccessTime:
                     // Android doesn't track access time, use last modified
                     return fileInfo.getLastModified();
-                    
+
                 case NLink:
                     // Number of hard links, default to 1
                     return 1;
-                    
+
                 default:
                     logger.warn("[ShizukuFile] Unknown attribute requested: {}", attribute);
                     return null;
@@ -234,7 +234,7 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
     public Map<SshFile.Attribute, Object> getAttributes(boolean followLinks) throws IOException {
         logger.debug("[ShizukuFile] getAttributes: path={}", absPath);
-        
+
         try {
             Map<SshFile.Attribute, Object> attributes = new HashMap<>();
             for (SshFile.Attribute attr : SshFile.Attribute.values()) {
@@ -280,17 +280,17 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
         public void close() throws IOException {
             try {
                 byte[] data = buffer.toByteArray();
-                logger.info("[ShizukuOutputStream] close: path={}, dataSize={}, offset={}", 
+                logger.info("[ShizukuOutputStream] close: path={}, dataSize={}, offset={}",
                         path, data.length, offset);
-                
+
                 FileOperationResult result = getFileSystemView().getServiceManager()
                         .writeFile(path, data, offset, offset > 0);
-                
+
                 if (!result.isSuccess()) {
                     logger.error("[ShizukuOutputStream] Write failed: {}", result.getErrorMessage());
                     throw new IOException("Write failed: " + result.getErrorMessage());
                 }
-                
+
                 logger.info("[ShizukuOutputStream] Write successful");
             } catch (Exception e) {
                 logger.error("[ShizukuOutputStream] close failed for: " + path, e);
@@ -325,7 +325,7 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
             if (eof) {
                 return -1;
             }
-            
+
             if (buffer == null || bufferPos >= buffer.length) {
                 fillBuffer();
                 if (buffer == null || buffer.length == 0) {
@@ -373,14 +373,14 @@ public abstract class ShizukuFile<TMina, TFileSystemView extends ShizukuFileSyst
 
         private void fillBuffer() throws IOException {
             try {
-                logger.debug("[ShizukuInputStream] fillBuffer: path={}, position={}, chunkSize={}", 
+                logger.debug("[ShizukuInputStream] fillBuffer: path={}, position={}, chunkSize={}",
                         path, position, CHUNK_SIZE);
-                
+
                 buffer = getFileSystemView().getServiceManager().readFile(path, position, CHUNK_SIZE);
                 bufferPos = 0;
-                
+
                 logger.debug("[ShizukuInputStream] fillBuffer got {} bytes", buffer.length);
-                
+
                 if (buffer.length == 0) {
                     eof = true;
                 } else {
