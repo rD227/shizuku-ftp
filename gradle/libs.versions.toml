@@ -88,7 +88,7 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 #androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended"}
-# I add the lib in here but idk why here didn't see it's color ( It's gray ( And It seems that it was working
+# I add the lib in here but idk why here didn't see its color ( It's gray ( And It seems that it was working
 
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }
@@ -101,3 +101,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 java = { id = "java" }
 maven-publish = { id = "maven-publish" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }

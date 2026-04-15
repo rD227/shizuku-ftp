@@ -19,25 +19,9 @@ If you click on start and click on another fingerprint, you will be prompted to 
 
 This way it will be intercepted instead of crashing. I have not understood this yet.
 
-# use
-
-(Now you don’t very need to look at this to use it, and the method of opening it is more friendly)
-
-Don't click the launch button directly to generate the key
-
-If this bug is not fixed, it will crash.
-
-You should click in the upper left corner and click Authentication
-
-Set password
-
-Then you need to choose an authentication method when starting
-
-Click the upper right corner, click Network status and select Shizuku
-
-Then click Start
-
 # What still needs to be done:
+
+The transfer won't actively overwrite the same file or directory, and needs to be fixed.
 
 ~~I didn’t seem to pay attention to the version number issue before~~
 
@@ -56,6 +40,25 @@ Let’s open it again later ()
 ~~I'm not too familiar with it and they do look difficult~~
 
 ~~I don't know where to start I'm a bit at a loss where to start~~
+
+
+# use
+
+(Now you don’t very need to look at this to use it, and the method of opening it is more friendly)
+
+Don't click the launch button directly to generate the key
+
+If this bug is not fixed, it will crash.
+
+You should click in the upper left corner and click Authentication
+
+Set password
+
+Then you need to choose an authentication method when starting
+
+Click the upper right corner, click Network status and select Shizuku
+
+Then click Start
 
 # The Problem:
 
