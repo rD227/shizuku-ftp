@@ -1,17 +1,23 @@
 package org.primftpd.ui
 
 //import androidx.compose.material.icons.filled.ArrowBack
-import android.R.string.yes
+//import android.R.string.yes
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.view.Menu
-import android.view.View
-import android.widget.TextView
+//import android.view.View
+//import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
@@ -22,9 +28,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,12 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -258,7 +269,6 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
 
     private fun handleStop() {
-        // demo 😄
         ServicesStartStopUtil.stopServers(this)
     }
 
@@ -291,7 +301,23 @@ fun MainScreen(
     onStopServer: () -> Unit,
     onNavigate: (String) -> Unit,
     initialLeftVisible: Boolean = false,
-    initialRightVisible: Boolean = false
+    initialRightVisible: Boolean = false,
+    // 权限状态模拟参数，默认为系统真实值
+    fullStorageAccess: Boolean = if (LocalInspectionMode.current) false else (
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
+    ),
+    mediaLocationAccess: Boolean = if (LocalInspectionMode.current) false else (
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            LocalContext.current.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) == 
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else true
+    ),
+    notificationPermission: Boolean = if (LocalInspectionMode.current) false else (
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            LocalContext.current.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else true
+    )
 ) {
     var rightMenuVisible by remember {
         mutableStateOf(initialRightVisible)
@@ -308,7 +334,9 @@ fun MainScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // 主内容
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -356,6 +384,16 @@ fun MainScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            
+            // 🎯 新增：权限状态卡片
+            Spacer(modifier = Modifier.height(32.dp))
+            PermissionsCard(
+                fullStorageAccess = fullStorageAccess,
+                mediaLocationAccess = mediaLocationAccess,
+                notificationPermission = notificationPermission
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // 背景遮罩 (Scrim)
@@ -525,6 +563,130 @@ fun MainScreen(
                         }
                     )
                 }
+            }
+        }
+    }
+}
+
+// 🎯 新增：权限状态卡片
+@Composable
+fun PermissionsCard(
+    fullStorageAccess: Boolean,
+    mediaLocationAccess: Boolean,
+    notificationPermission: Boolean
+) {
+    val context = LocalContext.current
+
+    val mediaLocationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ -> }
+
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ -> }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Permissions Status",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            
+            // Android 11+ 完整存储访问权限
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                PermissionItem(
+                    title = "Full Storage Access",
+                    hasPermission = fullStorageAccess,
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    }
+                )
+            }
+            
+            // Android 10+ 媒体位置访问权限
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                PermissionItem(
+                    title = "Media Location Access",
+                    hasPermission = mediaLocationAccess,
+                    onClick = {
+                        mediaLocationLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+                    }
+                )
+            }
+            
+            // Android 13+ 通知权限
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                PermissionItem(
+                    title = "Notification Permission",
+                    hasPermission = notificationPermission,
+                    onClick = {
+                        notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PermissionItem(
+    title: String,
+    hasPermission: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Warning,
+                contentDescription = null,
+                tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFFF9800),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (hasPermission) "Granted" else "Not granted",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        if (!hasPermission) {
+            TextButton(onClick = onClick) {
+                Text(
+                    text = "Grant",
+                    textDecoration = TextDecoration.Underline
+                )
             }
         }
     }
@@ -783,7 +945,7 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
 
 @Composable
 fun ShizukuFtpTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = if (LocalInspectionMode.current) false else isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -817,11 +979,14 @@ fun MainScreenPreview() {
             onStopServer = {
             },
             onNavigate = {
-            }
+            },
+            fullStorageAccess = true,
+            mediaLocationAccess = true,
+            notificationPermission = false
         )
     }
 }
-/*
+
 @Preview(showBackground = true, name = "Right Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {
@@ -834,11 +999,13 @@ fun LeftMenuOpenPreview() {
             },
             onNavigate = {
             },
-            initialRightVisible = true
+            initialRightVisible = true,
+            fullStorageAccess = false
         )
     }
 }
-*/
+
+/*
 @Preview(showBackground = true, name = "Password Dialog")
 @Composable
 fun PasswordDialogPreview() {
@@ -849,3 +1016,4 @@ fun PasswordDialogPreview() {
         )
     }
 }
+*/
