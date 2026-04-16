@@ -41,6 +41,10 @@ Well, restart the app to take effect （ then you can see logs
 3.
 Ok, this bug is caused by the NP manager.
 
+It's seems that close the server, the files uploaded to the server will be uploaded really via sftp (NP flies manager) 
+
+~~I can't stand it anymore. Why can it be used again? I can't reproduce this bug anymore.~~
+
 ~~**Newly discovered** things that could be BUGs:~~
 
 ~~Transferring in sftp mode, **my test sftp tool fails to write files to the server**, but can rename~~
