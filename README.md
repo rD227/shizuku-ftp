@@ -25,12 +25,28 @@ This way it will be intercepted instead of crashing. I have not understood this 
 
 # What still needs to be done:
 
-**Newly discovered** things that could be BUGs:
+1.
+emmm, if you didn't generate the key in the beginning, you should press the button twice 
 
-Transferring in sftp mode, **my test sftp tool fails to write files to the server**
-(Same device access (My testing environment : using the same device to access the server), or is it meant to be?) 
+(One for password, one for fingerprint)
 
-Because the [original project](https://github.com/wolpi/prim-ftpd) is also can't be used ~~Maybe it's my files browser ~~
+2.
+
+If you turn off debuggable in release,
+
+you will lose the ability to debug within the app, and it seems that it will not be written to the csv log file.
+
+Well, restart the app to take effect （ then you can see logs
+
+3.
+Ok, this bug is caused by the NP manager.
+
+~~**Newly discovered** things that could be BUGs:~~
+
+~~Transferring in sftp mode, **my test sftp tool fails to write files to the server**, but can rename~~
+~~(Same device access (My testing environment : using the same device to access the server), or it is be designed like this? I haven't look those files)~~ 
+
+~~Because the [original project](https://github.com/wolpi/prim-ftpd) is also can't be used ~~Maybe it's my files browser's problem~~~~
 
 But you can use [tailscale](https://github.com/tailscale/tailscale) to connect to the server
 
@@ -88,17 +104,17 @@ It was able to use it now.......
 
 
 
-~~2.
-When didn't generate the key and try to start the (s)ftp 
+~~2.~~
+~~When didn't generate the key and try to start the (s)ftp~~
 
-It will jump out the window 
+~~It will jump out the window~~ 
 
-then it will crash after generate the key
+~~then it will crash after generate the key~~
 
-(Didn't click the Round button in the first
+~~(Didn't click the Round button in the first~~
 
-try to generate key first will finish the problem
-)~~
+~~try to generate key first will finish the problem~~
+
 
 ~~3.
 Try changing logback.xml~~
