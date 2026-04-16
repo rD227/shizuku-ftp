@@ -10,6 +10,8 @@
 
 # 还需要做什么：
 
+我觉得最好一开始就请求完整存储访问权限，否则会有人不去点那个小小的false，即使弹窗对于用户来说很讨厌
+
 1.
 emmm，如果你一开始没有生成密钥，你应该按两次按钮
 
@@ -29,7 +31,9 @@ debug版本的日志似乎也很少，比如我搓半天就只有一条
 
 看来重新启动服务器，上传到服务器的文件将真正通过sftp（NP flies manager）上传 (否则就是 0B 的文件，但是ftp就不会被影响，我猜我可以手动做兼容)
 
-Ok, this bug is caused by the NP manager. 如果有其他情况，请向我发起issue
+你可以通过 关闭 root复制文件到temp目录选项 来解决这个问题：实际会在 android/data/...shizuku..目录产生中转文件
+
+~~Ok, this bug is caused by the NP manager. 如果有其他情况，请向我发起issue~~
 
 ~~**新发现的** 可能是BUG的东西：~~
 
