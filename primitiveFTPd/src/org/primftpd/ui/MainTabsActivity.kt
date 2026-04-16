@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -57,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -576,14 +579,48 @@ fun PermissionsCard(
     notificationPermission: Boolean
 ) {
     val context = LocalContext.current
+    val inspectionMode = LocalInspectionMode.current
+
+    // 将传入的初始值状态化，以便监听更新
+    var storageGranted by remember(fullStorageAccess) { mutableStateOf(fullStorageAccess) }
+    var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
+    var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
+
+    // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && !inspectionMode) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    storageGranted = Environment.isExternalStorageManager()
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    mediaGranted = context.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) == 
+                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationGranted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
+                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     val mediaLocationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { _ -> }
+    ) { isGranted ->
+        mediaGranted = isGranted // 弹窗结束后立即更新状态
+    }
 
     val notificationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { _ -> }
+    ) { isGranted ->
+        notificationGranted = isGranted // 弹窗结束后立即更新状态
+    }
     
     Card(
         modifier = Modifier
@@ -608,7 +645,7 @@ fun PermissionsCard(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 PermissionItem(
                     title = "Full Storage Access",
-                    hasPermission = fullStorageAccess,
+                    hasPermission = storageGranted,
                     onClick = {
                         val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
                             data = Uri.fromParts("package", context.packageName, null)
@@ -622,7 +659,7 @@ fun PermissionsCard(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 PermissionItem(
                     title = "Media Location Access",
-                    hasPermission = mediaLocationAccess,
+                    hasPermission = mediaGranted,
                     onClick = {
                         mediaLocationLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
                     }
@@ -633,7 +670,7 @@ fun PermissionsCard(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 PermissionItem(
                     title = "Notification Permission",
-                    hasPermission = notificationPermission,
+                    hasPermission = notificationGranted,
                     onClick = {
                         notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                     }
