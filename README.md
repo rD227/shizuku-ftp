@@ -19,29 +19,44 @@ FTP Shizuku is actually can be used
 
 SFTP Shizuku is actually can be used (The initial path is probably can't be used, you can manually specify)
 
-If you click on start and click on another fingerprint, you will be prompted to choose an authentication method.
+~~If you click on start and click on another fingerprint, you will be prompted to choose an authentication method.~~
 
-This way it will be intercepted instead of crashing. I have not understood this yet.
+~~This way it will be intercepted instead of crashing. I have not understood this yet.~~
 
 # What still needs to be done:
+
+I think it's better to request full storage access from the beginning, 
+
+otherwise someone will not click that little false, even if the pop-up is annoying to the user
 
 1.
 emmm, if you didn't generate the key in the beginning, you should press the button twice 
 
 (One for password, one for fingerprint)
 
-2.
+Not bug (Maybe)
 
+2.
 If you turn off debuggable in release,
 
 you will lose the ability to debug within the app, and it seems that it will not be written to the csv log file.
 
-Well, restart the app to take effect （ then you can see logs
+Well, restart the app to take effect （ then you can see logs 
+
+**Not bug**
 
 3.
 Ok, this bug is caused by the NP manager.
 
 It's seems that close the server, the files uploaded to the server will be uploaded really via sftp (NP flies manager) 
+
+You can solve this problem by turning off the root copy files to temp directory option: 
+
+the transfer file will actually be generated in the android/data/...shizuku.. directory
+
+~~(If not, a few more reboots seem to work too, this seems to be entirely an NP manager issue that I can't fix)~~
+
+**Not bug**
 
 ~~I can't stand it anymore. Why can it be used again? I can't reproduce this bug anymore.~~
 
