@@ -30,7 +30,7 @@ I think it's better to request full storage access from the beginning,
 otherwise someone will not click that little false, even if the pop-up is annoying to the user
 
 1.
-emmm, if you didn't generate the key in the beginning, you should press the button twice 
+em mm, if you didn't generate the key in the beginning, you should press the button twice 
 
 (One for password, one for fingerprint)
 
@@ -48,11 +48,11 @@ Well, restart the app to take effect （ then you can see logs
 3.
 Ok, this bug is caused by the NP manager.
 
-It's seems that close the server, the files uploaded to the server will be uploaded really via sftp (NP flies manager) 
+It seems that close the server, the files uploaded to the server will be uploaded really via sftp (NP flies manager) 
 
 You can solve this problem by turning off the root copy files to temp directory option: 
 
-the transfer file will actually be generated in the android/data/...shizuku.. directory
+the transfer file will actually be generated in the android/data/...shizuku… directory
 
 ~~(If not, a few more reboots seem to work too, this seems to be entirely an NP manager issue that I can't fix)~~
 
@@ -63,7 +63,7 @@ the transfer file will actually be generated in the android/data/...shizuku.. di
 ~~**Newly discovered** things that could be BUGs:~~
 
 ~~Transferring in sftp mode, **my test sftp tool fails to write files to the server**, but can rename~~
-~~(Same device access (My testing environment : using the same device to access the server), or it is be designed like this? I haven't look those files)~~ 
+~~(Same device access (My testing environment : using the same device to access the server), or it is being designed like this? I haven't looked those files)~~ 
 
 ~~Because the [original project](https://github.com/wolpi/prim-ftpd) is also can't be used ~~Maybe it's my files browser's problem~~~~
 
