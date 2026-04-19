@@ -13,6 +13,8 @@ Now the Shizuku function works
 
 ~~I will work hard~~
 
+# I need to do other things in recent,don't worry, I won't forget it,
+
 # Fixed ERROR
 
 FTP Shizuku is actually can be used
