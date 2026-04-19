@@ -12,10 +12,26 @@
       "filters": [],
       "attributes": [],
       "versionCode": 70,
-      "versionName": "v0.2.4-SNAPSHOT",
+      "versionName": "v0.2.5-SNAPSHOT",
       "outputFile": "primitiveFTPd-release.apk"
     }
   ],
   "elementType": "File",
+  "baselineProfiles": [
+    {
+      "minApi": 28,
+      "maxApi": 30,
+      "baselineProfiles": [
+        "baselineProfiles/1/primitiveFTPd-release.dm"
+      ]
+    },
+    {
+      "minApi": 31,
+      "maxApi": 2147483647,
+      "baselineProfiles": [
+        "baselineProfiles/0/primitiveFTPd-release.dm"
+      ]
+    }
+  ],
   "minSdkVersionForDexing": 26
 }

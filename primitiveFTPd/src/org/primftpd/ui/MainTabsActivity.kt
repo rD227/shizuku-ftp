@@ -72,6 +72,7 @@ import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
@@ -587,7 +588,7 @@ fun PermissionsCard(
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
 
     // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && !inspectionMode) {
