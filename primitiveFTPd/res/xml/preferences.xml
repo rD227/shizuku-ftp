@@ -229,7 +229,7 @@
 		<SwitchPreference
 			android:name="rootCopyFiles"
 			android:key="rootCopyFilesPref"
-			android:defaultValue="true"
+			android:defaultValue="false"
 			android:title="@string/prefRootCopyFiles"
 			android:summary="@string/prefSummaryRootCopyFiles"
 			app:iconSpaceReserved="false"

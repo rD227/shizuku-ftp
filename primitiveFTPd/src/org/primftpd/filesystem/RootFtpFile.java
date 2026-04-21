@@ -48,7 +48,7 @@ public class RootFtpFile extends RootFile<FtpFile, RootFtpFileSystemView> implem
             @Override
             public void close() throws IOException {
                 super.close();
-                logger.trace("calling sftp handleClose() for ftp file in createInputSteam");
+                logger.trace("calling sft0p handleClose() for ftp file in createInputSteam");
                 handleClose();
             }
         };
