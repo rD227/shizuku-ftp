@@ -13,7 +13,7 @@ Now the Shizuku function works
 
 ~~I will work hard~~
 
-# I need to do other things in recent,don't worry, I won't forget it,
+# I need to do learn more about it in recent,don't worry, I won't forget it,
 
 # Fixed ERROR
 
