@@ -31,6 +31,8 @@ I think it's better to request full storage access from the beginning,
 
 otherwise someone will not click that little false, even if the pop-up is annoying to the user
 
+Checking tv mode
+
 1.
 em mm, if you didn't generate the key in the beginning, you should press the button twice 
 
