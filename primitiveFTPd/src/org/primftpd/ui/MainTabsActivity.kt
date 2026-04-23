@@ -73,6 +73,8 @@ import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
@@ -330,6 +332,19 @@ fun MainScreen(
         mutableStateOf(initialLeftVisible)
     }
 
+    val scope = rememberCoroutineScope()
+
+    // 🎯 核心优化：定义一个通用的菜单导航函数
+    // 封装了：1. 关闭菜单 2. 协程延时（等待侧滑动画完成） 3. 执行跳转
+    val onMenuClick: (String) -> Unit = { route ->
+        rightMenuVisible = false
+        leftMenuVisible = false
+        scope.launch {
+            delay(0) // 略小于侧滑动画时间，让跳转在动画快结束时触发
+            onNavigate(route)
+        }
+    }
+
     val gearRotation by animateFloatAsState(
         targetValue = if (leftMenuVisible || rightMenuVisible) 180f else 0f,
         label = "GearRotation"
@@ -452,58 +467,37 @@ fun MainScreen(
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.connectsetting),
                         text = "Network status",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("netWorkStatus")
-                        }
-                    )//&&
+                        onClick = { onMenuClick("netWorkStatus") }
+                    )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),
                         text = "Scan code",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("qr")
-                        }
+                        onClick = { onMenuClick("qr") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.cleaner),
                         text = "Clean cache",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("clean")
-                        }
+                        onClick = { onMenuClick("clean") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),
                         text = "Client logs",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("clientStatus")
-                        }
+                        onClick = { onMenuClick("clientStatus") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24),
                         text = "Finger print",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("fingerPrint")
-                        }
+                        onClick = { onMenuClick("fingerPrint") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.thinkey),
                         text = "Verification Key",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("VerificationKey")
-                        }
+                        onClick = { onMenuClick("VerificationKey") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.outline_info_24),
                         text = "About",
-                        onClick = {
-                            rightMenuVisible = false
-                            onNavigate("about")
-                        }
+                        onClick = { onMenuClick("about") }
                     )
                 }
             }
@@ -543,10 +537,7 @@ fun MainScreen(
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.authentication),
                         text = "Authentication",
-                        onClick = {
-                            leftMenuVisible = false
-                            onNavigate("settings")
-                        }
+                        onClick = { onMenuClick("settings") }
                     )
                     RowClick(
                         icon = ImageVector.vectorResource(id = R.drawable.port),
@@ -745,6 +736,13 @@ fun FragmentContainerScreen(
     val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
     var hasNavigatedBack by remember { mutableStateOf(false) }
 
+
+    var canLoadFragment by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(50)
+        canLoadFragment = true
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -778,17 +776,19 @@ fun FragmentContainerScreen(
                 .fillMaxSize()
         )
 
-        DisposableEffect(containerId) {
-            val fragment = fragmentFactory() // 在这里调用传入的构造器
-            fragmentManager?.beginTransaction()
-                ?.replace(containerId, fragment, fragmentTag)
-                ?.commit()
+        if (canLoadFragment) {
+            DisposableEffect(containerId) {
+                val fragment = fragmentFactory()
+                fragmentManager?.beginTransaction()
+                    ?.replace(containerId, fragment, fragmentTag)
+                    ?.commit()
 
-            onDispose {
-                fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
-                    fragmentManager.beginTransaction()
-                        .remove(existingFragment)
-                        .commitAllowingStateLoss()
+                onDispose {
+                    fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
+                        fragmentManager.beginTransaction()
+                            .remove(existingFragment)
+                            .commitAllowingStateLoss()
+                    }
                 }
             }
         }
