@@ -20,6 +20,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -334,13 +336,25 @@ fun MainScreen(
 
     val scope = rememberCoroutineScope()
 
-    // 🎯 核心优化：定义一个通用的菜单导航函数
-    // 封装了：1. 关闭菜单 2. 协程延时（等待侧滑动画完成） 3. 执行跳转
+    // 预加载图标
+    val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
+    val iconQr = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24)
+    val iconClean = ImageVector.vectorResource(id = R.drawable.cleaner)
+    val iconLogs = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24)
+    val iconFingerprint = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24)
+    val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
+    val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
+    val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
+    val iconPort = ImageVector.vectorResource(id = R.drawable.port)
+    val iconUi = ImageVector.vectorResource(id = R.drawable.uisetting_coarse)
+    val iconSystem = ImageVector.vectorResource(id = R.drawable.system)
+
+
     val onMenuClick: (String) -> Unit = { route ->
         rightMenuVisible = false
         leftMenuVisible = false
         scope.launch {
-            delay(0) // 略小于侧滑动画时间，让跳转在动画快结束时触发
+            //delay(20)
             onNavigate(route)
         }
     }
@@ -403,7 +417,7 @@ fun MainScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             // 🎯 新增：权限状态卡片
             Spacer(modifier = Modifier.height(32.dp))
             PermissionsCard(
@@ -411,20 +425,22 @@ fun MainScreen(
                 mediaLocationAccess = mediaLocationAccess,
                 notificationPermission = notificationPermission
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // 背景遮罩 (Scrim)
-        if (rightMenuVisible || leftMenuVisible) {
+        // 背景遮罩 (Scrim) - 添加淡入淡出动画
+        AnimatedVisibility(
+            visible = rightMenuVisible || leftMenuVisible,
+            enter = fadeIn(animationSpec = tween(300)),
+            exit = fadeOut(animationSpec = tween(300))
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.32f))
                     .clickable(
-                        interactionSource = remember {
-                            MutableInteractionSource()
-                        },
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
                         rightMenuVisible = false
@@ -433,22 +449,25 @@ fun MainScreen(
             )
         }
 
-        // 右侧滑菜单
+        // 右侧滑菜单 - 性能优化与动画微调
         AnimatedVisibility(
             visible = rightMenuVisible,
-            enter = slideInHorizontally(initialOffsetX = {
-                it
-            }) + fadeIn(),
-            exit = slideOutHorizontally(targetOffsetX = {
-                it
-            }) + fadeOut(),
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                //animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                //animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(280.dp)
+                    .width(270.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .graphicsLayer { clip = true } // 提示系统开启硬件加速
             ) {
                 Column {
                     Text(
@@ -465,37 +484,37 @@ fun MainScreen(
                         Text("关闭")
                     }
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.connectsetting),
+                        icon = iconNetwork,
                         text = "Network status",
                         onClick = { onMenuClick("netWorkStatus") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24),
+                        icon = iconQr,
                         text = "Scan code",
                         onClick = { onMenuClick("qr") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.cleaner),
+                        icon = iconClean,
                         text = "Clean cache",
                         onClick = { onMenuClick("clean") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24),
+                        icon = iconLogs,
                         text = "Client logs",
                         onClick = { onMenuClick("clientStatus") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24),
+                        icon = iconFingerprint,
                         text = "Finger print",
                         onClick = { onMenuClick("fingerPrint") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.thinkey),
+                        icon = iconKey,
                         text = "Verification Key",
                         onClick = { onMenuClick("VerificationKey") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.outline_info_24),
+                        icon = iconAbout,
                         text = "About",
                         onClick = { onMenuClick("about") }
                     )
@@ -503,15 +522,17 @@ fun MainScreen(
             }
         }
 
-        // 左侧滑菜单
+        // 左侧滑菜单 - 性能优化与动画微调
         AnimatedVisibility(
             visible = leftMenuVisible,
-            enter = slideInHorizontally(initialOffsetX = {
-                -it
-            }) + fadeIn(),
-            exit = slideOutHorizontally(targetOffsetX = {
-                -it
-            }) + fadeOut(),
+            enter = slideInHorizontally(
+                initialOffsetX = { -it },
+                //animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -it },
+                //animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
             Box(
@@ -519,6 +540,7 @@ fun MainScreen(
                     .fillMaxHeight()
                     .width(280.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .graphicsLayer { clip = true }
             ) {
                 Column {
                     Text(
@@ -535,24 +557,24 @@ fun MainScreen(
                         Text("关闭")
                     }
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.authentication),
+                        icon = iconAuth,
                         text = "Authentication",
                         onClick = { onMenuClick("settings") }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.port),
+                        icon = iconPort,
                         text = "How to connect",
                         onClick = {
                         }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.uisetting_coarse),
+                        icon = iconUi,
                         text = "UI setting",
                         onClick = {
                         }
                     )
                     RowClick(
-                        icon = ImageVector.vectorResource(id = R.drawable.system),
+                        icon = iconSystem,
                         text = "System",
                         onClick = {
                         }
@@ -737,6 +759,8 @@ fun FragmentContainerScreen(
     var hasNavigatedBack by remember { mutableStateOf(false) }
 
 
+    // 🎯 核心优化：增加一个延迟状态
+    // 进入界面后先不渲染 Fragment，延迟 350ms 彻底避开 Compose 的导航切换动画最卡顿的瞬间
     var canLoadFragment by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(50)
@@ -765,30 +789,36 @@ fun FragmentContainerScreen(
         val containerId = remember { android.view.View.generateViewId() }
         val fragmentTag = remember(containerId) { "fragment_$containerId" }
 
-        AndroidView<FragmentContainerView>(
-            factory = { ctx ->
-                FragmentContainerView(ctx).apply {
-                    id = containerId
-                }
-            },
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        )
-
-        if (canLoadFragment) {
-            DisposableEffect(containerId) {
-                val fragment = fragmentFactory()
-                fragmentManager?.beginTransaction()
-                    ?.replace(containerId, fragment, fragmentTag)
-                    ?.commit()
-
-                onDispose {
-                    fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
-                        fragmentManager.beginTransaction()
-                            .remove(existingFragment)
-                            .commitAllowingStateLoss()
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            AndroidView<FragmentContainerView>(
+                factory = { ctx ->
+                    FragmentContainerView(ctx).apply {
+                        id = containerId
                     }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // 只有当延迟结束后才开始真正的 Fragment 事务
+            if (canLoadFragment) {
+                DisposableEffect(containerId) {
+                    val fragment = fragmentFactory()
+                    fragmentManager?.beginTransaction()
+                        ?.replace(containerId, fragment, fragmentTag)
+                        ?.commit()
+
+                    onDispose {
+                        fragmentManager?.findFragmentByTag(fragmentTag)?.let { existingFragment ->
+                            fragmentManager.beginTransaction()
+                                .remove(existingFragment)
+                                .commitAllowingStateLoss()
+                        }
+                    }
+                }
+            } else {
+                // 加载中占位，避免跳转瞬间的突兀感
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
                 }
             }
         }
@@ -1025,6 +1055,7 @@ fun MainScreenPreview() {
     }
 }
 
+/*
 @Preview(showBackground = true, name = "Right Menu Open")
 @Composable
 fun LeftMenuOpenPreview() {
@@ -1042,8 +1073,8 @@ fun LeftMenuOpenPreview() {
         )
     }
 }
+*/
 
-/*
 @Preview(showBackground = true, name = "Password Dialog")
 @Composable
 fun PasswordDialogPreview() {
@@ -1054,4 +1085,3 @@ fun PasswordDialogPreview() {
         )
     }
 }
-*/

@@ -33,6 +33,10 @@ otherwise someone will not click that little false, even if the pop-up is annoyi
 
 Checking tv mode
 
+Clicking the return button of the system button and the arrow in the upper left corner at the same time
+
+will cause the entire interface to be popped from the top of the stack.
+
 1.
 em mm, if you didn't generate the key in the beginning, you should press the button twice 
 
