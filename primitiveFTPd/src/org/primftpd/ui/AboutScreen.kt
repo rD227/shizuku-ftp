@@ -77,8 +77,8 @@ fun AboutScreen(onBack: () -> Unit) {
             // License
             SectionTitle(stringResource(R.string.licence))
             ClickableLink(
-                label = "Apache License 2.0",
-                url = "https://www.apache.org/licenses/LICENSE-2.0",
+                label = "General Public License v3.0",
+                url = "https://www.gnu.org/licenses/gpl-3.0.html",
                 context = context
             )
             
@@ -86,13 +86,14 @@ fun AboutScreen(onBack: () -> Unit) {
             
             // Project links
             SectionTitle("   \uD83D\uDCC2")
-            LinkItem("GitHub", "https://github.com/wolpi/prim-ftpd", context)
-            LinkItem("F-Droid", "https://f-droid.org/repository/browse/?fdid=org.primftpd", context)
+
+            LinkItem("GitHub", "https://github.com/rD227/shizuku-ftp", context)
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Dependencies
             SectionTitle("Libraries")
+            LinkItem("Upstream GitHub Project", "https://github.com/wolpi/prim-ftpd", context)
             LinkItem("Apache MINA", "https://mina.apache.org", context)
             LinkItem("Bouncy Castle", "https://bouncycastle.org/", context)
             LinkItem("SLF4J", "https://www.slf4j.org/", context)
