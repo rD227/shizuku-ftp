@@ -19,7 +19,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,7 +49,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -74,7 +75,6 @@ import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -694,6 +694,17 @@ fun PermissionsCard(
     }
 }
 
+fun <T> mySpringSpec()
+        = spring<T>(
+    dampingRatio = Spring.DampingRatioMediumBouncy,
+    stiffness = Spring.StiffnessLow
+)
+
+fun <T> telegramSpringSpec() = spring<T>(
+    dampingRatio = 0.5f,      // 较低的阻尼，产生更明显的弹性回拨
+    stiffness = Spring.StiffnessMediumLow // 中低刚度，让动画看起来更灵动而不生硬
+)
+
 @Composable
 fun PermissionItem(
     title: String,
@@ -703,7 +714,7 @@ fun PermissionItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 10.dp), // 稍微增加间距
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -711,31 +722,71 @@ fun PermissionItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            Icon(
-                imageVector = if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Warning,
-                contentDescription = null,
-                tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+            // 2. 图标使用 AnimatedContent 实现缩放弹跳切换
+            AnimatedContent(
+                targetState = hasPermission,
+                transitionSpec = {
+                    (scaleIn(animationSpec = telegramSpringSpec(), initialScale = 0.5f) + fadeIn())
+                        .togetherWith(scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh), targetScale = 0.8f) + fadeOut())
+                },
+                label = "iconPop"
+            ) { targetHasPermission ->
+                Icon(
+                    imageVector = if (targetHasPermission) Icons.Default.CheckCircle else Icons.Default.Warning,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = animateColorAsState(
+                        targetValue = if (targetHasPermission) Color(0xFF4CAF50) else Color(0xFFFF9800),
+                        label = "permissionIconTint",
+                        animationSpec = telegramSpringSpec()
+                    ).value
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
             Column {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
-                Text(
-                    text = if (hasPermission) "Granted" else "Not granted",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+                // 3. 状态文字切换动画，确保 "Not granted" 也能显示并带有平滑过渡
+                AnimatedContent(
+                    targetState = hasPermission,
+                    transitionSpec = {
+                        (slideInVertically { it / 2 } + fadeIn())
+                            .togetherWith(slideOutVertically { -it / 2 } + fadeOut())
+                            .using(SizeTransform(clip = false))
+                    },
+                    label = "statusText"
+                ) { targetPermission ->
+                    Text(
+                        text = if (targetPermission) "Granted" else "Not granted",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (targetPermission)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        else
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    )
+                }
             }
         }
-        
-        if (!hasPermission) {
-            TextButton(onClick = onClick) {
+
+        // 4. “Grant” 按钮的消失也带点弹性
+        AnimatedVisibility(
+            visible = !hasPermission,
+            enter = scaleIn(animationSpec = telegramSpringSpec()) + fadeIn(),
+            exit = scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)) + fadeOut()
+        ) {
+            TextButton(
+                onClick = onClick,
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ) {
                 Text(
                     text = "Grant",
+                    fontWeight = FontWeight.Bold,
                     textDecoration = TextDecoration.Underline
                 )
             }
@@ -789,7 +840,9 @@ fun FragmentContainerScreen(
         val containerId = remember { android.view.View.generateViewId() }
         val fragmentTag = remember(containerId) { "fragment_$containerId" }
 
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Box(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()) {
             AndroidView<FragmentContainerView>(
                 factory = { ctx ->
                     FragmentContainerView(ctx).apply {
@@ -967,7 +1020,10 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
         modifier = Modifier.size(160.dp),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isRunning) Color(0xFFE57373) else Color(0xFF81C784)
+            containerColor = animateColorAsState( targetValue = if (isRunning) Color(0xFFE57373) else Color(0xFF81C784)
+                , label = "serverButtonColor",
+                animationSpec = telegramSpringSpec()
+            ).value
         )
     ) {
         Text(
