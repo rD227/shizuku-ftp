@@ -109,6 +109,7 @@ dependencies {
     implementation libs.androidx.fragment
     implementation libs.androidx.preference
     implementation libs.androidx.recyclerview
+    implementation libs.androidx.compose.animation.graphics
     debugImplementation libs.androidx.ui.tooling
     debugImplementation libs.androidx.ui.test.manifest
     implementation libs.androidx.ui.tooling.preview
