@@ -40,8 +40,9 @@ runtime = "1.10.5"
 composeBom = "2026.03.00"
 # 新增 navigation 版本
 androidxNavigation = "2.9.7"
+ animationGraphics = "1.11.0"
 
-[libraries]
+ [libraries]
 # 明确命名以避免路径冲突
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "androidxActivity" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidxActivity" }
@@ -92,6 +93,7 @@ androidx-compose-material-icons-core = { group = "androidx.compose.material", na
 
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }
+ androidx-compose-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics", version.ref = "animationGraphics" }
 
 
  [plugins]

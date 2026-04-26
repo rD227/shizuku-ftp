@@ -23,6 +23,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -711,10 +712,18 @@ fun PermissionItem(
     hasPermission: Boolean,
     onClick: () -> Unit
 ) {
+    // 1. 加载 AVD 资源
+    val image = androidx.compose.animation.graphics.vector.AnimatedImageVector.animatedVectorResource(R.drawable.avd_anim)
+    // 2. 使用 painter 驱动动画，hasPermission 改变时动画会自动触发
+    val painter = androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter(
+        animatedImageVector = image,
+        atEnd = hasPermission
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp), // 稍微增加间距
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -722,26 +731,13 @@ fun PermissionItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            // 2. 图标使用 AnimatedContent 实现缩放弹跳切换
-            AnimatedContent(
-                targetState = hasPermission,
-                transitionSpec = {
-                    (scaleIn(animationSpec = telegramSpringSpec(), initialScale = 0.5f) + fadeIn())
-                        .togetherWith(scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh), targetScale = 0.8f) + fadeOut())
-                },
-                label = "iconPop"
-            ) { targetHasPermission ->
-                Icon(
-                    imageVector = if (targetHasPermission) Icons.Default.CheckCircle else Icons.Default.Warning,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = animateColorAsState(
-                        targetValue = if (targetHasPermission) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                        label = "permissionIconTint",
-                        animationSpec = telegramSpringSpec()
-                    ).value
-                )
-            }
+            // 3. 替换原来的 Icon
+            Image(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                //我应该把颜色改成不那么荧光的
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -752,7 +748,6 @@ fun PermissionItem(
                     fontWeight = FontWeight.Medium
                 )
 
-                // 3. 状态文字切换动画，确保 "Not granted" 也能显示并带有平滑过渡
                 AnimatedContent(
                     targetState = hasPermission,
                     transitionSpec = {
@@ -774,16 +769,12 @@ fun PermissionItem(
             }
         }
 
-        // 4. “Grant” 按钮的消失也带点弹性
         AnimatedVisibility(
             visible = !hasPermission,
             enter = scaleIn(animationSpec = telegramSpringSpec()) + fadeIn(),
             exit = scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)) + fadeOut()
         ) {
-            TextButton(
-                onClick = onClick,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-            ) {
+            TextButton(onClick = onClick) {
                 Text(
                     text = "Grant",
                     fontWeight = FontWeight.Bold,
