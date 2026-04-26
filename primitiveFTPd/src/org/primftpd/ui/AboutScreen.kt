@@ -94,6 +94,7 @@ fun AboutScreen(onBack: () -> Unit) {
             // Dependencies
             SectionTitle("Libraries")
             LinkItem("Upstream GitHub Project", "https://github.com/wolpi/prim-ftpd", context)
+            LinkItem("AndroidX", "https://developer.android.com/jetpack", context)
             LinkItem("Apache MINA", "https://mina.apache.org", context)
             LinkItem("Bouncy Castle", "https://bouncycastle.org/", context)
             LinkItem("SLF4J", "https://www.slf4j.org/", context)
