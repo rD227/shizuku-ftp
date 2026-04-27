@@ -21,6 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
@@ -601,6 +603,9 @@ fun PermissionsCard(
     var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
 
+    // 🎯 控制卡片展开/收起状态
+    var isExpanded by remember { mutableStateOf(true) }
+
     // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -637,79 +642,117 @@ fun PermissionsCard(
         notificationGranted = isGranted // 弹窗结束后立即更新状态
     }
 
-    var hidePermissionDialog by remember { mutableStateOf(false) }
-    
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            .padding(horizontal = 16.dp)
     ) {
-        val iconHideCard = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24)
-        Box(modifier = Modifier.clickable(
-                onClick = {
-                    hidePermissionDialog = !hidePermissionDialog
+        // 主卡片 - 带动画的滑动
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeOut()
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Permissions Status",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    // Android 11+ 完整存储访问权限
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        PermissionItem(
+                            title = "Full Storage Access",
+                            hasPermission = storageGranted,
+                            onClick = {
+                                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                }
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                    
+                    // Android 10+ 媒体位置访问权限
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        PermissionItem(
+                            title = "Media Location Access",
+                            hasPermission = mediaGranted,
+                            onClick = {
+                                mediaLocationLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+                            }
+                        )
+                    }
+                    
+                    // Android 13+ 通知权限
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        PermissionItem(
+                            title = "Notification Permission",
+                            hasPermission = notificationGranted,
+                            onClick = {
+                                notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        )
+                    }
                 }
-            ).fillMaxWidth()
-            .padding(0.dp)
-            ,
-            contentAlignment = Alignment.Center
-        ){
-            Icon(
-                imageVector = if (hidePermissionDialog) iconHideCard else iconHideCard,
-                contentDescription = null,
-                modifier = Modifier.padding(0.dp)
-            )
+            }
         }
 
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp)
+        // 🎯 浮动按钮 - 始终在卡片右侧中心
+        val iconHideCard = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24)
+        
+        // 根据展开状态计算按钮位置
+        val buttonOffset by animateIntOffsetAsState(
+            targetValue = if (isExpanded) IntOffset(0, 0) else IntOffset(-280, 0), // 收起时向左移动
+            animationSpec = spring(
+                dampingRatio = 0.5f,
+                stiffness = Spring.StiffnessMediumLow
+            ),
+            label = "ButtonOffset"
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset { buttonOffset }
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable {
+                    isExpanded = !isExpanded
+                }
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Permissions Status",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
+            Icon(
+                imageVector = iconHideCard,
+                contentDescription = if (isExpanded) "Hide card" else "Show card",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp)
             )
-            
-            // Android 11+ 完整存储访问权限
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                PermissionItem(
-                    title = "Full Storage Access",
-                    hasPermission = storageGranted,
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                        context.startActivity(intent)
-                    }
-                )
-            }
-            
-            // Android 10+ 媒体位置访问权限
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                PermissionItem(
-                    title = "Media Location Access",
-                    hasPermission = mediaGranted,
-                    onClick = {
-                        mediaLocationLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
-                    }
-                )
-            }
-            
-            // Android 13+ 通知权限
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                PermissionItem(
-                    title = "Notification Permission",
-                    hasPermission = notificationGranted,
-                    onClick = {
-                        notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                )
-            }
         }
     }
 }
