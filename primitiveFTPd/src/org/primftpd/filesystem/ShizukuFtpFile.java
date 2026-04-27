@@ -36,7 +36,7 @@ public class ShizukuFtpFile extends ShizukuFile<FtpFile, ShizukuFtpFileSystemVie
     }
 
     @Override
-    public String getOwnerName() {
+    public String                                                                                                                                                                                                                                                                                                                                                                                      getOwnerName() {
         return user.getName();
     }
 

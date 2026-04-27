@@ -636,6 +636,8 @@ fun PermissionsCard(
     ) { isGranted ->
         notificationGranted = isGranted // 弹窗结束后立即更新状态
     }
+
+    var hidePermissionDialog by remember { mutableStateOf(false) }
     
     Card(
         modifier = Modifier
@@ -646,8 +648,25 @@ fun PermissionsCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
+        val iconHideCard = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24)
+        Box(modifier = Modifier.clickable(
+                onClick = {
+                    hidePermissionDialog = !hidePermissionDialog
+                }
+            ).fillMaxWidth()
+            .padding(0.dp)
+            ,
+            contentAlignment = Alignment.Center
+        ){
+            Icon(
+                imageVector = if (hidePermissionDialog) iconHideCard else iconHideCard,
+                contentDescription = null,
+                modifier = Modifier.padding(0.dp)
+            )
+        }
+
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             Text(
                 text = "Permissions Status",
@@ -695,16 +714,10 @@ fun PermissionsCard(
     }
 }
 
-fun <T> mySpringSpec()
-        = spring<T>(
-    dampingRatio = Spring.DampingRatioMediumBouncy,
-    stiffness = Spring.StiffnessLow
-)
-
 fun <T> telegramSpringSpec() = spring<T>(
-    dampingRatio = 0.5f,      // 较低的阻尼，产生更明显的弹性回拨
-    stiffness = Spring.StiffnessMediumLow // 中低刚度，让动画看起来更灵动而不生硬
-)
+    dampingRatio = 0.5f,
+    stiffness = Spring.StiffnessMediumLow //真正的 telegram动画应该是另外一个库的开源矢量图：Lottie 库
+)//cpp的库，太疯狂了
 
 @Composable
 fun PermissionItem(
@@ -1121,7 +1134,7 @@ fun LeftMenuOpenPreview() {
     }
 }
 */
-
+/*
 @Preview(showBackground = true, name = "Password Dialog")
 @Composable
 fun PasswordDialogPreview() {
@@ -1131,4 +1144,4 @@ fun PasswordDialogPreview() {
             onSave = {}
         )
     }
-}
+}*/

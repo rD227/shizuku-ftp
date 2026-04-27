@@ -30,7 +30,7 @@
                     android:propertyName="fillColor"
                     android:duration="300"
                     android:valueFrom="#ffd700"
-                    android:valueTo="#79d67d"
+                    android:valueTo="#4CAF50"
                     android:valueType="colorType"
                     android:interpolator="@android:interpolator/fast_out_slow_in"/>
             </set>
@@ -51,8 +51,8 @@
                     android:propertyName="fillColor"
                     android:startOffset="200"
                     android:duration="400"
-                    android:valueFrom="#79d67d"
-                    android:valueTo="#79d67d"
+                    android:valueFrom="#4CAF50"
+                    android:valueTo="#4CAF50"
                     android:valueType="colorType"
                     android:interpolator="@android:interpolator/fast_out_slow_in"/>
                 <objectAnimator
