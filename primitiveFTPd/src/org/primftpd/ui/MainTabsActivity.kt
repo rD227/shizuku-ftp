@@ -458,6 +458,10 @@ fun MainScreen(
             enter = slideInHorizontally(
                 initialOffsetX = { it },
                 //animationSpec = tween(300)
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
@@ -530,8 +534,13 @@ fun MainScreen(
             visible = leftMenuVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { -it },
-                //animationSpec = tween(300)
-            ) + fadeIn(animationSpec = tween(300)),
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            ) + fadeIn(animationSpec = tween(300),
+
+                ),
             exit = slideOutHorizontally(
                 targetOffsetX = { -it },
                 //animationSpec = tween(300)
@@ -672,8 +681,28 @@ fun PermissionsCard(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
+                // 🎯 顶部置顶按钮
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            onClick = {
+                                isExpanded = false
+                            }
+                        )
+                        .padding(vertical = 0.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24),
+                        contentDescription = "Hide card",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color(0xFF2FB8BB)
+                    )
+                }
+
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     Text(
                         text = "Permissions Status",
@@ -721,38 +750,37 @@ fun PermissionsCard(
             }
         }
 
-        // 🎯 浮动按钮 - 始终在卡片右侧中心
-        val iconHideCard = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24)
-        
-        // 根据展开状态计算按钮位置
-        val buttonOffset by animateIntOffsetAsState(
-            targetValue = if (isExpanded) IntOffset(0, 0) else IntOffset(-280, 0), // 收起时向左移动
-            animationSpec = spring(
+        // 🎯 右侧圆形浮动按钮 - 只在卡片隐藏时显示
+        AnimatedVisibility(
+            visible = !isExpanded,
+            enter = scaleIn(animationSpec = spring(
                 dampingRatio = 0.5f,
                 stiffness = Spring.StiffnessMediumLow
-            ),
-            label = "ButtonOffset"
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .offset { buttonOffset }
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .clickable {
-                    isExpanded = !isExpanded
-                }
-                .padding(12.dp),
-            contentAlignment = Alignment.Center
+            )) + fadeIn(),
+            exit = scaleOut(animationSpec = spring(
+                dampingRatio = 0.5f,
+                stiffness = Spring.StiffnessMediumLow
+            )) + fadeOut(),
+            modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            Icon(
-                imageVector = iconHideCard,
-                contentDescription = if (isExpanded) "Hide card" else "Show card",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable {
+                        isExpanded = true
+                    }
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24),
+                    contentDescription = "Show card",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
