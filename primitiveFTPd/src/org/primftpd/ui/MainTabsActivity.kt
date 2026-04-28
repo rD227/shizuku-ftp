@@ -697,7 +697,7 @@ fun PermissionsCard(
                         imageVector = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24),
                         contentDescription = "Hide card",
                         modifier = Modifier.size(24.dp),
-                        tint = Color(0xFF2FB8BB)
+                        tint = Color(0xFF4CAF50)
                     )
                 }
 
