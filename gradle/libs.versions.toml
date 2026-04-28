@@ -23,6 +23,8 @@ androidxRecyclerview = "1.4.0"
 material = "1.13.0"
 desugar = "2.1.5"
 
+ vico = "3.1.0"
+
 bouncycastle = "1.83"
 eventbus = "3.3.1"
 httpclient5 = "5.6"
@@ -85,11 +87,10 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 
-# Navigation 和 Icons
+# Navigation Icons 图形绘制
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
-#androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended"}
-# I add the lib in here but idk why here didn't see its color ( It's gray ( And It seems that it was working
+ vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }

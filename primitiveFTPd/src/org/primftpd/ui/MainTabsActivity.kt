@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -784,6 +785,11 @@ fun PermissionsCard(
         }
     }
 }
+
+
+//做一个流量监控的条形图，直接这样写是会在后台一直绘制，还是在进入时记录数据绘制呢？
+
+
 
 fun <T> telegramSpringSpec() = spring<T>(
     dampingRatio = 0.5f,
