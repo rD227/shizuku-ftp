@@ -79,6 +79,9 @@ import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer.ColumnProvider.Companion.series
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -424,11 +427,36 @@ fun MainScreen(
 
             // 🎯 新增：权限状态卡片
             Spacer(modifier = Modifier.height(32.dp))
-            PermissionsCard(
-                fullStorageAccess = fullStorageAccess,
-                mediaLocationAccess = mediaLocationAccess,
-                notificationPermission = notificationPermission
-            )
+            Box(contentAlignment = Alignment.TopCenter) {
+                // 1. 背景图表：先定义，使其在层级上处于底层 (Behind)
+                val modelProducer = remember { CartesianChartModelProducer() }
+                LaunchedEffect(Unit) {
+                    modelProducer.runTransaction {
+                        lineSeries {
+                            series(2, 6, 4, 12, 8, 16, 10, 20)
+                        }
+                    }
+                }
+
+                Column {
+                    // 🎯 调整此处高度，让图表向下移动一段距离
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    NetworkTrafficChart(
+                        modelProducer = modelProducer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(bottom = 8.dp)
+                    )
+                }
+
+                PermissionsCard(
+                    fullStorageAccess = fullStorageAccess,
+                    mediaLocationAccess = mediaLocationAccess,
+                    notificationPermission = notificationPermission
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -783,6 +811,8 @@ fun PermissionsCard(
                 )
             }
         }
+
+
     }
 }
 
