@@ -426,7 +426,7 @@ fun MainScreen(
             )
 
             // 🎯 新增：权限状态卡片
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Box(contentAlignment = Alignment.TopCenter) {
                 // 1. 背景图表：先定义，使其在层级上处于底层 (Behind)
                 val modelProducer = remember { CartesianChartModelProducer() }
@@ -439,15 +439,15 @@ fun MainScreen(
                 }
 
                 Column {
-                    // 🎯 调整此处高度，让图表向下移动一段距离
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
                     NetworkTrafficChart(
                         modelProducer = modelProducer,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .padding(bottom = 8.dp)
+                            .padding(bottom = 0.dp)
+                            .padding(top = 12.dp)
                     )
                 }
 
