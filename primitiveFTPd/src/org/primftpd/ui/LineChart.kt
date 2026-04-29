@@ -16,15 +16,40 @@ import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 //import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
+import com.patrykandpatrick.vico.compose.common.Fill
+
 
 @Composable
 fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
 ) {
+    val lineColor = Color(0xFFB39DDB)
+
     CartesianChartHost(
         chart = rememberCartesianChart(
-            rememberLineCartesianLayer(),
+            rememberLineCartesianLayer(
+                lineProvider = LineCartesianLayer.LineProvider.series(
+                    LineCartesianLayer.rememberLine(
+                        fill = LineCartesianLayer.LineFill.single(Fill(lineColor)),
+                        areaFill = LineCartesianLayer.AreaFill.single(
+                            Fill(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        lineColor.copy(alpha = 0.4f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                        ),//
+                        interpolator = LineCartesianLayer.Interpolator.catmullRom()
+                    )
+                )
+            ),
             startAxis = VerticalAxis.rememberStart(),
             bottomAxis = HorizontalAxis.rememberBottom(),
         ),
