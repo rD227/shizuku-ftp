@@ -20,6 +20,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
@@ -60,7 +61,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
@@ -643,6 +646,18 @@ fun PermissionsCard(
 
     // 🎯 控制卡片展开/收起状态
     var isExpanded by remember { mutableStateOf(true) }
+    // 🎯 控制是否贴边
+    var shouldStickToEdge by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) {
+            delay(5000)
+            shouldStickToEdge = true
+        } else {
+            shouldStickToEdge = false
+        }
+    }
 
     // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -680,10 +695,24 @@ fun PermissionsCard(
         notificationGranted = isGranted // 弹窗结束后立即更新状态
     }
 
+    val animatedPadding by animateDpAsState(
+        targetValue = if (!isExpanded && shouldStickToEdge) 0.dp else 16.dp,
+        label = "padding",
+        //animationSpec = telegramSpringSpec()
+        //why add this will crash?
+        //underZero number is not allowed
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioHighBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(start = 16.dp,
+                    end = animatedPadding.coerceAtLeast(0.dp)
+                )
     ) {
         // 主卡片 - 带动画的滑动
         AnimatedVisibility(
@@ -792,13 +821,22 @@ fun PermissionsCard(
             )) + fadeOut(),
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
+            val buttonOffsetX by animateDpAsState(
+                targetValue = if (shouldStickToEdge) 24.dp else 0.dp,
+                label = "buttonOffset"
+            )
             Box(
                 modifier = Modifier
+                    .offset(x = buttonOffsetX)
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
                     .clickable {
-                        isExpanded = true
+                        if (shouldStickToEdge){
+                            shouldStickToEdge = false
+                        }else{
+                            isExpanded = true
+                        }
                     }
                     .padding(12.dp),
                 contentAlignment = Alignment.Center
