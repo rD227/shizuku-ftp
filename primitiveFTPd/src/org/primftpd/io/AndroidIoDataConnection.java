@@ -221,7 +221,11 @@ public class AndroidIoDataConnection implements DataConnection {
                 loopcnt++;
 
                 // post event
-                //EventBus.getDefault().post(new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite));
+
+                if(loopcnt % 25 == 0) {
+                    EventBus.getDefault().post(new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite));
+                }
+                //为什么这里被注释了？
             }
 
             LOG.trace("bytes read: {}", inCounting.getCount());
