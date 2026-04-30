@@ -22,7 +22,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -38,8 +37,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,7 +45,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -61,8 +57,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -82,9 +76,9 @@ import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer.ColumnProvider.Companion.series
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -181,7 +175,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         )*/
                         FragmentContainerScreen(
                             "扫码了",
-                            {org.primftpd.ui.QrFragment(pftpdFragment)},
+                            {QrFragment(pftpdFragment)},
                             {navController.popBackStack()}
                         )
                     }
@@ -196,35 +190,35 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                     composable("netWorkStatus"){
                         FragmentContainerScreen(
                             "networkStatus",
-                            {org.primftpd.ui.PftpdFragment()},
+                            {PftpdFragment()},
                             {navController.popBackStack()}
                             )
                     }
                     composable("clientStatus"){
                         FragmentContainerScreen(
                             "clientStatus",
-                            {org.primftpd.ui.ClientActionFragment()},
+                            {ClientActionFragment()},
                             {navController.popBackStack()}
                             )
                     }
                     composable("VerificationKey"){
                         FragmentContainerScreen(
                             "Verification Key",
-                            {org.primftpd.ui.PubKeyAuthKeysFragment(true)/*what is true?*/},
+                            {PubKeyAuthKeysFragment(true)/*what is true?*/},
                             {navController.popBackStack()}
                             )
                     }
                     composable("fingerPrint"){
                         FragmentContainerScreen(
                             "fingerPrint",
-                            {org.primftpd.ui.KeysFingerprintsFragment()},
+                            {KeysFingerprintsFragment()},
                             {navController.popBackStack()}
                             )
                     }
                     composable("clean"){
                         FragmentContainerScreen(
                             "cleaner",
-                            {org.primftpd.ui.CleanSpaceFragment()},
+                            {CleanSpaceFragment()},
                             {navController.popBackStack()}
                             )
                     }
@@ -269,11 +263,11 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                 keyProvider.calcPubkeyFingerprints(context)
             }
 
-            val keyPresent = keyProvider.isKeyPresent()
+            val keyPresent = keyProvider.isKeyPresent
             if (!keyPresent) {
-                val askDiag = org.primftpd.ui.GenKeysAskDialogFragment()
+                val askDiag = GenKeysAskDialogFragment()
                 val args = Bundle().apply {
-                    putBoolean(org.primftpd.ui.GenKeysAskDialogFragment.KEY_START_SERVER, true)
+                    putBoolean(GenKeysAskDialogFragment.KEY_START_SERVER, true)
                 }
                 askDiag.arguments = args
                 askDiag.show(supportFragmentManager, DIALOG_TAG)
@@ -300,7 +294,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
             Toast.makeText(this, R.string.restartServer, Toast.LENGTH_LONG).show()
         }
         if (LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS == key) {
-            val askDiag = org.primftpd.ui.GenKeysAskDialogFragment()
+            val askDiag = GenKeysAskDialogFragment()
             askDiag.show(supportFragmentManager, DIALOG_TAG)
         }
     }
@@ -335,7 +329,8 @@ fun MainScreen(
             LocalContext.current.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
                 android.content.pm.PackageManager.PERMISSION_GRANTED
         } else true
-    )
+    ),
+    viewModel: NetworkViewModel = viewModel()
 ) {
     var rightMenuVisible by remember {
         mutableStateOf(initialRightVisible)
@@ -445,7 +440,7 @@ fun MainScreen(
                     Spacer(modifier = Modifier.height(28.dp))
 
                     NetworkTrafficChart(
-                        modelProducer = modelProducer,
+                        modelProducer = viewModel.modelProducer,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
