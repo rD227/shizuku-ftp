@@ -407,13 +407,11 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
     }
 
     public void run() {
-        DataInputStream dis = null;
-        try {
-            dis = new DataInputStream(in);
+        try (DataInputStream dis = new DataInputStream(in)) {
             while (true) {
                 int length = dis.readInt();
                 if (length < 5) {
-                    throw new IllegalArgumentException();
+                    throw new IllegalArgumentException("Packet too short: " + length);
                 }
                 Buffer buffer = new Buffer(length + 4);
                 buffer.putInt(length);
@@ -421,42 +419,34 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
                 while (nb > 0) {
                     int l = dis.read(buffer.array(), buffer.wpos(), nb);
                     if (l < 0) {
-                        throw new IllegalArgumentException();
+                        throw new IllegalArgumentException("Unexpected end of stream");
                     }
                     buffer.wpos(buffer.wpos() + l);
                     nb -= l;
                 }
                 process(buffer);
             }
+        } catch (EOFException ignored) {
         } catch (Throwable t) {
-            if (!closed && !(t instanceof EOFException)) { // Ignore
+            if (!closed) {
                 log.error("Exception caught in SFTP subsystem", t);
             }
         } finally {
-            if (dis != null) {
-                try {
-                    dis.close();
-                } catch (IOException ioe) {
-                    log.error("Could not close DataInputStream", ioe);
-                }
-            }
-
-            if (handles != null) {
-                for (Map.Entry<String, Handle> entry : handles.entrySet()) {
-                    Handle handle = entry.getValue();
-                    try {
-                        handle.close();
-                    } catch (IOException ioe) {
-                        log.error("Could not close open handle: " + entry.getKey(), ioe);
-                    }
-                }
-            }
-            dis = null;
-
+            closeAllHandles();
             callback.onExit(0);
         }
     }
 
+    private void closeAllHandles() {
+        if (handles == null) return;
+        for (Map.Entry<String, Handle> entry : handles.entrySet()) {
+            try {
+                entry.getValue().close();
+            } catch (IOException ioe) {
+                log.error("Could not close open handle: " + entry.getKey(), ioe);
+            }
+        }
+    }
     protected void process(Buffer buffer) throws IOException {
         int length = buffer.getInt();
         // XXX has been changed to support hashing as extended command, see below (check-file)
