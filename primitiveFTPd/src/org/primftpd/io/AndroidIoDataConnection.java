@@ -185,7 +185,7 @@ public class AndroidIoDataConnection implements DataConnection {
             while (true) {
                 int count = inCounting.read(buffer);
                 if (count == -1)
-                    break;
+                    break;//永远循环，直到读完文件
 
                 //这里调用了一个CountingReadableButeChannel类，这个类继承了ReadableByteChannel，在这个继承类的构造方法当中
                 //持有一个ReadableByteChanel的实例对象，使用这个
@@ -230,11 +230,7 @@ public class AndroidIoDataConnection implements DataConnection {
                     lastPostTime = now;
                 }
             }
-        } catch(IOException e) {
-            LOG.warn("Exception during data transfer, closing data connection socket", e);
-            factory.closeDataConnection();
-            throw e;
-        } catch(RuntimeException e) {
+        } catch(IOException | RuntimeException e) {
             LOG.warn("Exception during data transfer, closing data connection socket", e);
             factory.closeDataConnection();
             throw e;
