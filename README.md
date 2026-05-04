@@ -15,6 +15,9 @@ Now the Shizuku function works
 
 # I need to do learn more about it recently,don't worry, I won't forget it,
 
+~I'm learning BGA packaged chip (How to replant tin)~
+~Filled: two times~
+
 # Fixed ERROR
 
 FTP Shizuku is actually can be used
