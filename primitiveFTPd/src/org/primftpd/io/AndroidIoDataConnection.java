@@ -27,14 +27,12 @@ public class AndroidIoDataConnection implements DataConnection {
     private final ServerDataConnectionFactory factory;
     private SocketChannel dataSocketChannel;
 
-    public AndroidIoDataConnection(final SocketChannel dataSocketChannel, final FtpIoSession session,
-                            final ServerDataConnectionFactory factory) {
+    public AndroidIoDataConnection(final SocketChannel dataSocketChannel, final FtpIoSession session, final ServerDataConnectionFactory factory) {
         LOG.trace("AndroidIoDataConnection()");
         this.session = session;
         this.dataSocketChannel = dataSocketChannel;
         this.factory = factory;
     }
-
 
     /*
      * (non-Javadoc)
@@ -42,21 +40,22 @@ public class AndroidIoDataConnection implements DataConnection {
      * @seeorg.apache.ftpserver.FtpDataConnection2#transferFromClient(java.io.
      * OutputStream)
      */
-    public final long transferFromClient(FtpSession session, final OutputStream out)
-            throws IOException {
+    public final long transferFromClient(FtpSession session, final OutputStream out) throws IOException {
         LOG.trace("transferFromClient()");
 
         WritableByteChannel outStreamBacked = new WritableByteChannel() {
             @Override
             public int write(ByteBuffer src) throws IOException {
-                //LOG.trace("buffer stats, position: {}, limit: {}, capacity: {}, remaining: {}",
-                //        new Object[]{src.position(), src.limit(), src.capacity(), src.remaining()});
+                // 🔧 修复：使用 remaining() 而不是 position() 来获取要写入的长度
+                //   flip/limit+position 之后 position=0, remaining()=实际数据长度
                 byte[] buf = src.array();
-                int length = src.position();
+                int length = src.remaining();
+                int offset = src.position();
                 if (length < buf.length) {
                     LOG.trace("writing less than buffer length, len: {}, diff: {}", length, (buf.length - length));
                 }
-                out.write(buf, 0, length);
+                out.write(buf, offset, length);
+                src.position(src.limit());
                 return length;
             }
 
@@ -72,7 +71,8 @@ public class AndroidIoDataConnection implements DataConnection {
         };
 
         try {
-            return transfer(session, true, dataSocketChannel, outStreamBacked);
+            // 🔧 修复：客户端上传 → 服务器读取，isWrite 应为 false
+            return transfer(session, false, dataSocketChannel, outStreamBacked);
         } finally {
             //IoUtils.close(out);
         }
@@ -85,12 +85,10 @@ public class AndroidIoDataConnection implements DataConnection {
      * org.apache.ftpserver.FtpDataConnection2#transferToClient(java.io.InputStream
      * )
      */
-    public final long transferToClient(FtpSession session, final InputStream in)
-            throws IOException {
+    public final long transferToClient(FtpSession session, final InputStream in) throws IOException {
         LOG.trace("transferToClient()");
 
         ReadableByteChannel inStreamBacked = new ReadableByteChannel() {
-
             private int lastRead = 0;
 
             @Override
@@ -105,6 +103,10 @@ public class AndroidIoDataConnection implements DataConnection {
                     dst.position(0);
                     dst.limit(lastRead);
                 }
+                // 🔧 修复：当 lastRead == buf.length 时（读满缓冲区），
+                //   也需要正确设置 position 和 limit，否则 position 不对
+                //   对于 SocketChannel.read()，读满后 position=capacity，limit=capacity
+                //   对于 InputStream.read()，读满时 position 和 limit 未被设置，可能不正确
                 return lastRead;
             }
 
@@ -120,6 +122,7 @@ public class AndroidIoDataConnection implements DataConnection {
         };
 
         try {
+            // 服务器发送给客户端 → 服务器写入，isWrite = true（正确）
             return transfer(session, true, inStreamBacked, dataSocketChannel);
         } finally {
             //IoUtils.close(out);
@@ -133,8 +136,7 @@ public class AndroidIoDataConnection implements DataConnection {
      * org.apache.ftpserver.FtpDataConnection2#transferToClient(java.lang.String
      * )
      */
-    public final void transferToClient(FtpSession session, final String str)
-            throws IOException {
+    public final void transferToClient(FtpSession session, final String str) throws IOException {
         LOG.trace("transferToClient()");
         //Writer writer = null;
         try {
@@ -150,27 +152,26 @@ public class AndroidIoDataConnection implements DataConnection {
                         .getBytes("UTF-8").length);
             }
         } finally {
-//            if (writer != null) {
-//                writer.flush();
-//            }
-//            IoUtils.close(writer);
+            // if (writer != null) {
+            //     writer.flush();
+            // }
+            // IoUtils.close(writer);
         }
-
     }
 
-    private final long transfer(FtpSession session, boolean isWrite, final ReadableByteChannel in, final WritableByteChannel out)
-            throws IOException {
+    // D:/Users/xvsu/AndroidStudioProjects/shizuku-ftp/primitiveFTPd/src/org/primftpd/io/AndroidIoDataConnection.java
+    private final long transfer(FtpSession session, boolean isWrite, final ReadableByteChannel in, final WritableByteChannel out) throws IOException {
         long transferredSize = 0L;
-
+        long lastPostTime = 0; // 记录上次发送事件的时间
         boolean isAscii = session.getDataType() == DataType.ASCII;
+
         byte[] buff = new byte[4096];
 
-        LOG.trace("transfer(), ascii: {}", isAscii);
         if (isAscii) {
             LOG.info("ignoring request for ascii transfer, doing it binary");
         }
-        try {
 
+        try {
             DefaultFtpSession defaultFtpSession = null;
             if (session instanceof DefaultFtpSession) {
                 defaultFtpSession = (DefaultFtpSession) session;
@@ -179,23 +180,25 @@ public class AndroidIoDataConnection implements DataConnection {
             CountingReadableByteChannel inCounting = new CountingReadableByteChannel(in);
             CountingWritableByteChannel outCounting = new CountingWritableByteChannel(out);
 
-            long loopcnt = 0;
             ByteBuffer buffer = ByteBuffer.wrap(buff);
+
             while (true) {
-
-                // read data
                 int count = inCounting.read(buffer);
-                if (count == -1) {
+                if (count == -1)
                     break;
-                }
-                if (count < buff.length) {
-                    LOG.trace("read less than buffer size in loop '{}', read: {}, diff: {}",
-                            new Object[]{loopcnt, count, (buff.length - count)});
-                    LOG.trace("    buffer stats, position: {}, limit: {}, capacity: {}, remaining: {}",
-                            new Object[]{buffer.position(), buffer.limit(), buffer.capacity(), buffer.remaining()});
-                }
 
-                // update MINA session
+                // 🔧 核心修复：read 之后，统一将 buffer 准备为 "position=0, limit=count" 的状态
+                //   这样 out.write(buffer) 才能写出正确的字节数
+                //
+                //   两种 in 的情况：
+                //   - SocketChannel.read(): read 后 position=count, limit=capacity
+                //     → 需要 limit(count), position(0)
+                //   - inStreamBacked.read(): read 后 position=0, limit=lastRead(=count)
+                //     → limit(count) 无变化, position(0) 无变化 (幂等)
+                buffer.limit(count);
+                buffer.position(0);
+
+                // 更新会话统计
                 if (defaultFtpSession != null) {
                     if (isWrite) {
                         defaultFtpSession.increaseWrittenDataBytes(count);
@@ -204,33 +207,23 @@ public class AndroidIoDataConnection implements DataConnection {
                     }
                 }
 
-                // write data
+                // 写入数据（现在 remaining()=count，能正确写出全部数据）
                 outCounting.write(buffer);
-
                 transferredSize += count;
-
                 notifyObserver();
 
                 buffer.clear();
 
-                long read = inCounting.getCount();
-                long written = outCounting.getCount();
-                if (read != written) {
-                    LOG.trace("difference of read/written in loop '{}', bytes: {}", loopcnt, (written - read));
+                //每200ms发送一次事件
+                long now = System.currentTimeMillis();
+                if (now - lastPostTime > 200) {
+                    EventBus.getDefault().post(
+                        new DataTransferredEvent(now, transferredSize, isWrite)
+                    );
+                    android.util.Log.d("IoDataConn", ">>>POST 事件 bytes=" + transferredSize);
+                    lastPostTime = now;
                 }
-                loopcnt++;
-
-                // post event
-
-                if(loopcnt % 25 == 0) {
-                    EventBus.getDefault().post(new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite));
-                }
-                //为什么这里被注释了？
             }
-
-            LOG.trace("bytes read: {}", inCounting.getCount());
-            LOG.trace("bytes written: {}", outCounting.getCount());
-
         } catch(IOException e) {
             LOG.warn("Exception during data transfer, closing data connection socket", e);
             factory.closeDataConnection();
@@ -239,10 +232,14 @@ public class AndroidIoDataConnection implements DataConnection {
             LOG.warn("Exception during data transfer, closing data connection socket", e);
             factory.closeDataConnection();
             throw e;
-        } finally {
-//            if (out != null) {
-//                out.flush();
-//            }
+        }
+
+        // 🔧 修复：传输结束后发送最终事件，确保最后一段数据不被遗漏
+        if (transferredSize > 0) {
+            EventBus.getDefault().post(
+                new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite)
+            );
+            android.util.Log.d("IoDataConn", ">>>POST 最终事件 bytes=" + transferredSize);
         }
 
         return transferredSize;
@@ -254,7 +251,6 @@ public class AndroidIoDataConnection implements DataConnection {
     protected void notifyObserver() {
         //LOG.trace("notifyObserver()");
         session.updateLastAccessTime();
-
         // TODO this has been moved from AbstractConnection, do we need to keep
         // it?
         // serverContext.getConnectionManager().updateConnection(this);
