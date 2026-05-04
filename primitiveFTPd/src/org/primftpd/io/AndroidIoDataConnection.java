@@ -187,9 +187,15 @@ public class AndroidIoDataConnection implements DataConnection {
                 if (count == -1)
                     break;
 
+                //这里调用了一个CountingReadableButeChannel类，这个类继承了ReadableByteChannel，在这个继承类的构造方法当中
+                //持有一个ReadableByteChanel的实例对象，使用这个
+
+                //ai的注释
                 // 🔧 核心修复：read 之后，统一将 buffer 准备为 "position=0, limit=count" 的状态
                 //   这样 out.write(buffer) 才能写出正确的字节数
                 //
+
+                //（zhe li you liang ge wen jian shi li
                 //   两种 in 的情况：
                 //   - SocketChannel.read(): read 后 position=count, limit=capacity
                 //     → 需要 limit(count), position(0)

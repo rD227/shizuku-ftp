@@ -18,6 +18,7 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 //import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.common.Fill
@@ -28,24 +29,40 @@ fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
 ) {
-    val lineColor = Color(0xFFB39DDB)
+    val ftpLineColor = Color(0xFFB39DDB)
+    val sftpLineColor = Color(0xFF81C784)
 
     CartesianChartHost(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(
                 lineProvider = LineCartesianLayer.LineProvider.series(
                     LineCartesianLayer.rememberLine(
-                        fill = LineCartesianLayer.LineFill.single(Fill(lineColor)),
+                        fill = LineCartesianLayer.LineFill.single(Fill(ftpLineColor)),
                         areaFill = LineCartesianLayer.AreaFill.single(
                             Fill(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        lineColor.copy(alpha = 0.4f),
+                                        ftpLineColor.copy(alpha = 0.4f),
                                         Color.Transparent
                                     )
                                 )
                             )
                         ),//
+                        interpolator = LineCartesianLayer.Interpolator.catmullRom()
+                    )
+                    ,
+                    LineCartesianLayer.rememberLine(
+                        fill = LineCartesianLayer.LineFill.single(Fill(sftpLineColor)),
+                        areaFill = LineCartesianLayer.AreaFill.single(
+                            Fill(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        sftpLineColor.copy(alpha = 0.4f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                        ),
                         interpolator = LineCartesianLayer.Interpolator.catmullRom()
                     )
                 )
