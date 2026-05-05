@@ -1,6 +1,5 @@
 package org.primftpd.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
@@ -32,8 +31,7 @@ class NetworkViewModel : ViewModel() {
     private val logger: Logger? = LoggerFactory.getLogger(javaClass)
 
     init {
-        Log.d("NetworkViewModel", ">>> ViewModel 已创建，正在注册 EventBus")
-        logger?.debug(">>>SLF4J try to look the ViewModel start, ready to register th event bus ")
+        logger?.debug(">>> ViewModel created, registering EventBus")
         EventBus.getDefault().register(this)
         viewModelScope.launch {
             while (isActive) {
@@ -55,7 +53,7 @@ class NetworkViewModel : ViewModel() {
             }
             lastSftpEventBytes = currentTotal
             sftpBytesInLastSecond.addAndGet(delta)
-            Log.d("NetworkViewModel", ">>>SFTP事件: delta=${delta}B, sftpBytesInLastSecond=${sftpBytesInLastSecond.get()}B")
+            logger?.debug(">>>SFTP event: delta={}B, sftpBytesInLastSecond={}B", delta, sftpBytesInLastSecond.get())
         } else {
             val delta = if (currentTotal > lastFtpEventBytes) {
                 currentTotal - lastFtpEventBytes
@@ -64,7 +62,7 @@ class NetworkViewModel : ViewModel() {
             }
             lastFtpEventBytes = currentTotal
             ftpBytesInLastSecond.addAndGet(delta)
-            Log.d("NetworkViewModel", ">>>FTP事件: delta=${delta}B, ftpBytesInLastSecond=${ftpBytesInLastSecond.get()}B")
+            logger?.debug(">>>FTP event: delta={}B, ftpBytesInLastSecond={}B", delta, ftpBytesInLastSecond.get())
         }
     }
 
@@ -74,7 +72,7 @@ class NetworkViewModel : ViewModel() {
         val ftpSpeedKB = ftpBytesThisSecond / 1024
         val sftpSpeedKB = sftpBytesThisSecond / 1024
 
-        Log.d("NetworkViewModel", ">>>每秒更新: ftp=${ftpSpeedKB}KB/s, sftp=${sftpSpeedKB}KB/s")
+        logger?.info(">>> every second update: ftp={}KB/s, sftp={}KB/s", ftpSpeedKB, sftpSpeedKB)
 
         ftpSpeedHistory.add(ftpSpeedKB)
         sftpSpeedHistory.add(sftpSpeedKB)

@@ -30,7 +30,9 @@ SFTP Shizuku is actually can be used (The initial path is probably can't be used
 
 # What still needs to be done:
 
-I want to see if the log4J of [NetWorkViewModel](primitiveFTPd/src/org/primftpd/ui/NetworkViewModel.kt) can be use
+~~I want to see if the log4J of [NetWorkViewModel](primitiveFTPd/src/org/primftpd/ui/NetworkViewModel.kt) can be use~~
+
+Zip Transform？
 
 I think it's better to request full storage access from the beginning, 
 
