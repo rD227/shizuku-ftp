@@ -113,8 +113,10 @@ public class AndroidIoDataConnectionFactory extends IODataConnectionFactory impl
                             address, passivePort);
             //port = serverSocketChannel.getLocalPort();
             //servSoc.setSoTimeout(dataCfg.getIdleTime() * 1000);
-            //port = serverSocket.getLocalPort();
-            port = passivePort;
+
+
+            //port = passivePort;
+            port = serverSocket.getLocalPort();
             serverSocket.setSoTimeout(dataCfg.getIdleTime() * 1000);
 
 
