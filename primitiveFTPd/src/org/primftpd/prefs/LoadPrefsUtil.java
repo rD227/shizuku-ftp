@@ -299,7 +299,7 @@ public class LoadPrefsUtil
 	 * @param port Port to validate
 	 * @return True if port is valid, false if invalid.
 	 */
-	static boolean validatePort(int port) {
+	public static boolean validatePort(int port) {
 		return port > 1024 && port <= 64000;
 	}
 
