@@ -503,7 +503,7 @@ fun MainScreen(
             ) {
                 Column {
                     Text(
-                        text = "功能与工具",
+                        text = "Function and tools",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -513,7 +513,7 @@ fun MainScreen(
                         },
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     ) {
-                        Text("关闭")
+                        Text("Close")
                     }
                     RowClick(
                         icon = iconNetwork,
@@ -581,7 +581,7 @@ fun MainScreen(
             ) {
                 Column {
                     Text(
-                        text = "设置与系统",
+                        text = "Setting and System",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -591,7 +591,7 @@ fun MainScreen(
                         },
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     ) {
-                        Text("关闭")
+                        Text("Close")
                     }
                     RowClick(
                         icon = iconAuth,
@@ -622,7 +622,7 @@ fun MainScreen(
     }
 }
 
-// 🎯 新增：权限状态卡片
+
 @Composable
 fun PermissionsCard(
     fullStorageAccess: Boolean,
@@ -952,8 +952,6 @@ fun FragmentContainerScreen(
     var hasNavigatedBack by remember { mutableStateOf(false) }
 
 
-    // 🎯 核心优化：增加一个延迟状态
-    // 进入界面后先不渲染 Fragment，延迟 350ms 彻底避开 Compose 的导航切换动画最卡顿的瞬间
     var canLoadFragment by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(50)
@@ -994,7 +992,6 @@ fun FragmentContainerScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // 只有当延迟结束后才开始真正的 Fragment 事务
             if (canLoadFragment) {
                 DisposableEffect(containerId) {
                     val fragment = fragmentFactory()
