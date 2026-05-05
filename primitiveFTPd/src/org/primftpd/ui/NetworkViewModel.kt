@@ -19,17 +19,15 @@ import java.util.concurrent.atomic.AtomicLong
 class NetworkViewModel : ViewModel() {
     val modelProducer = CartesianChartModelProducer()
 
-    // 🔧 修复3：使用AtomicLong保证线程安全（EventBus回调在BACKGROUND线程，updateChart在Main线程）
-    private val bytesInLastSecond = AtomicLong(0L)
+    private val ftpBytesInLastSecond = AtomicLong(0L)
+    private val sftpBytesInLastSecond = AtomicLong(0L)
 
-    private val speedHistory = mutableListOf<Long>()
+    private val ftpSpeedHistory = mutableListOf<Long>()
+    private val sftpSpeedHistory = mutableListOf<Long>()
     private val maxHistoryPoints = 20
-    //最大长度
 
-    // 🔧 修复4：记录上一次event.bytes，计算增量delta
-    //   原代码的 lastTotalBytes 在每秒清零 bytesInLastSecond 时没有重置，
-    //   导致delta越来越大（transferredSize是累计值，不是每秒的增量）
-    private var lastEventBytes = 0L
+    private var lastFtpEventBytes = 0L
+    private var lastSftpEventBytes = 0L
 
     private val logger: Logger? = LoggerFactory.getLogger(javaClass)
 
@@ -48,36 +46,50 @@ class NetworkViewModel : ViewModel() {
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     fun onDataTransferred(event: DataTransferredEvent) {
         val currentTotal = event.bytes
-        // 🔧 修复5：正确计算增量
-        //   event.bytes 是累计传输字节数（transferredSize），不是本次增量
-        //   delta = 本次累计 - 上次累计 = 这段时间新增的字节
-        val delta = if (currentTotal > lastEventBytes) {
-            currentTotal - lastEventBytes
+
+        if (event.isSftp) {
+            val delta = if (currentTotal > lastSftpEventBytes) {
+                currentTotal - lastSftpEventBytes
+            } else {
+                currentTotal
+            }
+            lastSftpEventBytes = currentTotal
+            sftpBytesInLastSecond.addAndGet(delta)
+            Log.d("NetworkViewModel", ">>>SFTP事件: delta=${delta}B, sftpBytesInLastSecond=${sftpBytesInLastSecond.get()}B")
         } else {
-            // 新传输开始（transferredSize被重置为0），直接用currentTotal
-            currentTotal
+            val delta = if (currentTotal > lastFtpEventBytes) {
+                currentTotal - lastFtpEventBytes
+            } else {
+                currentTotal
+            }
+            lastFtpEventBytes = currentTotal
+            ftpBytesInLastSecond.addAndGet(delta)
+            Log.d("NetworkViewModel", ">>>FTP事件: delta=${delta}B, ftpBytesInLastSecond=${ftpBytesInLastSecond.get()}B")
         }
-        lastEventBytes = currentTotal
-
-        bytesInLastSecond.addAndGet(delta)
-
-        Log.d("NetworkViewModel", ">>>收到事件: delta=${delta}B, bytesInLastSecond=${bytesInLastSecond.get()}B, total=${currentTotal}")
     }
 
     private suspend fun updateChart() {
-        // 🔧 修复6：getAndSet(0) 原子地读取并清零，避免竞态
-        val bytesThisSecond = bytesInLastSecond.getAndSet(0L)
-        val speedKB = bytesThisSecond / 1024
+        val ftpBytesThisSecond = ftpBytesInLastSecond.getAndSet(0L)
+        val sftpBytesThisSecond = sftpBytesInLastSecond.getAndSet(0L)
+        val ftpSpeedKB = ftpBytesThisSecond / 1024
+        val sftpSpeedKB = sftpBytesThisSecond / 1024
 
-        Log.d("NetworkViewModel", ">>>每秒更新: speed=${speedKB}KB/s, bytesThisSecond=${bytesThisSecond}B")
+        Log.d("NetworkViewModel", ">>>每秒更新: ftp=${ftpSpeedKB}KB/s, sftp=${sftpSpeedKB}KB/s")
 
-        speedHistory.add(speedKB)
-        if (speedHistory.size > maxHistoryPoints) {
-            speedHistory.removeAt(0)
+        ftpSpeedHistory.add(ftpSpeedKB)
+        sftpSpeedHistory.add(sftpSpeedKB)
+        if (ftpSpeedHistory.size > maxHistoryPoints) {
+            ftpSpeedHistory.removeAt(0)
+        }
+        if (sftpSpeedHistory.size > maxHistoryPoints) {
+            sftpSpeedHistory.removeAt(0)
         }
 
         modelProducer.runTransaction {
-            lineSeries { series(speedHistory) }
+            lineSeries {
+                series(ftpSpeedHistory)
+                series(sftpSpeedHistory)
+            }
         }
     }
 
