@@ -62,12 +62,19 @@ import androidx.compose.ui.tooling.preview.Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
+    var hasNatigatedBack by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.prefs)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (!hasNatigatedBack) {
+                            hasNatigatedBack = true
+                            onBack()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
@@ -590,7 +597,7 @@ private fun ConnectivityCategory() {
             input == otherVal -> context.getString(R.string.portsEqual_v2)
             else -> null
         }
-    }
+    }//这里原来的otherKey删掉了，直接穿的两个参数
 
     @SuppressLint("LocalContextGetResourceValueCall")
     fun validatePassivePorts(input: String): String? {
@@ -914,6 +921,9 @@ private fun SystemCategory() {
     val loggingStr = remember {
         prefs.getString(LoadPrefsUtil.PREF_KEY_LOGGING, Logging.NONE.xmlValue()) ?: "0"
     }
+    // this val's mutableStateOf is removed by AI
+    //
+
     var loggingIndex by remember {
         mutableStateOf(loggingValues.indexOf(loggingStr).coerceAtLeast(0))
     }
