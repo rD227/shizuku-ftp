@@ -401,7 +401,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
         try {
             pendingFuture = executors.submit(this);
         } catch (RuntimeException e) {    // e.g., RejectedExecutionException
-            log.error("Failed (" + e.getClass().getSimpleName() + ") to start command: " + e.getMessage(), e);
+            log.error("Failed ({}) to start command: {}", e.getClass().getSimpleName(), e.getMessage(), e);
             throw new IOException(e);
         }
     }
@@ -436,6 +436,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
             callback.onExit(0);
         }
     }
+    //Now, Java needn't GC it by hands
 
     private void closeAllHandles() {
         if (handles == null) return;
@@ -443,7 +444,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
             try {
                 entry.getValue().close();
             } catch (IOException ioe) {
-                log.error("Could not close open handle: " + entry.getKey(), ioe);
+                log.error("Could not close open handle: {}", entry.getKey(), ioe);
             }
         }
     }
@@ -1268,7 +1269,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
             boolean result = pendingFuture.cancel(true);
             // TODO consider waiting some reasonable (?) amount of time for cancellation
             if (log.isDebugEnabled()) {
-                log.debug("destroy() - cancel pending future=" + result);
+                log.debug("destroy() - cancel pending future={}", result);
             }
         }
 
@@ -1277,7 +1278,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
         if ((executors != null) && shutdownExecutor) {
             Collection<Runnable> runners = executors.shutdownNow();
             if (log.isDebugEnabled()) {
-                log.debug("destroy() - shutdown executor service - runners count=" + ((runners == null) ? 0 : runners.size()));
+                log.debug("destroy() - shutdown executor service - runners count={}", (runners == null) ? 0 : runners.size());
             }
         }
 
