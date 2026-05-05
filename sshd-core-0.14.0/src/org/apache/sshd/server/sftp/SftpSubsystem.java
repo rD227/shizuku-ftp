@@ -54,6 +54,8 @@ import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.SessionAware;
 import org.apache.sshd.server.session.ServerSession;
+import org.greenrobot.eventbus.EventBus;
+import org.primftpd.events.DataTransferredEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,6 +218,10 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
     private FileSystemView root;
     private int version;
     private Map<String, Handle> handles = new HashMap<String, Handle>();
+
+    // SFTP traffic monitoring
+    private long sftpCumulativeBytes = 0;
+    private long lastSftpEventTime = 0;
 
     protected static abstract class Handle {
         SshFile file;
@@ -438,6 +444,16 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
     }
     //Now, Java needn't GC it by hands
 
+    private void postSftpTraffic(long bytes, boolean isWrite) {
+        sftpCumulativeBytes += bytes;
+        long now = System.currentTimeMillis();
+        if (now - lastSftpEventTime > 200) {
+            EventBus.getDefault().post(
+                new DataTransferredEvent(now, sftpCumulativeBytes, isWrite, true));
+            lastSftpEventTime = now;
+        }
+    }
+
     private void closeAllHandles() {
         if (handles == null) return;
         for (Map.Entry<String, Handle> entry : handles.entrySet()) {
@@ -568,6 +584,9 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
                         FileHandle fh = (FileHandle) p;
                         byte[] b = new byte[Math.min(len, Buffer.MAX_LEN)];
                         len = fh.read(b, offset);
+                        if (len > 0) {
+                            postSftpTraffic(len, false);
+                        }
                         if (len >= 0) {
                             Buffer buf = new Buffer(len + 5);
                             buf.putByte((byte) SSH_FXP_DATA);
@@ -595,6 +614,7 @@ public class SftpSubsystem implements Command, Runnable, SessionAware, FileSyste
                     } else {
                         FileHandle fh = (FileHandle) p;
                         fh.write(data, offset);
+                        postSftpTraffic(data.length, true);
                         sendStatus(id, SSH_FX_OK, "");
                     }
                 } catch (IOException e) {

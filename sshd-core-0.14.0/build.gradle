@@ -51,4 +51,6 @@ dependencies {
 
     compileOnly(libs.slf4j.api)
     compileOnly(libs.mina.core)
+
+    implementation(libs.eventbus)
 }
