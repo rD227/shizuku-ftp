@@ -25,7 +25,7 @@ public class AndroidIoDataConnectionFactory extends IODataConnectionFactory impl
     private final Logger LOG = LoggerFactory
             .getLogger(IODataConnectionFactory.class);
 
-    private FtpServerContext serverContext;
+    //private FtpServerContext serverContext;
 
     private InetAddress address;
 
@@ -53,7 +53,7 @@ public class AndroidIoDataConnectionFactory extends IODataConnectionFactory impl
             final FtpIoSession session) {
         super(serverContext, session);
         this.session = session;
-        this.serverContext = serverContext;
+        //this.serverContext = serverContext;
     }
 
     @Override
