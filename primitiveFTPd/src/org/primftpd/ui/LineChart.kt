@@ -1,11 +1,14 @@
 package org.primftpd.ui
 
+//import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -13,14 +16,12 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-//import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.LinearGradientShader
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Fill
 
 
@@ -36,42 +37,34 @@ fun NetworkTrafficChart(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(
                 lineProvider = LineCartesianLayer.LineProvider.series(
+                    // 第一根线 (FTP)
                     LineCartesianLayer.rememberLine(
                         fill = LineCartesianLayer.LineFill.single(Fill(ftpLineColor)),
                         areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        ftpLineColor.copy(alpha = 0.4f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                        ),//
+                            Fill(Brush.verticalGradient(listOf(ftpLineColor.copy(alpha = 0.4f), Color.Transparent)))
+                        ),
                         interpolator = LineCartesianLayer.Interpolator.catmullRom()
-                    )
-                    ,
+                    ),
+                    // 第二根线 (SFTP)
                     LineCartesianLayer.rememberLine(
                         fill = LineCartesianLayer.LineFill.single(Fill(sftpLineColor)),
                         areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        sftpLineColor.copy(alpha = 0.4f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
+                            Fill(Brush.verticalGradient(listOf(sftpLineColor.copy(alpha = 0.4f), Color.Transparent)))
                         ),
                         interpolator = LineCartesianLayer.Interpolator.catmullRom()
-                    )
+                    ),
                 )
             ),
-            startAxis = VerticalAxis.rememberStart(),
-            bottomAxis = HorizontalAxis.rememberBottom(),
+            // 去除网格线
+            startAxis = VerticalAxis.rememberStart(guideline = null),
+            bottomAxis = HorizontalAxis.rememberBottom(guideline = null),
         ),
         modelProducer = modelProducer,
         modifier = modifier,
+        // 禁止缩放及滑动
+        //我感觉我们缩放时候应该适配一下x轴和y轴的单位
+        zoomState = rememberVicoZoomState(zoomEnabled = false),
+        scrollState = rememberVicoScrollState(scrollEnabled = false)
     )
 }
 

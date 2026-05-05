@@ -13,9 +13,23 @@ import kotlin.math.min
 /**
  * Shizuku-based file implementation using privileged UserService.
  * Replaces libsuperuser root shell approach.
+ *
+ * Definition, there are two type generic placeholders, among which TFileSystemView must be a subclass of AbstractFileSystemView.
+ *  ~~So why did it choose this name? It makes people think of trademark tm or plant magic (mana) or something like that. lol~~
+ *
+ *  **This is a handle to remotely transfer the file name**
+ *
+ *  当主进程向 Shizuku 的服务端请求文件列表时，服务端只能把文件的基本信息（如名字、大小、读写权限等）序列化成一个数据结构传回给主 App，
+ *  这个用来承载原始元数据的载体就是 FileInfo
+ *
+ *  It's different from TMina4
  */
-abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>
-    (fileSystemView: TFileSystemView?, absPath: String?, protected val fileInfo: FileInfo) :
+abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kotlin的类型声明
+    //定义，有两个类型泛型占位符，其中TFileSystemView 必须是 AbstractFileSystemView 的子类
+    //~~所以为什么起这个名字，这个容易让人想到商标tm或者植物魔法（mana）之类的~~
+    //这是个远程传递文件名字的句柄
+    (fileSystemView: TFileSystemView?, absPath: String?, protected val fileInfo: FileInfo)
+    :
     AbstractFile<TFileSystemView>(fileSystemView, absPath, fileInfo.name) {
     
     init {
@@ -195,7 +209,7 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>
 
         return try {
             val attributes = mutableMapOf<SshFile.Attribute, Any>()
-            for (attr in SshFile.Attribute.values()) {
+            for (attr in SshFile.Attribute.entries) {
                 val value = getAttribute(attr, followLinks)
                 if (value != null) {
                     attributes[attr] = value
