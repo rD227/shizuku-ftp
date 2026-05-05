@@ -10,9 +10,9 @@
 
 # 还需要做什么：
 
-[NetWorkViewModel](/primitiveFTPd/src/org/primftpd/ui/NetworkViewModel.kt) 的log4J要看看能不能用
+~~[NetWorkViewModel](/primitiveFTPd/src/org/primftpd/ui/NetworkViewModel.kt) 的log4J要看看能不能用~~
 
-
+压缩传输？
 
     ~~我觉得最好一开始就请求完整存储访问权限，否则会有人不去点那个小小的false，即使弹窗对于用户来说很讨厌~~
 
@@ -23,6 +23,7 @@ emmm，如果你一开始没有生成密钥，你应该按两次按钮
 
 （一次密码，一次指纹）
 （应该修好了？）
+
 2.
 release里面关掉debuggable就会失去app内调试的能力，似乎也不会写入那个csv的日志文件里面
 
