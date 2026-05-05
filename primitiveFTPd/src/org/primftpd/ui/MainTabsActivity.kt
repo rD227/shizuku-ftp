@@ -180,9 +180,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         )
                     }
                     composable("settings") {
-                        FragmentContainerScreen(
-                            title = "设置",
-                            fragmentFactory = { org.primftpd.prefs.FtpPrefsFragment() },
+                        SettingsScreen(
                             onBack = { navController.popBackStack() }
                         )
                     }
