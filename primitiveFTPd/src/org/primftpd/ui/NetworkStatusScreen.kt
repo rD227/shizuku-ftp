@@ -1,7 +1,6 @@
 package org.primftpd.ui
 
 import android.Manifest
-import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -71,13 +70,14 @@ import rikka.shizuku.Shizuku
 fun NetworkStatusScreen(
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isServerRunning: Boolean
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val logger = remember { LoggerFactory.getLogger("NetworkStatusScreen") }
     val configuration = LocalConfiguration.current
-    val isLeftToRight = configuration.layoutDirection == android.util.LayoutDirection.LTR
+    val isLeftToRight = configuration.layoutDirection == View.LAYOUT_DIRECTION_LTR
 
     // ─── States ───
     var serversRunning by remember { mutableStateOf(ServersRunningBean()) }
@@ -195,20 +195,6 @@ fun NetworkStatusScreen(
         showSafWarning = false
     }
 
-    fun displayKeyFingerprints() {
-        scope.launch {
-            withContext(Dispatchers.IO) {
-                keyFingerprintProvider.calcPubkeyFingerprints(context)
-                val algo = keyFingerprintProvider.findPreferredHostKeyAlog(context)
-                val fingerprint = keyFingerprintProvider.fingerprints[algo]
-                withContext(Dispatchers.Main) {
-                    chosenAlgo = algo
-                    keyFingerprintBean = fingerprint
-                }
-            }
-        }
-    }
-
     fun finalizeShizukuSelection() {
         pendingShizukuSelection = false
         shizukuRetryCount = 0
@@ -246,7 +232,7 @@ fun NetworkStatusScreen(
             return
         }
         shizukuBinderReady = true
-        if (Shizuku.isPreV11() || Shizuku.getVersion() < 11) {
+        if (Shizuku.getVersion() < 11) {
             Toast.makeText(context, "Shizuku version is not supported", Toast.LENGTH_LONG).show()
             revertStorageTypeToPlain()
             return
@@ -254,14 +240,8 @@ fun NetworkStatusScreen(
         val selfPermission = Shizuku.checkSelfPermission()
         if (selfPermission == PackageManager.PERMISSION_GRANTED) {
             finalizeShizukuSelection()
-            return
-        }
-        if (shizukuRetryCount < 8) {
-            Shizuku.requestPermission(1235)
-            mainHandler.postDelayed({ tryFinalizeShizukuSelection() }, 500L)
         } else {
-            Toast.makeText(context, "Shizuku permission was not granted", Toast.LENGTH_LONG).show()
-            revertStorageTypeToPlain()
+            Shizuku.requestPermission(1235)
         }
     }
 
@@ -277,7 +257,7 @@ fun NetworkStatusScreen(
             return false
         }
         shizukuBinderReady = true
-        if (Shizuku.isPreV11() || Shizuku.getVersion() < 11) {
+        if (Shizuku.getVersion() < 11) {
             Toast.makeText(context, "Shizuku version is not supported", Toast.LENGTH_LONG).show()
             return false
         }
@@ -312,14 +292,21 @@ fun NetworkStatusScreen(
                     checkSafAccess()
                 }
             }
-            else -> { // SAF, RO_SAF, VIRTUAL
-                // Handled via safLauncher below, but trigger it here
-                try {
-                    // Logic to launch SAF picker
-                    // (Actually we'll call onStorageTypeChanged within the launcher success)
-                } catch (_: ActivityNotFoundException) {
-                    Toast.makeText(context, "SAF seems to be broken on your device :(", Toast.LENGTH_SHORT).show()
-                    revertStorageTypeToPlain()
+            else -> {
+                // Handled in UI calling safLauncher
+            }
+        }
+    }
+
+    fun displayKeyFingerprints() {
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                keyFingerprintProvider.calcPubkeyFingerprints(context)
+                val algo = keyFingerprintProvider.findPreferredHostKeyAlog(context)
+                val fingerprint = keyFingerprintProvider.fingerprints[algo]
+                withContext(Dispatchers.Main) {
+                    chosenAlgo = algo
+                    keyFingerprintBean = fingerprint
                 }
             }
         }
@@ -427,14 +414,10 @@ fun NetworkStatusScreen(
     LaunchedEffect(Unit) {
         refreshPermissions()
         refreshAddresses()
-        val bean = reloadPrefs()
-        if (bean != null) {
-            prefsBean = bean
-            selectedStorageType = bean.storageType
-            safUrl = bean.safUrl
-            if (LoadPrefsUtil.startOnOpen(LoadPrefsUtil.getPrefs(context))) {
-                onStartServer()
-            }
+        reloadPrefs()?.let {
+            prefsBean = it
+            selectedStorageType = it.storageType
+            safUrl = it.safUrl
         }
         refreshServerState()
         displayKeyFingerprints()
@@ -605,7 +588,7 @@ fun NetworkStatusScreen(
                                 },
                                 role = Role.RadioButton
                             )
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                            .padding(horizontal = 32.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -846,8 +829,13 @@ private fun PermissionRow(
 
 @Preview(showBackground = true)
 @Composable
-fun NetWorkPreview(){
-    NetworkStatusScreen(
-
-    ) { }
+private fun NetworkStatusScreenPreview() {
+    ShizukuFtpTheme {
+        NetworkStatusScreen(
+            onStartServer = {},
+            onStopServer = {},
+            onBack = {},
+            isServerRunning = false
+        )
+    }
 }
