@@ -186,11 +186,12 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                     }
                     //Can be overwritten now
                     composable("netWorkStatus"){
-                        FragmentContainerScreen(
-                            "networkStatus",
-                            {PftpdFragment()},
-                            {navController.popBackStack()}
-                            )
+                        NetworkStatusScreen(
+                            isServerRunning = isServerRunning,
+                            onStartServer = { handleStart() },
+                            onStopServer = { handleStop() },
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                     composable("clientStatus"){
                         FragmentContainerScreen(
