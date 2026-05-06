@@ -236,7 +236,6 @@ public class AndroidIoDataConnection implements DataConnection {
             throw e;
         }
 
-        // 🔧 修复：传输结束后发送最终事件，确保最后一段数据不被遗漏
         if (transferredSize > 0) {
             EventBus.getDefault().post(
                 new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite)

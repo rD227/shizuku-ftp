@@ -8,6 +8,9 @@ import org.primftpd.shizuku.aidl.IShizukuFileService;
 import org.primftpd.shizuku.aidl.FileInfo;
 import org.primftpd.shizuku.aidl.FileOperationResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,9 +30,12 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
     private static final String TAG = "ShizukuUserService";
     private static final int SERVICE_VERSION = 1;
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     public ShizukuUserService() {
         super();
-        Log.i(TAG, "[ShizukuUserService] Service created");
+        Log.i(TAG, "[ShizukuUserService] Service created <<< Debug");
+        logger.info("[ShizukuUserService]Service created");
     }
 
     @Override
