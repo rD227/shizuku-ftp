@@ -15,8 +15,11 @@ import org.primftpd.util.ServicesStartStopUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public class StartStopWidgetProvider extends AppWidgetProvider
 {
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+
 	public static final String WIDGET_TOUCH_ACTION = "org.primftpd.APPWIDGET_TOUCH";
 
 	protected Logger logger() {
@@ -64,8 +67,9 @@ public class StartStopWidgetProvider extends AppWidgetProvider
 	public void onReceive(Context context, Intent intent) {
 		super.onReceive(context, intent);
 		String action = intent != null ? intent.getAction() : null;
-		//logger().debug("onReceive(), action: {}", action);
-		Log.d(getClass().getName(), "onReceive(), action: " + action);
+		logger().debug("onReceive(), action: {}", action);
+		Log.d(getClass().getName(), "onReceive(), action: " + action + "Debug");
+		logger.debug("onReceive(), action: {}", action);
 
 		if (WIDGET_TOUCH_ACTION.equals(action)) {
 			ServersRunningBean serversRunningBean = ServicesStartStopUtil.checkServicesRunning(context);
