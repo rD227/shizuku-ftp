@@ -241,7 +241,8 @@ public class AndroidIoDataConnection implements DataConnection {
             EventBus.getDefault().post(
                 new DataTransferredEvent(System.currentTimeMillis(), transferredSize, isWrite)
             );
-            android.util.Log.d("IoDataConn", ">>>POST 最终事件 bytes=" + transferredSize);
+            //android.util.Log.d("IoDataConn", ">>>POST 最终事件 bytes=" + transferredSize);
+            LOG.info("IoDataConn: transferred {} bytes", transferredSize);
         }
 
         return transferredSize;
