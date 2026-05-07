@@ -208,7 +208,7 @@ public abstract class FsFile<TMina, TFileSystemView extends FsFileSystemView>
 			if (folders != null) {
 				filesArray = new File[folders.length];
 				for (int i = 0; i < folders.length; i++) {
-					filesArray[i] = new File(file.getAbsolutePath() + File.separator + folders[i]);
+					filesArray[i] = new File(Utils.joinPath(file.getAbsolutePath(), folders[i]));
 				}
 			}
 		}
