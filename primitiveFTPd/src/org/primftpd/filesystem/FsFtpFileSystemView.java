@@ -63,10 +63,14 @@ public class FsFtpFileSystemView extends FsFileSystemView<FsFtpFile, FtpFile> im
 				if (topLevelDir.exists()) {
 					path = topLevelDir.getAbsolutePath();
 				} else {
-					path = currentAbsPath + File.separator + dir;
+					path = Utils.joinPath(currentAbsPath, dir);
 				}
 			} else {
-				path = currentAbsPath + File.separator + dir;
+				path = Utils.joinPath(currentAbsPath, dir);
+			}
+		} else {
+			while (path.endsWith("/") && path.length() > 1) {
+				path = path.substring(0, path.length() - 1);
 			}
 		}
 		dirObj = new File(path);

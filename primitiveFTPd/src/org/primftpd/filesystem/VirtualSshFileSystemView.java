@@ -50,7 +50,7 @@ public class VirtualSshFileSystemView extends VirtualFileSystemView<
     @Override
     public SshFile getFile(SshFile baseDir, String file) {
         logger.trace("getFile(baseDir: {}, file: {})", baseDir.getAbsolutePath(), file);
-        return getFile(baseDir.getAbsolutePath() + "/" + file);
+        return getFile(Utils.joinPath(baseDir.getAbsolutePath(), file));
     }
 
     @Override

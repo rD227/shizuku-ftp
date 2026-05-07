@@ -56,10 +56,13 @@ public class ShizukuFtpFileSystemView extends ShizukuFileSystemView<ShizukuFtpFi
             if (topLevelDir.doesExist()) {
                 newPath = topLevelDir.getAbsolutePath();
             } else {
-                newPath = workingDir.getAbsolutePath() + File.separator + dir;
+                newPath = Utils.joinPath(workingDir.getAbsolutePath(), dir);
             }
         } else {
             newPath = dir;
+            while (newPath.endsWith("/") && newPath.length() > 1) {
+                newPath = newPath.substring(0, newPath.length() - 1);
+            }
         }
 
         ShizukuFtpFile newWorkingDir = getFile(newPath);
