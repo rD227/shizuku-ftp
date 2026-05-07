@@ -1,14 +1,15 @@
 package org.primftpd.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.ActivityNotFoundException
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -68,25 +69,26 @@ import rikka.shizuku.Shizuku
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetworkStatusScreen(
+    isServerRunning: Boolean,
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
-    onBack: () -> Unit,
-    isServerRunning: Boolean
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val logger = remember { LoggerFactory.getLogger("NetworkStatusScreen") }
     val configuration = LocalConfiguration.current
-    val isLeftToRight = configuration.layoutDirection == View.LAYOUT_DIRECTION_LTR
+    val isLeftToRight = configuration.layoutDirection == android.util.LayoutDirection.LTR
 
     // ─── States ───
     var serversRunning by remember { mutableStateOf(ServersRunningBean()) }
     var prefsBean by remember { mutableStateOf<PrefsBean?>(null) }
     var ipAddressBeans by remember { mutableStateOf<List<IpAddressBean>>(emptyList()) }
     var isLoadingAddresses by remember { mutableStateOf(true) }
-    var quickShareInfo by remember { mutableStateOf<String?>(null) }
-    var safUrl by remember { mutableStateOf<String?>(null) }
 
+    var quickShareFileCount by remember { mutableIntStateOf(-1) }
+
+    var safUrl by remember { mutableStateOf<String?>(null) }
     var clientAction1 by remember { mutableStateOf("") }
     var clientAction2 by remember { mutableStateOf("") }
     var clientAction3 by remember { mutableStateOf("") }
@@ -97,10 +99,8 @@ fun NetworkStatusScreen(
     var hasNotificationPermission by remember { mutableStateOf<Boolean?>(null) }
 
     var selectedStorageType by remember { mutableStateOf<StorageType?>(null) }
-
     var keyFingerprintBean by remember { mutableStateOf<KeyFingerprintBean?>(null) }
     var chosenAlgo by remember { mutableStateOf<HostKeyAlgorithm?>(null) }
-
     var showSafWarning by remember { mutableStateOf(false) }
 
     var shizukuBinderReady by remember { mutableStateOf(false) }
@@ -110,7 +110,6 @@ fun NetworkStatusScreen(
     val ipAddressProvider = remember { IpAddressProvider() }
     val keyFingerprintProvider = remember { KeyFingerprintProvider() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
-
     var timestampOfLastEvent by remember { mutableLongStateOf(0L) }
 
     // ─── Helper Functions ───
@@ -123,9 +122,11 @@ fun NetworkStatusScreen(
     fun isEventInTime(): Boolean {
         val currentTime = System.currentTimeMillis()
         val offset = currentTime - timestampOfLastEvent
-        val inTime = offset > 20
-        if (inTime) timestampOfLastEvent = currentTime
-        return inTime
+        if (offset > 20) {
+            timestampOfLastEvent = currentTime
+            return true
+        }
+        return false
     }
 
     fun refreshPermissions() {
@@ -178,7 +179,7 @@ fun NetworkStatusScreen(
                 cursor = context.contentResolver.query(
                     bean.safUrl.toUri(),
                     arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
-                    null, null, null, null
+                    null, null, null
                 )
                 if (cursor == null) {
                     showSafWarning = true
@@ -245,28 +246,6 @@ fun NetworkStatusScreen(
         }
     }
 
-    fun requestShizukuPermission(): Boolean {
-        if (pendingShizukuSelection) return false
-        shizukuRetryCount = 0
-        val pingBinder = shizukuBinderReady || Shizuku.pingBinder()
-        if (!pingBinder) {
-            pendingShizukuSelection = true
-            mainHandler.removeCallbacksAndMessages(null)
-            mainHandler.postDelayed({ tryFinalizeShizukuSelection() }, 500L)
-            Toast.makeText(context, "Waiting for Shizuku service...", Toast.LENGTH_SHORT).show()
-            return false
-        }
-        shizukuBinderReady = true
-        if (Shizuku.getVersion() < 11) {
-            Toast.makeText(context, "Shizuku version is not supported", Toast.LENGTH_LONG).show()
-            return false
-        }
-        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) return true
-        pendingShizukuSelection = true
-        Shizuku.requestPermission(1235)
-        return false
-    }
-
     fun onStorageTypeChanged(type: StorageType) {
         pendingShizukuSelection = false
         shizukuRetryCount = 0
@@ -281,19 +260,20 @@ fun NetworkStatusScreen(
                 checkSafAccess()
             }
             StorageType.SHIZUKU -> {
-                if (requestShizukuPermission()) {
-                    pendingShizukuSelection = false
-                    val prefs = LoadPrefsUtil.getPrefs(context)
-                    LoadPrefsUtil.storeStorageType(prefs, StorageType.SHIZUKU)
-                    reloadPrefs()?.let {
-                        prefsBean = it
-                        selectedStorageType = StorageType.SHIZUKU
+                if (shizukuBinderReady || Shizuku.pingBinder()) {
+                    if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+                        finalizeShizukuSelection()
+                    } else {
+                        pendingShizukuSelection = true
+                        Shizuku.requestPermission(1235)
                     }
-                    checkSafAccess()
+                } else {
+                    pendingShizukuSelection = true
+                    mainHandler.postDelayed({ tryFinalizeShizukuSelection() }, 500L)
                 }
             }
             else -> {
-                // Handled in UI calling safLauncher
+                //other
             }
         }
     }
@@ -352,12 +332,11 @@ fun NetworkStatusScreen(
                 if (isEventInTime()) refreshServerState()
             }
 
-            @Composable
             @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
             fun onServerInfoResponse(event: ServerInfoResponseEvent) {
                 val numberOfFiles = event.quickShareNumberOfFiles
                 if (isEventInTime() && numberOfFiles >= 0) {
-                    quickShareInfo = stringResource(R.string.quickShareInfoActivityV2, numberOfFiles)
+                    quickShareFileCount = numberOfFiles
                 }
             }
 
@@ -374,12 +353,16 @@ fun NetworkStatusScreen(
     }
 
     DisposableEffect(context) {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) { refreshAddresses() }
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) { refreshAddresses() }
+            override fun onLost(network: Network) { refreshAddresses() }
+            override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) { refreshAddresses() }
         }
-        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        context.registerReceiver(receiver, filter)
-        onDispose { context.unregisterReceiver(receiver) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            cm.registerDefaultNetworkCallback(callback)
+        }
+        onDispose { cm.unregisterNetworkCallback(callback) }
     }
 
     DisposableEffect(context) {
@@ -464,10 +447,10 @@ fun NetworkStatusScreen(
                 )
             }
 
-            if (quickShareInfo != null) {
+            if (quickShareFileCount >= 0) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = quickShareInfo!!,
+                    text = stringResource(R.string.quickShareInfoActivityV2, quickShareFileCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -588,7 +571,7 @@ fun NetworkStatusScreen(
                                 },
                                 role = Role.RadioButton
                             )
-                            .padding(horizontal = 32.dp, vertical = 6.dp),
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -621,8 +604,8 @@ fun NetworkStatusScreen(
             val currentSafUrl = safUrl
             if (!currentSafUrl.isNullOrBlank() &&
                 (selectedStorageType == StorageType.SAF ||
-                 selectedStorageType == StorageType.RO_SAF ||
-                 selectedStorageType == StorageType.VIRTUAL)) {
+                        selectedStorageType == StorageType.RO_SAF ||
+                        selectedStorageType == StorageType.VIRTUAL)) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.selectedSafUri),

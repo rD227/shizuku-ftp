@@ -118,7 +118,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         setContent {
             ShizukuFtpTheme {
                 val navController = rememberNavController()
-                
+
                 // 密码输入弹窗
                 if (showPasswordDialog) {
                     PasswordInputDialog(
@@ -198,28 +198,28 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             "clientStatus",
                             {ClientActionFragment()},
                             {navController.popBackStack()}
-                            )
+                        )
                     }
                     composable("VerificationKey"){
                         FragmentContainerScreen(
                             "Verification Key",
                             {PubKeyAuthKeysFragment(true)/*what is true?*/},
                             {navController.popBackStack()}
-                            )
+                        )
                     }
                     composable("fingerPrint"){
                         FragmentContainerScreen(
                             "fingerPrint",
                             {KeysFingerprintsFragment()},
                             {navController.popBackStack()}
-                            )
+                        )
                     }
                     composable("clean"){
                         FragmentContainerScreen(
                             "cleaner",
                             {CleanSpaceFragment()},
                             {navController.popBackStack()}
-                            )
+                        )
                     }
                 }
             }
@@ -247,7 +247,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
 
         // 检查密码是否设置（如果需要密码认证）
-        if (prefsBean.serverToStart.isPasswordMandatory(prefsBean) && 
+        if (prefsBean.serverToStart.isPasswordMandatory(prefsBean) &&
             org.primftpd.util.StringUtils.isBlank(prefsBean.password)) {
             // 弹出密码输入框
             showPasswordDialog = true
@@ -315,20 +315,20 @@ fun MainScreen(
     initialRightVisible: Boolean = false,
     // 权限状态模拟参数，默认为系统真实值
     fullStorageAccess: Boolean = if (LocalInspectionMode.current) false else (
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
-    ),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
+            ),
     mediaLocationAccess: Boolean = if (LocalInspectionMode.current) false else (
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            LocalContext.current.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) == 
-                android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else true
-    ),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                LocalContext.current.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                        android.content.pm.PackageManager.PERMISSION_GRANTED
+            } else true
+            ),
     notificationPermission: Boolean = if (LocalInspectionMode.current) false else (
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            LocalContext.current.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
-                android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else true
-    ),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                LocalContext.current.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                        android.content.pm.PackageManager.PERMISSION_GRANTED
+            } else true
+            ),
     viewModel: NetworkViewModel = viewModel()
 ) {
     var rightMenuVisible by remember {
@@ -662,12 +662,12 @@ fun PermissionsCard(
                     storageGranted = Environment.isExternalStorageManager()
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    mediaGranted = context.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) == 
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                    mediaGranted = context.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                            android.content.pm.PackageManager.PERMISSION_GRANTED
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationGranted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                    notificationGranted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                            android.content.pm.PackageManager.PERMISSION_GRANTED
                 }
             }
         }
@@ -705,8 +705,8 @@ fun PermissionsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp,
-                    end = animatedPadding.coerceAtLeast(0.dp)
-                )
+                end = animatedPadding.coerceAtLeast(0.dp)
+            )
     ) {
         // 主卡片 - 带动画的滑动
         AnimatedVisibility(
@@ -762,7 +762,7 @@ fun PermissionsCard(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
-                    
+
                     // Android 11+ 完整存储访问权限
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         PermissionItem(
@@ -776,7 +776,7 @@ fun PermissionsCard(
                             }
                         )
                     }
-                    
+
                     // Android 10+ 媒体位置访问权限
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         PermissionItem(
@@ -787,7 +787,7 @@ fun PermissionsCard(
                             }
                         )
                     }
-                    
+
                     // Android 13+ 通知权限
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         PermissionItem(
@@ -1047,7 +1047,7 @@ fun FingerprintsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
-            ) {
+        ) {
             Text("密钥指纹信息内容...")
         }
     }
@@ -1083,9 +1083,9 @@ fun PasswordInputDialog(
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.prefTitlePassword)) },
                     placeholder = { Text("Please input password") },//useless?
-                    visualTransformation = if (passwordVisible) 
-                        VisualTransformation.None 
-                    else 
+                    visualTransformation = if (passwordVisible)
+                        VisualTransformation.None
+                    else
                         PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -1095,7 +1095,7 @@ fun PasswordInputDialog(
                                 else
                                     ImageVector.vectorResource(id = R.drawable.baseline_disabled_visible_24),
                                 contentDescription = if (passwordVisible) "Hide password"
-                                     else "Show password"
+                                else "Show password"
                             )
                         }
                     },
