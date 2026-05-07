@@ -79,11 +79,14 @@ public class VirtualFtpFileSystemView extends VirtualFileSystemView<
             if (topLevelDir.doesExist()) {
                 newPath = topLevelDir.getAbsolutePath();
             } else {
-                newPath = workingDir.getAbsolutePath() + File.separator + dir;
+                newPath = Utils.joinPath(workingDir.getAbsolutePath(), dir);
             }
             logger.trace("  using path for cwd operation: {}", newPath);
         } else {
             newPath = dir;
+            while (newPath.endsWith("/") && newPath.length() > 1) {
+                newPath = newPath.substring(0, newPath.length() - 1);
+            }
         }
 
         newWorkingDir = getFile(newPath);

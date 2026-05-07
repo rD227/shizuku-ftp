@@ -272,8 +272,14 @@ fun NetworkStatusScreen(
                     mainHandler.postDelayed({ tryFinalizeShizukuSelection() }, 500L)
                 }
             }
-            else -> {
-                //other
+            StorageType.SAF, StorageType.RO_SAF, StorageType.VIRTUAL -> {
+                val prefs = LoadPrefsUtil.getPrefs(context)
+                LoadPrefsUtil.storeStorageType(prefs, type)
+                reloadPrefs()?.let {
+                    prefsBean = it
+                    selectedStorageType = type
+                }
+                checkSafAccess()
             }
         }
     }
@@ -313,7 +319,10 @@ fun NetworkStatusScreen(
                 putString(LoadPrefsUtil.PREF_KEY_SAF_URL, uriStr)
             }
             safUrl = uriStr
-            reloadPrefs()?.let { prefsBean = it }
+            reloadPrefs()?.let {
+                prefsBean = it
+                selectedStorageType = it.storageType
+            }
         }
     }
 

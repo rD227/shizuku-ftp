@@ -39,7 +39,7 @@ public class ShizukuSshFileSystemView extends ShizukuFileSystemView<ShizukuSshFi
         if (file.charAt(0) == '/') {
             return getFile(file);
         }
-        return getFile(baseDir.getAbsolutePath() + "/" + file);
+        return getFile(Utils.joinPath(baseDir.getAbsolutePath(), file));
     }
 
 

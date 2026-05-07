@@ -13,12 +13,23 @@ public class Utils {
 
     protected static Logger logger = LoggerFactory.getLogger(Utils.class);
 
+    static String joinPath(String base, String child) {
+        while (base.endsWith("/") && base.length() > 1) {
+            base = base.substring(0, base.length() - 1);
+        }
+        return base + "/" + child;
+    }
+
     static String absolute(String rel, String workingDir) {
         if (rel.charAt(0) == '/') {
             return rel;
         }
         if ("./".equals(rel) || ".".equals(rel)) {
             return workingDir;
+        }
+        // strip trailing slashes to avoid double slashes in path concatenation
+        while (workingDir.endsWith("/")) {
+            workingDir = workingDir.substring(0, workingDir.length() - 1);
         }
         return workingDir + "/" + rel;
     }
@@ -30,7 +41,11 @@ public class Utils {
         // if homeDir == / -> stay relative (needed for virtual folders)
         if (path.charAt(0) != '/' && !"/".equals(homeDir)) {
             // assume it is relative to home dir, see GH issue #111
-            return homeDir + "/" + path;
+            String hd = homeDir;
+            while (hd.endsWith("/") && hd.length() > 1) {
+                hd = hd.substring(0, hd.length() - 1);
+            }
+            return hd + "/" + path;
         }
         return path;
     }

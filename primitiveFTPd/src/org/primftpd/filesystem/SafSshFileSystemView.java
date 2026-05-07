@@ -46,7 +46,7 @@ public class SafSshFileSystemView extends SafFileSystemView<SafSshFile, SshFile>
     public SshFile getFile(SshFile baseDir, String file) {
         logger.trace("getFile(baseDir: {}, file: {})", baseDir.getAbsolutePath(), file);
         // e.g. for scp
-        return getFile(baseDir.getAbsolutePath() + "/" + file);
+        return getFile(Utils.joinPath(baseDir.getAbsolutePath(), file));
     }
 
     @Override
