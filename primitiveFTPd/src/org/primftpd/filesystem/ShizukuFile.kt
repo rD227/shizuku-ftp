@@ -3,7 +3,6 @@ package org.primftpd.filesystem
 import org.apache.sshd.common.file.SshFile
 import org.primftpd.events.ClientActionEvent
 import org.primftpd.shizuku.aidl.FileInfo
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -224,11 +223,14 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
     }
 
     /**
-     * OutputStream implementation for Shizuku file writing
+     * OutputStream implementation for Shizuku file writing.
+     * Writes in fixed-size chunks to avoid buffering the entire file in memory.
      */
     private inner class ShizukuOutputStream(private val path: String?, private val offset: Long) :
         OutputStream() {
-        private val buffer = ByteArrayOutputStream()
+        private val buffer = ByteArray(CHUNK_SIZE)
+        private var bufferPos = 0
+        private var isFirstWrite = true
 
         init {
             logger.debug("[ShizukuOutputStream] Created: path={}, offset={}", path, offset)
@@ -236,38 +238,58 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
 
         @Throws(IOException::class)
         override fun write(b: Int) {
-            buffer.write(b)
+            if (bufferPos == buffer.size) flushBuffer()
+            buffer[bufferPos++] = b.toByte()
         }
 
         @Throws(IOException::class)
         override fun write(b: ByteArray, off: Int, len: Int) {
-            buffer.write(b, off, len)
+            var remaining = len
+            var srcPos = off
+            while (remaining > 0) {
+                val space = buffer.size - bufferPos
+                val toCopy = minOf(remaining, space)
+                System.arraycopy(b, srcPos, buffer, bufferPos, toCopy)
+                bufferPos += toCopy
+                srcPos += toCopy
+                remaining -= toCopy
+                if (bufferPos == buffer.size) flushBuffer()
+            }
         }
 
         @Throws(IOException::class)
         override fun close() {
             try {
-                val data = buffer.toByteArray()
-                logger.info(
-                    "[ShizukuOutputStream] close: path={}, dataSize={}, offset={}",
-                    path, data.size, offset
-                )
-
-                val serviceManager = (fileSystemView as? ShizukuFileSystemView<*, *>)?.serviceManager
-                val result = serviceManager?.writeFile(path, data, offset, offset > 0)
-
-                if (result?.isSuccess != true) {
-                    logger.error("[ShizukuOutputStream] Write failed: {}", result?.errorMessage)
-                    throw IOException("Write failed: ${result?.errorMessage}")
-                }
-
-                logger.info("[ShizukuOutputStream] Write successful")
+                flushBuffer()
             } catch (e: Exception) {
                 logger.error("[ShizukuOutputStream] close failed for: $path", e)
                 throw IOException("Failed to write file", e)
             } finally {
                 super.close()
             }
+        }
+
+        @Throws(IOException::class)
+        private fun flushBuffer() {
+            if (bufferPos == 0) return
+            val data = buffer.copyOf(bufferPos)
+            logger.debug(
+                "[ShizukuOutputStream] flush: path={}, dataSize={}, firstWrite={}, offset={}",
+                path, data.size, isFirstWrite, offset
+            )
+
+            val serviceManager = (fileSystemView as? ShizukuFileSystemView<*, *>)?.serviceManager
+            val writeOffset = if (isFirstWrite) offset else 0
+            val result = serviceManager?.writeFile(path, data, writeOffset, !isFirstWrite)
+
+            if (result?.isSuccess != true) {
+                logger.error("[ShizukuOutputStream] Write failed: {}", result?.errorMessage)
+                throw IOException("Write failed: ${result?.errorMessage}")
+            }
+
+            bufferPos = 0
+            isFirstWrite = false
+            logger.debug("[ShizukuOutputStream] flush successful")
         }
     }
 
