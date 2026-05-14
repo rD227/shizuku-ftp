@@ -422,7 +422,7 @@ fun MainScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // 🎯 新增：权限状态卡片
+            // >>> 新增：权限状态卡片
             Spacer(modifier = Modifier.height(20.dp))
             Box(contentAlignment = Alignment.TopCenter) {
                 // 1. 背景图表：先定义，使其在层级上处于底层 (Behind)
@@ -638,9 +638,9 @@ fun PermissionsCard(
     var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
 
-    // 🎯 控制卡片展开/收起状态
+    // >>> 控制卡片展开/收起状态
     var isExpanded by remember { mutableStateOf(true) }
-    // 🎯 控制是否贴边
+    // >>> 控制是否贴边
     var shouldStickToEdge by remember { mutableStateOf(false) }
 
 
@@ -733,7 +733,7 @@ fun PermissionsCard(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
-                // 🎯 顶部置顶按钮
+                // >>> 顶部置顶按钮
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -802,7 +802,7 @@ fun PermissionsCard(
             }
         }
 
-        // 🎯 右侧圆形浮动按钮 - 只在卡片隐藏时显示
+        // >>> 右侧圆形浮动按钮 - 只在卡片隐藏时显示
         AnimatedVisibility(
             visible = !isExpanded,
             enter = scaleIn(animationSpec = spring(
@@ -849,9 +849,7 @@ fun PermissionsCard(
 }
 
 
-//做一个流量监控的条形图，直接这样写是会在后台一直绘制，还是在进入时记录数据绘制呢？
-
-
+//做一个流量监控的条形图
 
 fun <T> telegramSpringSpec() = spring<T>(
     dampingRatio = 0.5f,

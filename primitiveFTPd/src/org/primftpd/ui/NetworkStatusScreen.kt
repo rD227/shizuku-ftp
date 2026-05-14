@@ -107,6 +107,8 @@ fun NetworkStatusScreen(
     var pendingShizukuSelection by remember { mutableStateOf(false) }
     var shizukuRetryCount by remember { mutableIntStateOf(0) }
 
+    var hasNavigatedBack by remember { mutableStateOf(false) }
+
     val ipAddressProvider = remember { IpAddressProvider() }
     val keyFingerprintProvider = remember { KeyFingerprintProvider() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
@@ -422,7 +424,12 @@ fun NetworkStatusScreen(
             TopAppBar(
                 title = { Text("Network Status") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (!hasNavigatedBack) {
+                            hasNavigatedBack = true
+                            onBack()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
