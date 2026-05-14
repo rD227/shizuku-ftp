@@ -13,6 +13,9 @@ Now the Shizuku function works
 
 ~~I will work hard~~
 
+# Exterior
+<img src="Pictures/Screenshot_20260515-022532_Shizuku-ftp.png" width="48%" /> <img src="Pictures/Screenshot_20260515-022539_Shizuku-ftp.png" width="48%" />
+
 # I need to do learn more about it recently,don't worry, I won't forget it,
 
 ~I'm learning BGA packaged chip (How to replant tin)~
