@@ -1,5 +1,6 @@
 package org.primftpd.util;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
@@ -13,12 +14,31 @@ import org.primftpd.filepicker.nononsenseapps.FilePickerActivity;
 import java.io.File;
 import java.util.UUID;
 
+@SuppressLint("SdCardPath")
 public final class Defaults {
 	private Defaults(){}
 
-	public static final File HOME_DIR = Environment.getExternalStorageDirectory();
-	public static final File DOWNLOADS_DIR = Environment.getExternalStoragePublicDirectory(
-			Environment.DIRECTORY_DOWNLOADS);
+	public static final File HOME_DIR;
+	public static final File DOWNLOADS_DIR;
+	static {
+		File home;
+		try {
+			// Environment.getExternalStorageDirectory() can throw NPE in Compose Preview/Layoutlib
+			home = Environment.getExternalStorageDirectory();
+		} catch (Throwable t) {
+			home = new File("/sdcard");
+		}
+		HOME_DIR = home;
+
+		File downloads;
+		try {
+			downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+		} catch (Throwable t) {
+			downloads = new File(HOME_DIR, "Download");
+		}
+		DOWNLOADS_DIR = downloads;
+	}
+
 	public static final String PUB_KEY_AUTH_KEY_PATH_OLD =
 		HOME_DIR.getAbsolutePath() + "/.ssh/authorized_keys";
 	public static final String PUB_KEY_AUTH_KEY_PATH_OLDER =
@@ -27,7 +47,14 @@ public final class Defaults {
 	public static final HostKeyAlgorithm DEFAULT_HOST_KEY_ALGO = HostKeyAlgorithm.ED_25519;
 
 	public static File homeDirScoped(Context ctxt) {
-		return ctxt.getExternalFilesDir(null);
+		File dir = null;
+		try {
+			dir = ctxt.getExternalFilesDir(null);
+		} catch (Throwable t) {
+			// ignore
+		}
+		// Fallback to internal files dir if external is not available (e.g. in Preview)
+		return dir != null ? dir : ctxt.getFilesDir();
 	}
 	public static String pubKeyAuthKeyPath(Context ctxt) {
 		return homeDirScoped(ctxt).getAbsolutePath() + "/.ssh/authorized_keys";
@@ -49,11 +76,14 @@ public final class Defaults {
 				tmpDir = Defaults.rootCopyTmpDir(ctxt);
 				break;
 		}
-		tmpDir.mkdirs();
-		UUID uuid = UUID.randomUUID();
-		File targetPath = new File(tmpDir, uuid.toString());
-		targetPath.mkdir();
-		return targetPath;
+		if (tmpDir != null) {
+			tmpDir.mkdirs();
+			UUID uuid = UUID.randomUUID();
+			File targetPath = new File(tmpDir, uuid.toString());
+			targetPath.mkdir();
+			return targetPath;
+		}
+		return null;
 	}
 
 	public static Intent createDefaultDirPicker(Context ctxt) {

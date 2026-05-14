@@ -247,7 +247,7 @@ public class LoadPrefsUtil
 	public static Boolean rootCopyFiles(SharedPreferences prefs) {
 		return prefs.getBoolean(
 				LoadPrefsUtil.PREF_ROOT_COPY_FILES,
-				Boolean.TRUE);
+				Boolean.FALSE);
 	}
 
 	public static int loadPortInsecure(
