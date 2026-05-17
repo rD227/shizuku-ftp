@@ -562,41 +562,23 @@ fun NetworkStatusScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
+            val storageTypes = listOf(
+                StorageType.PLAIN to stringResource(R.string.storageTypePlainV2),
+                StorageType.ROOT to stringResource(R.string.storageTypeRoot),
+                StorageType.SHIZUKU to stringResource(R.string.storageTypeShizuku),
+                StorageType.SAF to stringResource(R.string.storageTypeSaf),
+                StorageType.RO_SAF to stringResource(R.string.storageTypeRoSaf),
+                StorageType.VIRTUAL to stringResource(R.string.storageTypeVirtual),
+            )
             Column(modifier = Modifier.selectableGroup()) {
-                val storageTypes = listOf(
-                    StorageType.PLAIN to stringResource(R.string.storageTypePlainV2),
-                    StorageType.ROOT to stringResource(R.string.storageTypeRoot),
-                    StorageType.SHIZUKU to stringResource(R.string.storageTypeShizuku),
-                    StorageType.SAF to stringResource(R.string.storageTypeSaf),
-                    StorageType.RO_SAF to stringResource(R.string.storageTypeRoSaf),
-                    StorageType.VIRTUAL to stringResource(R.string.storageTypeVirtual),
-                )
                 storageTypes.forEach { (type, label) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = selectedStorageType == type,
-                                onClick = {
-                                    if (type == StorageType.SAF || type == StorageType.RO_SAF || type == StorageType.VIRTUAL) {
-                                        onStorageTypeChanged(type)
-                                        safLauncher.launch(null)
-                                    } else {
-                                        onStorageTypeChanged(type)
-                                    }
-                                },
-                                role = Role.RadioButton
-                            )
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedStorageType == type,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-                    }
+                    StorageTypeRow(
+                        type = type,
+                        label = label,
+                        selected = selectedStorageType == type,
+                        onSelected = { onStorageTypeChanged(type) },
+                        onSafRequired = { safLauncher.launch(null) }
+                    )
                 }
             }
 
@@ -617,6 +599,15 @@ fun NetworkStatusScreen(
                 )
             }
 
+            val onSafUrlClick = remember {
+                {
+                    try { safLauncher.launch(null) }
+                    catch (_: ActivityNotFoundException) {
+                        Toast.makeText(context, "SAF seems to be broken on your device :(", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
             val currentSafUrl = safUrl
             if (!currentSafUrl.isNullOrBlank() &&
                 (selectedStorageType == StorageType.SAF ||
@@ -634,11 +625,8 @@ fun NetworkStatusScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 2.dp)
-                        .clickable {
-                            try { safLauncher.launch(null) }
-                            catch (_: ActivityNotFoundException) {
-                                Toast.makeText(context, "SAF seems to be broken on your device :(", Toast.LENGTH_SHORT).show()
-                            }
+                        .clickable{
+                            onSafUrlClick
                         }
                 )
             }
@@ -784,6 +772,35 @@ fun NetworkStatusScreen(
 }
 
 @Composable
+private fun StorageTypeRow(
+    type: StorageType,
+    label: String,
+    selected: Boolean,
+    onSelected: () -> Unit,
+    onSafRequired: () -> Unit
+) {
+    val onClick = remember(type) {
+        {
+            onSelected()
+            if (type == StorageType.SAF || type == StorageType.RO_SAF || type == StorageType.VIRTUAL) {
+                onSafRequired()
+            }
+        }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
 private fun PermissionRow(
     textId: Int,
     granted: Boolean?,
@@ -821,7 +838,8 @@ private fun PermissionRow(
                     else Modifier
                 )
                 .clickable { onRequest() }
-                .padding(4.dp)
+                .padding(4.dp),
+            //onClick = onRequest
         )
     }
 }
