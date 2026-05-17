@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import eu.chainfire.libsuperuser.Shell;
 
@@ -31,6 +32,7 @@ public class ServerServiceHandler extends Handler
 	private final String logName;
 
 	private static Shell.Interactive shell;
+	private static final AtomicInteger shellUserCount = new AtomicInteger(0);
 
 
 	protected ServerServiceHandler(
@@ -148,20 +150,25 @@ public class ServerServiceHandler extends Handler
 	}
 
 	private synchronized void shellOpen() {
+		int count = shellUserCount.incrementAndGet();
 		if (shell == null) {
 			logger.debug("opening root shell ({})", logName);
-			// TODO test .setShell()
 			Shell.Builder builder = new Shell.Builder();
 			if (!Utils.RUN_TESTS) {
 				builder.useSU();
 			}
 			shell = builder.open();
 		} else {
-			logger.debug("root shell already open ({})", logName);
+			logger.debug("root shell already open ({}), user count: {}", logName, count);
 		}
 	}
 
 	private synchronized void shellClose() {
+		int count = shellUserCount.decrementAndGet();
+		if (count > 0) {
+			logger.debug("root shell still in use by other servers ({}), user count: {}", logName, count);
+			return;
+		}
 		if (shell != null) {
 			logger.debug("closing root shell ({})", logName);
 			try {
