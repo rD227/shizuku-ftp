@@ -75,7 +75,7 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                     file.length(),
                     file.lastModified(),
                     file.canRead(),
-                    file.canWrite(),
+                    true,// didn't do any judgment in fact
                     file.canExecute(),
                     symlinkTarget
             );
