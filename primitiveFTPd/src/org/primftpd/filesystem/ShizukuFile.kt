@@ -65,11 +65,11 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
     }
 
     override fun isFile(): Boolean {
-        return fileInfo.isFile()
+        return fileInfo.isFile();
     }
 
     override fun isWritable(): Boolean {
-        return true
+        return fileInfo.canWrite()
     }
 
     override fun isRemovable(): Boolean {
