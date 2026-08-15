@@ -64,6 +64,7 @@ public abstract class AbstractServerService
 		AbstractServerService service);
 
     private ServerServiceHandler serviceHandler;
+    private HandlerThread serviceHandlerThread;
 
 
     protected abstract Object getServer();
@@ -98,15 +99,15 @@ public abstract class AbstractServerService
 
 	@Override
 	public void onCreate() {
-		HandlerThread thread = new HandlerThread(
+		serviceHandlerThread = new HandlerThread(
 			"ServiceStartArguments",
 			Process.THREAD_PRIORITY_BACKGROUND);
-		thread.start();
+		serviceHandlerThread.start();
 
 		// listen for events
 		EventBus.getDefault().register(this);
 
-		Looper serviceLooper = thread.getLooper();
+		Looper serviceLooper = serviceHandlerThread.getLooper();
 		serviceHandler = createServiceHandler(serviceLooper, this);
 	}
 
@@ -177,6 +178,11 @@ public abstract class AbstractServerService
 		Message msg = serviceHandler.obtainMessage();
 		msg.arg1 = MSG_STOP;
 		serviceHandler.sendMessage(msg);
+
+		if (serviceHandlerThread != null) {
+			serviceHandlerThread.quitSafely();
+			serviceHandlerThread = null;
+		}
 
 		// stop on idle timer not needed anymore
 		if (this.timerHandler != null) {
