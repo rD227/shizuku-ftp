@@ -110,16 +110,15 @@ public class ServerServiceHandler extends Handler
 
 	protected void handleStop(AbstractServerService service)
 	{
-		if (service.getServer() != null) {
-			logger.debug("stopping {} server", logName);
-			service.stopServer();
+		logger.debug("stopping {} server", logName);
+		service.stopServer();
 
-			if (service.prefsBean.isAnnounce()) {
-				service.unannounceService();
-			}
-
-			service.cleanQuickShareTmpDir();
+		if (service.prefsBean.isAnnounce()) {
+			service.unannounceService();
 		}
+
+		service.cleanQuickShareTmpDir();
+
 		releaseWakeLock();
 		shellClose();
 		logger.debug("stopSelf ({})", logName);
