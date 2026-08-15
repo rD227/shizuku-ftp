@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -278,14 +279,22 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
                 parent.mkdirs();
             }
 
-            try (FileOutputStream fos = new FileOutputStream(file, append)) {
-                if (offset > 0 && !append) {
-                    fos.getChannel().position(offset);
+            if (append) {
+                try (FileOutputStream fos = new FileOutputStream(file, true)) {
+                    fos.write(data);
                 }
-                fos.write(data);
-                Log.d(TAG, "[writeFile] Success");
-                return FileOperationResult.success();
+            } else if (offset > 0) {
+                try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+                    raf.seek(offset);
+                    raf.write(data);
+                }
+            } else {
+                try (FileOutputStream fos = new FileOutputStream(file, false)) {
+                    fos.write(data);
+                }
             }
+            Log.d(TAG, "[writeFile] Success");
+            return FileOperationResult.success();
         } catch (Exception e) {
             Log.e(TAG, "[writeFile] Failed for: " + absolutePath, e);
             return FileOperationResult.failure("writeFile failed: " + e.getMessage());
