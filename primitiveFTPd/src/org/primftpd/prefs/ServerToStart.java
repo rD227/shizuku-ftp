@@ -44,7 +44,7 @@ public enum ServerToStart
 			return true;
 		}
 		public boolean isPasswordMandatory(PrefsBean prefsBean) {
-			return FTP.isPasswordMandatory(prefsBean) && SFTP.isPasswordMandatory(prefsBean);
+			return FTP.isPasswordMandatory(prefsBean) || SFTP.isPasswordMandatory(prefsBean);
 		}
 	};
 
