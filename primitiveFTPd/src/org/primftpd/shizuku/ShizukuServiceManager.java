@@ -3,6 +3,7 @@ package org.primftpd.shizuku;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
 
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.chainfire.libsuperuser.BuildConfig;
 import rikka.shizuku.Shizuku;
 
 /**
@@ -31,16 +31,7 @@ public class ShizukuServiceManager {
     private boolean isBound = false;
     private final Object bindLock = new Object();
 
-    private final Shizuku.UserServiceArgs serviceArgs = new Shizuku.UserServiceArgs(
-            new ComponentName(
-                    "org.primftpd.shizuku",
-                    ShizukuUserService.class.getName()
-            )
-    )
-    .daemon(false)
-    .processNameSuffix("shizuku_file_service")
-    .debuggable(true)
-    .version(1);
+    private final Shizuku.UserServiceArgs serviceArgs;
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -66,7 +57,19 @@ public class ShizukuServiceManager {
 
     public ShizukuServiceManager(Context context) {
         this.context = context.getApplicationContext();
-        logger.info("=== ShizukuServiceManager created, context={} ===", context.getPackageName());
+        boolean debuggable = (this.context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        this.serviceArgs = new Shizuku.UserServiceArgs(
+                new ComponentName(
+                        this.context.getPackageName(),
+                        ShizukuUserService.class.getName()
+                )
+        )
+        .daemon(false)
+        .processNameSuffix("shizuku_file_service")
+        .debuggable(debuggable)
+        .version(1);
+        logger.info("=== ShizukuServiceManager created, package={}, debuggable={} ===",
+                this.context.getPackageName(), debuggable);
     }
 
     /**
