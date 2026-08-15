@@ -93,34 +93,34 @@ public class SshServerService extends AbstractServerService
 	@Override
 	protected void stopServer()
 	{
-		if (sshServer == null) {
-			logger.info("ssh server already null");
-			return;
-		}
-		try {
-			List<AbstractSession> activeSessions = sshServer.getActiveSessions();
-			for (AbstractSession session : activeSessions) {
-				try {
-					session.disconnect(-1, "server close");
-				} catch (IOException e) {
-					logger.error("could not end active session", e);
+		if (sshServer != null) {
+			try {
+				List<AbstractSession> activeSessions = sshServer.getActiveSessions();
+				for (AbstractSession session : activeSessions) {
+					try {
+						session.disconnect(-1, "server close");
+					} catch (IOException e) {
+						logger.error("could not end active session", e);
+					}
 				}
+			} catch (Exception e) {
+				logger.info("could not get active sessions on server stop. {}, {}",
+					e.getClass().getCanonicalName(), e.getMessage());
 			}
-		} catch (Exception e) {
-			logger.info("could not get active sessions on server stop. {}, {}",
-				e.getClass().getCanonicalName(), e.getMessage());
+			try {
+				sshServer.stop(true);
+			} catch (Exception e) {
+				logger.info("exception on server.stop().", e);
+			}
+			try {
+				sshServer.close(true);
+			} catch (Exception e) {
+				logger.info("exception on server.close().", e);
+			}
+			sshServer = null;
+		} else {
+			logger.info("ssh server already null");
 		}
-		try {
-			sshServer.stop(true);
-		} catch (Exception e) {
-			logger.info("exception on server.stop().", e);
-		}
-		try {
-			sshServer.close(true);
-		} catch (Exception e) {
-			logger.info("exception on server.close().", e);
-		}
-		sshServer = null;
 
 		if (shizukuServiceManager != null) {
 			shizukuServiceManager.unbindService();
