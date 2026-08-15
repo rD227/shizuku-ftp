@@ -299,6 +299,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     }
     override fun onDestroy() {
         super.onDestroy()
+        LoadPrefsUtil.getPrefs(this).unregisterOnSharedPreferenceChangeListener(this)
         EventBus.getDefault().unregister(this)
     }
 }
