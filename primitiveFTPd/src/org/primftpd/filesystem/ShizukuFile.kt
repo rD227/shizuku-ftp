@@ -95,7 +95,7 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
         if (path.isNullOrEmpty() || path == "/") return null
         val idx = path.lastIndexOf('/')
         return when {
-            idx < 0 -> null
+            idx < 0 -> null //Maybe it's not absolute path
             idx == 0 -> "/"
             else -> path.substring(0, idx)
         }
