@@ -70,6 +70,27 @@
                 android:text="@string/delete"
                 />
         </TableRow>
+
+        <TableRow>
+            <TextView
+                android:id="@+id/trafficChartDataLabel"
+                android:text="@string/trafficChartData"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+            <TextView
+                android:id="@+id/trafficChartDataSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                />
+            <Button
+                android:id="@+id/trafficChartDataDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/delete"
+                />
+        </TableRow>
     </TableLayout>
 
 </ScrollView>

@@ -149,6 +149,8 @@
     <string name="logFiles">Log files:</string>
     <string name="rootTmpFiles">Temp files of root access:</string>
     <string name="delete">Delete</string>
+    <string name="trafficChartData">Traffic chart data:</string>
+    <string name="trafficChartDataCount">%1$d samples</string>
     <string name="mobileUiShort">Mobile Mode</string>
     <string name="mobileUiLong">Mobile Device Mode</string>
     <string name="tvUiShort">TV Mode</string>

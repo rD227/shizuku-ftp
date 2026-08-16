@@ -77,8 +77,6 @@ import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -426,16 +424,7 @@ fun MainScreen(
             // >>> 新增：权限状态卡片
             Spacer(modifier = Modifier.height(20.dp))
             Box(contentAlignment = Alignment.TopCenter) {
-                // 1. 背景图表：先定义，使其在层级上处于底层 (Behind)
-                val modelProducer = remember { CartesianChartModelProducer() }
-                LaunchedEffect(Unit) {
-                    modelProducer.runTransaction {
-                        lineSeries {
-                            series(2, 6, 4, 12, 8, 16, 10, 20)
-                        }
-                    }
-                }
-
+                // 背景图表放在权限卡片下层，数据由 NetworkViewModel 提供。
                 Column {
                     Spacer(modifier = Modifier.height(28.dp))
 
