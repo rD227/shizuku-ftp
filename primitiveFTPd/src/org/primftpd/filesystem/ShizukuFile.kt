@@ -65,11 +65,40 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
     }
 
     override fun isFile(): Boolean {
-        return fileInfo.isFile();
+        return fileInfo.isFile
     }
 
     override fun isWritable(): Boolean {
-        return fileInfo.canWrite()
+        if (fileInfo.exists()) {
+            return fileInfo.canWrite()
+        }
+
+        // File does not exist yet — probably an upload of a new file.
+        // Creating it requires write permission on the parent directory, so walk up
+        // until we find an existing parent and check that. (Some clients, like
+        // FileZilla, never issue mkdir commands — see FsFile.isWritable().)
+        val serviceManager = (fileSystemView as? ShizukuFileSystemView<*, *>)?.serviceManager
+            ?: return false
+
+        var parentPath = parentPathOf(absPath)
+        while (parentPath != null) {
+            val parentInfo = serviceManager.stat(parentPath)
+            if (parentInfo.exists()) {
+                return parentInfo.canWrite()
+            }
+            parentPath = parentPathOf(parentPath)
+        }
+        return false
+    }
+
+    private fun parentPathOf(path: String?): String? {
+        if (path.isNullOrEmpty() || path == "/") return null
+        val idx = path.lastIndexOf('/')
+        return when {
+            idx < 0 -> null
+            idx == 0 -> "/"
+            else -> path.substring(0, idx)
+        }
     }
 
     override fun isRemovable(): Boolean {
