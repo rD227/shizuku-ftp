@@ -1,11 +1,14 @@
 package org.primftpd.ui;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import org.greenrobot.eventbus.EventBus;
 
 import org.primftpd.R;
 import org.primftpd.util.Defaults;
@@ -27,6 +30,7 @@ public class CleanSpaceFragment extends Fragment implements RecreateLogger {
     private TextView quickShareSpaceTextView;
     private TextView logsSpaceTextView;
     private TextView rootTmpSpaceTextView;
+    private TextView trafficChartDataSizeTextView;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -38,6 +42,7 @@ public class CleanSpaceFragment extends Fragment implements RecreateLogger {
         quickShareSpaceTextView = view.findViewById(R.id.quickShareFilesSize);
         logsSpaceTextView = view.findViewById(R.id.logFilesSize);
         rootTmpSpaceTextView = view.findViewById(R.id.rootTmpFilesSize);
+        trafficChartDataSizeTextView = view.findViewById(R.id.trafficChartDataSize);
 
         // register listeners
         final CleanSpaceFragment fragment = this;
@@ -47,6 +52,8 @@ public class CleanSpaceFragment extends Fragment implements RecreateLogger {
                 viewL -> onButtonClick(fragment, logsDir(), false));
         view.findViewById(R.id.rootTmpFilesDelete).setOnClickListener(
                 viewR -> onButtonClick(fragment, rootTmpDir(), true));
+        view.findViewById(R.id.trafficChartDataDelete).setOnClickListener(
+                viewT -> onTrafficChartDataDelete());
 
         return view;
     }
@@ -103,6 +110,25 @@ public class CleanSpaceFragment extends Fragment implements RecreateLogger {
         quickShareSpaceTextView.setText(FileSizeUtils.humanReadableByteCountSI(calcSizeQuickShare()));
         logsSpaceTextView.setText(FileSizeUtils.humanReadableByteCountSI(calcSizeLogs()));
         rootTmpSpaceTextView.setText(FileSizeUtils.humanReadableByteCountSI(calcSizeRootTmp()));
+
+        Context context = getContext();
+        if (context != null) {
+            long sampleCount = TrafficChartStore.getInstance(context).sampleCount();
+            trafficChartDataSizeTextView.setText(
+                    getString(R.string.trafficChartDataCount, sampleCount));
+        }
+    }
+
+    private void onTrafficChartDataDelete() {
+        Context context = getContext();
+        if (context == null) {
+            logger.warn("context is null");
+            return;
+        }
+
+        TrafficChartStore.getInstance(context).clear();
+        EventBus.getDefault().post(new TrafficChartClearEvent());
+        updateView();
     }
 
     private long calcSizeQuickShare() {
