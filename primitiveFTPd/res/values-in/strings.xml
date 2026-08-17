@@ -133,8 +133,6 @@
     <string name="statsTotalReceived">Total Diterima</string>
     <string name="statsTotalSent">Total Terkirim</string>
     <string name="statsLabel">Stat</string>
-    <string name="quickShareInfoNotification">Berbagi Cepat: %1s</string>
-    <string name="quickShareInfoActivity">Berjalan dalam Mode Berbagi Cepat untuk berkas: %1s</string>
     <string name="allKeysFingerprintsLabel">Tampilkan sidik jari dari semua tombol</string>
     <string name="pubkeyAuthKeysHeading">Kunci untuk autentikasi kunci publik</string>
     <string name="addPubkeyForAuth">Tambahkan kunci publik untuk auth</string>
