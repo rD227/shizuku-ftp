@@ -73,7 +73,7 @@ fun MainScreen(
                         android.content.pm.PackageManager.PERMISSION_GRANTED
             } else true
             ),
-    viewModel: NetworkViewModel = viewModel()
+    viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel()
 ) {
     var rightMenuVisible by remember {
         mutableStateOf(initialRightVisible)
@@ -167,17 +167,19 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(20.dp))
             Box(contentAlignment = Alignment.TopCenter) {
                 // 背景图表放在权限卡片下层，数据由 NetworkViewModel 提供。
-                Column {
-                    Spacer(modifier = Modifier.height(28.dp))
+                if (viewModel != null) {
+                    Column {
+                        Spacer(modifier = Modifier.height(28.dp))
 
-                    NetworkTrafficChart(
-                        modelProducer = viewModel.modelProducer,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .padding(bottom = 0.dp)
-                            .padding(top = 12.dp)
-                    )
+                        NetworkTrafficChart(
+                            modelProducer = viewModel.modelProducer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .padding(bottom = 0.dp)
+                                .padding(top = 12.dp)
+                        )
+                    }
                 }
 
                 PermissionsCard(
@@ -238,7 +240,8 @@ fun MainScreen(
                     Text(
                         text = "Function and tools",
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Button(
                         onClick = {
@@ -316,7 +319,8 @@ fun MainScreen(
                     Text(
                         text = "Setting and System",
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Button(
                         onClick = {
@@ -659,7 +663,7 @@ fun PermissionItem(
 
 @Preview(showBackground = true,
     name = "Main Screen",
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable
 fun MainScreenPreview() {
@@ -674,7 +678,8 @@ fun MainScreenPreview() {
             },
             fullStorageAccess = true,
             mediaLocationAccess = true,
-            notificationPermission = false
+            notificationPermission = false,
+            //initialLeftVisible = true
         )
     }
 }
