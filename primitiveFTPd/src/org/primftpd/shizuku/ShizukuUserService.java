@@ -235,8 +235,16 @@ public class ShizukuUserService extends IShizukuFileService.Stub {
 
             try (FileInputStream fis = new FileInputStream(file)) {
                 if (offset > 0) {
-                    long skipped = fis.skip(offset);
-                    Log.d(TAG, "[readFile] Skipped " + skipped + " bytes");
+                    long remaining = offset;
+                    while (remaining > 0) {
+                        long skipped = fis.skip(remaining);
+                        if (skipped <= 0) {
+                            Log.w(TAG, "[readFile] Unable to skip to offset " + offset + ", remaining " + remaining + " bytes");
+                            return new byte[0];
+                        }
+                        remaining -= skipped;
+                    }
+                    Log.d(TAG, "[readFile] Skipped " + offset + " bytes");
                 }
                 
                 int toRead = length > 0 ? Math.min(length, (int)(fileSize - offset)) 
