@@ -7,6 +7,7 @@ build
 *.iml
 .gradle
 local.properties
+COMPILE_README.md
 
 #logs
 .kotlin
