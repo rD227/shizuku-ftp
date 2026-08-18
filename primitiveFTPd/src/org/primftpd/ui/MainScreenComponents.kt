@@ -109,12 +109,12 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
 
 @Composable
 fun ShizukuFtpTheme(
-    darkTheme: Boolean = if (LocalInspectionMode.current) false else isSystemInDarkTheme(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor && !LocalInspectionMode.current && Build.VERSION.SDK_INT >= 31 -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
