@@ -14,6 +14,7 @@ public class DataTransferredEvent {
     }
 
     /** @deprecated use {@link #DataTransferredEvent(long, long, boolean, boolean)} */
+    @Deprecated
     public DataTransferredEvent(long timestamp, long bytes, boolean isWrite) {
         this(timestamp, bytes, isWrite, false);
     }
