@@ -16,6 +16,7 @@ java {
 android {
     namespace = "org.primftpd"
     compileSdk = libs.versions.compileSdk.get().toInteger()
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
