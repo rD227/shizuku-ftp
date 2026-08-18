@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,12 +51,10 @@ public class QrFragment extends Fragment implements RecreateLogger {
     private TextView fallbackTextView;
     private ProgressBar qrLoading;
 
-    private String lastChosenIp = null;
+    private final String chosenIp;
 
-    final private PftpdFragment pftpdFragment;
-
-    public QrFragment(PftpdFragment pftpdFragment) {
-        this.pftpdFragment = pftpdFragment;
+    public QrFragment(String chosenIp) {
+        this.chosenIp = chosenIp;
     }
 
     @Override
@@ -82,18 +79,7 @@ public class QrFragment extends Fragment implements RecreateLogger {
     @Override
     public void onResume() {
         super.onResume();
-        draw(pftpdFragment.getChosenIp());
-    }
-
-    public void drawIfChanged() {
-        String chosenIp = pftpdFragment.getChosenIp();
-        if (!Objects.equals(lastChosenIp, chosenIp)) {
-            logger.debug("redraw needed");
-            draw(chosenIp);
-            lastChosenIp = chosenIp;
-        } else {
-            logger.debug("no redraw needed (current ip: {}, last ip: {})", chosenIp, lastChosenIp);
-        }
+        draw(chosenIp);
     }
 
     protected void draw(String chosenIp) {
