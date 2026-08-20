@@ -11,7 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.greenrobot.eventbus.EventBus
@@ -88,8 +90,19 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             { navController.popBackStack() }
                         )
                     }
-                    composable("settings") {
+                    composable(
+                        route = "settings/{section}",
+                        arguments = listOf(navArgument("section") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val sectionName = backStackEntry.arguments?.getString("section") ?: "auth"
+                        val settingsSection = when (sectionName) {
+                            "connecting" -> SettingsSection.CONNECTIVITY
+                            "ui" -> SettingsSection.UI
+                            "system" -> SettingsSection.SYSTEM
+                            else -> SettingsSection.AUTH
+                        }
                         SettingsScreen(
+                            section = settingsSection,
                             onBack = { navController.popBackStack() }
                         )
                     }

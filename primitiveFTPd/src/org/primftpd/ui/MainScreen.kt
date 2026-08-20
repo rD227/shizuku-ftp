@@ -92,6 +92,9 @@ fun MainScreen(
     val iconFingerprint = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24)
     val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
     val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
+    val iconPort = ImageVector.vectorResource(id = R.drawable.port)
+    val iconUi = ImageVector.vectorResource(id = R.drawable.uisetting_coarse)
+    val iconSystem = ImageVector.vectorResource(id = R.drawable.system)
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
 
 
@@ -333,7 +336,22 @@ fun MainScreen(
                     RowClick(
                         icon = iconAuth,
                         text = "Authentication",
-                        onClick = { onMenuClick("settings") }
+                        onClick = { onMenuClick("settings/auth") }
+                    )
+                    RowClick(
+                        icon = iconPort,
+                        text = "How to connect",
+                        onClick = { onMenuClick("settings/connecting") }
+                    )
+                    RowClick(
+                        icon = iconUi,
+                        text = "UI setting",
+                        onClick = { onMenuClick("settings/ui") }
+                    )
+                    RowClick(
+                        icon = iconSystem,
+                        text = "System",
+                        onClick = { onMenuClick("settings/system") }
                     )
                 }
             }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,12 +32,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,15 +60,34 @@ import org.primftpd.util.Defaults
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.NotificationUtil
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
+
+enum class SettingsSection(val route: String) {
+    AUTH("auth"),
+    CONNECTIVITY("connecting"),
+    UI("ui"),
+    SYSTEM("system")
+}
 
 // ─── Entry Point ────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    section: SettingsSection = SettingsSection.AUTH,
+    onBack: () -> Unit
+) {
     var hasNatigatedBack by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val sectionOffsets = remember { mutableStateMapOf<SettingsSection, Int>() }
+
+    LaunchedEffect(section) {
+        snapshotFlow { sectionOffsets[section] }
+            .first { it != null }
+            ?.let { scrollState.animateScrollTo(it) }
+    }
 
     Scaffold(
         topBar = {
@@ -84,20 +109,51 @@ fun SettingsScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
-            AuthCategory()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        sectionOffsets[SettingsSection.AUTH] = it.positionInParent().y.toInt()
+                    }
+            ) {
+                AuthCategory()
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            ConnectivityCategory()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        sectionOffsets[SettingsSection.CONNECTIVITY] = it.positionInParent().y.toInt()
+                    }
+            ) {
+                ConnectivityCategory()
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            UiCategory()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        sectionOffsets[SettingsSection.UI] = it.positionInParent().y.toInt()
+                    }
+            ) {
+                UiCategory()
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            SystemCategory()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        sectionOffsets[SettingsSection.SYSTEM] = it.positionInParent().y.toInt()
+                    }
+            ) {
+                SystemCategory()
+            }
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
-
 // ─── Helper: get SharedPreferences once ─────────────────────────
 
 @Composable
