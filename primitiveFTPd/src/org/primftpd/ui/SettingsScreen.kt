@@ -111,7 +111,7 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(scrollState)
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned {
@@ -121,7 +121,7 @@ fun SettingsScreen(
                 AuthCategory()
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned {
@@ -131,7 +131,7 @@ fun SettingsScreen(
                 ConnectivityCategory()
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned {
@@ -141,7 +141,7 @@ fun SettingsScreen(
                 UiCategory()
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned {
