@@ -123,7 +123,8 @@ fun ShizukuFtpTheme(
     }
     MaterialTheme(
         colorScheme = colorScheme,
-        content = content
-    )
+    ) {
+        Surface(content = content)
+    }
 }
 
