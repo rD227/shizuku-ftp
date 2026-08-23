@@ -23,7 +23,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.primftpd.R
 
 // --- Shared UI components ---
@@ -75,8 +77,11 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
     ) {
         Text(
             text = if (isRunning) "stop" else "start",
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.offset(y = (-2).dp),
+            fontSize = 20.sp
         )
+        //Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -135,3 +140,10 @@ fun ShizukuFtpTheme(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun startButtonPreview(){
+    ShizukuFtpTheme() {
+        ServerControlButton(isRunning = false, onClick = {})
+    }
+}
