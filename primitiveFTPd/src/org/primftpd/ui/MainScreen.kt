@@ -6,10 +6,17 @@ import android.net.Uri
 import android.provider.Settings
 import android.os.Build
 import android.os.Environment
+
+import android.widget.Toast
+import android.os.BatteryManager
+
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.graphics.res.animatedVectorResource
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,10 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -43,6 +56,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+import dev.chrisbanes.haze.HazeInputScale
+
+import dev.chrisbanes.haze.HazeState
+
+import dev.chrisbanes.haze.hazeEffect
+
+import dev.chrisbanes.haze.hazeSource
+
+import dev.chrisbanes.haze.rememberHazeState
+
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.blurEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.primftpd.R
@@ -75,14 +101,22 @@ fun MainScreen(
             ),
     viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel()
 ) {
-    var rightMenuVisible by remember {
-        mutableStateOf(initialRightVisible)
-    }
-    var leftMenuVisible by remember {
-        mutableStateOf(initialLeftVisible)
-    }
+    var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
+    var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
+    var glassEnabled by remember { mutableStateOf(true) }
+    var permissionsCardExpanded by remember { mutableStateOf(true) }
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val hazeState = rememberHazeState()
+    val batteryPercent = rememberBatteryPercent(context)
+    val serverStartTime = rememberServerStartTime(isServerRunning)
+
+    LaunchedEffect(batteryPercent) {
+        if (batteryPercent == null) {
+            Toast.makeText(context, "Unable to read battery level", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // 预加载图标
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -92,17 +126,15 @@ fun MainScreen(
     val iconFingerprint = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24)
     val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
     val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
+    val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
     val iconPort = ImageVector.vectorResource(id = R.drawable.port)
     val iconUi = ImageVector.vectorResource(id = R.drawable.uisetting_coarse)
     val iconSystem = ImageVector.vectorResource(id = R.drawable.system)
-    val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
-
 
     val onMenuClick: (String) -> Unit = { route ->
         rightMenuVisible = false
         leftMenuVisible = false
         scope.launch {
-            //delay(20)
             onNavigate(route)
         }
     }
@@ -112,7 +144,15 @@ fun MainScreen(
         label = "GearRotation"
     )
 
+    val sidebarOpen = leftMenuVisible || rightMenuVisible
+
     Box(modifier = Modifier.fillMaxSize()) {
+        MainBackground(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = hazeState)
+        )
+
         // 主内容
         Column(
             modifier = Modifier
@@ -128,49 +168,75 @@ fun MainScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                MenuButton(
-                    iconRes = R.drawable.gear,
-                    rotation = gearRotation,
-                    onClick = {
-                        leftMenuVisible = true
-                    }
-                )
+                AnimatedVisibility(
+                    visible = !sidebarOpen,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    MenuButton(
+                        iconRes = R.drawable.gear,
+                        rotation = gearRotation,
+                        onClick = {
+                            leftMenuVisible = true
+                        }
+                    )
+                }
                 Text(
                     text = if (isServerRunning) "Server is running" else "Server has stopped",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                MenuButton(
-                    iconRes = R.drawable.link,
-                    rotation = gearRotation,
+                AnimatedVisibility(
+                    visible = !sidebarOpen,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    MenuButton(
+                        iconRes = R.drawable.link,
+                        rotation = gearRotation,
+                        onClick = {
+                            rightMenuVisible = true
+                        }
+                    )
+                }
+            }
+
+            // 原 Spacer(weight = 0.7f) 替换为自定义图片，并做上下渐隐
+            MainHeroImage(
+                modifier = Modifier
+                    .weight(0.7f)
+                    .fillMaxWidth()
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                GlassBackgroundToggleButton(
+                    enabled = glassEnabled,
+                    onClick = { glassEnabled = !glassEnabled }
+                )
+                ServerControlButton(
+                    isRunning = isServerRunning,
                     onClick = {
-                        rightMenuVisible = true
+                        if (isServerRunning) {
+                            onStopServer()
+                        } else {
+                            onStartServer()
+                        }
                     }
                 )
-            }
-            Spacer(modifier = Modifier.weight(0.7F))
-            ServerControlButton(
-                isRunning = isServerRunning,
-                onClick = {
-                    if (isServerRunning) {
-                        onStopServer()
-                    } else {
-                        onStartServer()
-                    }
+                AnimatedVisibility(
+                    visible = !permissionsCardExpanded,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut()
+                ) {
+                    ShowCardButton(onClick = { permissionsCardExpanded = true })
                 }
-            )
-
-            /**
-            Text(
-                text = "Click to switch server status",
-                modifier = Modifier.padding(top = 16.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            **/
+            }
 
             // >>> 新增：权限状态卡片
-            Spacer(modifier = Modifier.weight(0.1F))
+            Spacer(modifier = Modifier.weight(0.1f))
             Box(contentAlignment = Alignment.TopCenter) {
                 // 背景图表放在权限卡片下层，数据由 NetworkViewModel 提供。
                 if (viewModel != null) {
@@ -191,14 +257,16 @@ fun MainScreen(
                 PermissionsCard(
                     fullStorageAccess = fullStorageAccess,
                     mediaLocationAccess = mediaLocationAccess,
-                    notificationPermission = notificationPermission
+                    notificationPermission = notificationPermission,
+                    isExpanded = permissionsCardExpanded,
+                    onExpandedChange = { permissionsCardExpanded = it }
                 )
             }
 
             Spacer(modifier = Modifier.weight(0.2f))
         }
 
-        // 背景遮罩 (Scrim) - 添加淡入淡出动画
+        // 背景遮罩 (Scrim)
         AnimatedVisibility(
             visible = rightMenuVisible || leftMenuVisible,
             enter = fadeIn(animationSpec = tween(300)),
@@ -218,85 +286,91 @@ fun MainScreen(
             )
         }
 
-        // 右侧滑菜单 - 性能优化与动画微调
+        // 右侧滑菜单
         AnimatedVisibility(
             visible = rightMenuVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                //animationSpec = tween(300)
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioLowBouncy,
                     stiffness = Spring.StiffnessLow
                 )
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                //animationSpec = tween(300)
+                targetOffsetX = { it }
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(270.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .graphicsLayer { clip = true } // 提示系统开启硬件加速
+            GlassSidebarBox(
+                hazeState = hazeState,
+                glassEnabled = glassEnabled,
+                modifier = Modifier.width(270.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Function and tools",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Button(
-                        onClick = {
-                            rightMenuVisible = false
-                        },
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    ) {
-                        Text("Close")
+                SidebarTopButtons(
+                    gearRotation = gearRotation,
+                    onGearClick = {
+                        rightMenuVisible = false
+                        leftMenuVisible = true
+                    },
+                    onLinkClick = {
+                        leftMenuVisible = false
+                        rightMenuVisible = false
                     }
-                    RowClick(
-                        icon = iconNetwork,
-                        text = "Network status",
-                        onClick = { onMenuClick("netWorkStatus") }
-                    )
-                    RowClick(
-                        icon = iconQr,
-                        text = "Scan code",
-                        onClick = { onMenuClick("qr") }
-                    )
-                    RowClick(
-                        icon = iconClean,
-                        text = "Clean cache",
-                        onClick = { onMenuClick("clean") }
-                    )
-                    RowClick(
-                        icon = iconLogs,
-                        text = "Client logs",
-                        onClick = { onMenuClick("clientStatus") }
-                    )
-                    RowClick(
-                        icon = iconFingerprint,
-                        text = "Finger print",
-                        onClick = { onMenuClick("fingerPrint") }
-                    )
-                    RowClick(
-                        icon = iconKey,
-                        text = "Verification Key",
-                        onClick = { onMenuClick("VerificationKey") }
-                    )
-                    RowClick(
-                        icon = iconAbout,
-                        text = "About",
-                        onClick = { onMenuClick("about") }
-                    )
+                )
+                SidebarInfo(startTime = serverStartTime, batteryPercent = batteryPercent)
+                Text(
+                    text = "Function and tools",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Button(
+                    onClick = {
+                        rightMenuVisible = false
+                    },
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                ) {
+                    Text("Close")
                 }
+                RowClick(
+                    icon = iconNetwork,
+                    text = "Network status",
+                    onClick = { onMenuClick("netWorkStatus") }
+                )
+                RowClick(
+                    icon = iconQr,
+                    text = "Scan code",
+                    onClick = { onMenuClick("qr") }
+                )
+                RowClick(
+                    icon = iconClean,
+                    text = "Clean cache",
+                    onClick = { onMenuClick("clean") }
+                )
+                RowClick(
+                    icon = iconLogs,
+                    text = "Client logs",
+                    onClick = { onMenuClick("clientStatus") }
+                )
+                RowClick(
+                    icon = iconFingerprint,
+                    text = "Finger print",
+                    onClick = { onMenuClick("fingerPrint") }
+                )
+                RowClick(
+                    icon = iconKey,
+                    text = "Verification Key",
+                    onClick = { onMenuClick("VerificationKey") }
+                )
+                RowClick(
+                    icon = iconAbout,
+                    text = "About",
+                    onClick = { onMenuClick("about") }
+                )
             }
         }
 
-        // 左侧滑菜单 - 性能优化与动画微调
+        // 左侧滑菜单
         AnimatedVisibility(
             visible = leftMenuVisible,
             enter = slideInHorizontally(
@@ -305,69 +379,244 @@ fun MainScreen(
                     dampingRatio = Spring.DampingRatioLowBouncy,
                     stiffness = Spring.StiffnessLow
                 )
-            ) + fadeIn(animationSpec = tween(300),
-
-                ),
+            ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
-                targetOffsetX = { -it },
-                //animationSpec = tween(300)
+                targetOffsetX = { -it }
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(280.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .graphicsLayer { clip = true }
+            GlassSidebarBox(
+                hazeState = hazeState,
+                glassEnabled = glassEnabled,
+                modifier = Modifier.width(280.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Setting and System",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Button(
-                        onClick = {
-                            leftMenuVisible = false
-                        },
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    ) {
-                        Text("Close")
+                SidebarTopButtons(
+                    gearRotation = gearRotation,
+                    onGearClick = {
+                        rightMenuVisible = false
+                        leftMenuVisible = false
+                    },
+                    onLinkClick = {
+                        leftMenuVisible = false
+                        rightMenuVisible = true
                     }
-                    RowClick(
-                        icon = iconAuth,
-                        text = "Authentication",
-                        onClick = { onMenuClick("settings/auth") }
-                    )
-                    RowClick(
-                        icon = iconPort,
-                        text = "How to connect",
-                        onClick = { onMenuClick("settings/connecting") }
-                    )
-                    RowClick(
-                        icon = iconUi,
-                        text = "UI setting",
-                        onClick = { onMenuClick("settings/ui") }
-                    )
-                    RowClick(
-                        icon = iconSystem,
-                        text = "System",
-                        onClick = { onMenuClick("settings/system") }
-                    )
+                )
+                SidebarInfo(startTime = serverStartTime, batteryPercent = batteryPercent)
+                Text(
+                    text = "Setting and System",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Button(
+                    onClick = {
+                        leftMenuVisible = false
+                    },
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                ) {
+                    Text("Close")
                 }
+                RowClick(
+                    icon = iconAuth,
+                    text = "Authentication",
+                    onClick = { onMenuClick("settings/auth") }
+                )
+                RowClick(
+                    icon = iconPort,
+                    text = "How to connect",
+                    onClick = { onMenuClick("settings/connecting") }
+                )
+                RowClick(
+                    icon = iconUi,
+                    text = "UI setting",
+                    onClick = { onMenuClick("settings/ui") }
+                )
+                RowClick(
+                    icon = iconSystem,
+                    text = "System",
+                    onClick = { onMenuClick("settings/system") }
+                )
             }
         }
     }
 }
 
+@Composable
+private fun MainBackground(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(id = R.drawable.main_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.5f to Color.Transparent,
+                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.45f)
+                    )
+                )
+        )
+    }
+}
+
+@Composable
+private fun MainHeroImage(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(id = R.drawable.main_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
+                        0.35f to Color.Transparent,
+                        0.65f to Color.Transparent,
+                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f)
+                    )
+                )
+        )
+    }
+}
+
+@Composable
+private fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) {
+    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(
+            painter = painterResource(id = if (enabled) R.drawable.visiable else R.drawable.baseline_disabled_visible_24),
+            contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+@Composable
+private fun ShowCardButton(onClick: () -> Unit) {
+    OutlinedIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(48.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.outline_data_alert_24),
+            contentDescription = "Show card",
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun rememberBatteryPercent(context: Context): Int? {
+    return remember(context) {
+        runCatching {
+            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
+        }.getOrNull()
+    }
+}
+
+@Composable
+private fun rememberServerStartTime(isServerRunning: Boolean): Long? {
+    var startTime by remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(isServerRunning) {
+        if (isServerRunning && startTime == null) {
+            startTime = System.currentTimeMillis()
+        } else if (!isServerRunning) {
+            startTime = null
+        }
+    }
+    return startTime
+}
+
+@Composable
+private fun SidebarTopButtons(
+    gearRotation: Float,
+    onGearClick: () -> Unit,
+    onLinkClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
+        MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
+    }
+}
+
+@Composable
+private fun SidebarInfo(startTime: Long?, batteryPercent: Int?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = startTime?.let { "Server started " + formatStartTime(it) } ?: "Server not started",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = batteryPercent?.let { "Battery $it%" } ?: "Battery unknown",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.GlassSidebarBox(
+    hazeState: HazeState,
+    glassEnabled: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val glassModifier = if (glassEnabled) {
+        Modifier.hazeEffect(state = hazeState) {
+            inputScale = HazeInputScale.Auto
+            blurEffect {
+                blurRadius = 30.dp
+                fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.35f))
+            }
+        }
+    } else {
+        Modifier
+    }
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .then(glassModifier)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (glassEnabled) 0.55f else 1f))
+            .graphicsLayer { clip = true }
+    ) {
+        Column(content = content)
+    }
+}
+
+private fun formatStartTime(timestamp: Long): String {
+    return java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+        .format(java.util.Date(timestamp))
+}
 
 @Composable
 fun PermissionsCard(
     fullStorageAccess: Boolean,
     mediaLocationAccess: Boolean,
-    notificationPermission: Boolean
+    notificationPermission: Boolean,
+    isExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val inspectionMode = LocalInspectionMode.current
@@ -377,8 +626,6 @@ fun PermissionsCard(
     var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
 
-    // >>> 控制卡片展开/收起状态
-    var isExpanded by remember { mutableStateOf(true) }
     // >>> 控制是否贴边
     var shouldStickToEdge by remember { mutableStateOf(false) }
 
@@ -488,7 +735,7 @@ fun PermissionsCard(
                         .fillMaxWidth()
                         .clickable(
                             onClick = {
-                                isExpanded = false
+                                onExpandedChange(false)
                             }
                         )
                         .padding(vertical = 0.dp),
@@ -551,62 +798,8 @@ fun PermissionsCard(
             }
         }
 
-        // >>> 右侧圆形浮动按钮 - 只在卡片隐藏时显示
-        AnimatedVisibility(
-            visible = !isExpanded,
-            enter = scaleIn(animationSpec = spring(
-                dampingRatio = 0.5f,
-                stiffness = Spring.StiffnessMediumLow
-            )) + expandVertically(
-                animationSpec = spring(
-                    dampingRatio = 0.5f,
-                    stiffness = Spring.StiffnessMediumLow
-                )
-            ) + fadeIn(),
-            exit = scaleOut(animationSpec = spring(
-                dampingRatio = 0.5f,
-                stiffness = Spring.StiffnessMediumLow
-            )) + shrinkVertically(
-                animationSpec = spring(
-                    dampingRatio = 0.5f,
-                    stiffness = Spring.StiffnessMediumLow
-                )
-            ) + fadeOut(),
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            val buttonOffsetX by animateDpAsState(
-                targetValue = if (shouldStickToEdge) 24.dp else 0.dp,
-                label = "buttonOffset"
-            )
-            Box(
-                modifier = Modifier
-                    .offset(x = buttonOffsetX)
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable {
-                        if (shouldStickToEdge){
-                            shouldStickToEdge = false
-                        }else{
-                            isExpanded = true
-                        }
-                    }
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.outline_data_alert_24),
-                    contentDescription = "Show card",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-
-
     }
 }
-
 
 //做一个流量监控的条形图
 
