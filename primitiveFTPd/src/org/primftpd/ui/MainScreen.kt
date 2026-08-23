@@ -197,8 +197,6 @@ fun MainScreen(
                 currentTime = currentTime,
                 batteryPercent = batteryPercent,
                 gearRotation = gearRotation,
-                hazeState = hazeState,
-                glassEnabled = true,
                 onGearClick = { leftMenuVisible = true },
                 onLinkClick = { rightMenuVisible = true },
                 modifier = Modifier.fillMaxHeight()
@@ -493,50 +491,36 @@ fun MainScreen(
 
 @Composable
 private fun MainBackground(modifier: Modifier = Modifier) {
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFF1A1A2E),
-                            Color(0xFF16213E),
-                            Color(0xFF0F3460)
-                        )
-                    )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to Color.Transparent,
-                        0.5f to Color.Transparent,
-                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.45f)
-                    )
-                )
-        )
-    }
+    Box(
+        modifier = modifier.background(MaterialTheme.colorScheme.background)
+    )
 }
 
 @Composable
 private fun MainHeroImage(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFF1A1A2E),
-                            Color(0xFF16213E),
-                            Color(0xFF0F3460)
+        if (!LocalInspectionMode.current) {
+            Image(
+                painter = painterResource(id = R.drawable.my_background),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF1A1A2E),
+                                Color(0xFF16213E),
+                                Color(0xFF0F3460)
+                            )
                         )
                     )
-                )
-        )
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -557,8 +541,6 @@ private fun BoxScope.NarrowWallpaperRail(
     currentTime: Long,
     batteryPercent: Int?,
     gearRotation: Float,
-    hazeState: HazeState,
-    glassEnabled: Boolean,
     onGearClick: () -> Unit,
     onLinkClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -567,46 +549,66 @@ private fun BoxScope.NarrowWallpaperRail(
         java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
             .format(java.util.Date(currentTime))
     }
-    val glassModifier = if (glassEnabled) {
-        Modifier.hazeEffect(state = hazeState) {
-            inputScale = HazeInputScale.Auto
-            blurEffect {
-                blurRadius = 20.dp
-                fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.30f))
-            }
-        }
-    } else {
-        Modifier
-    }
-    Column(
+    Box(
         modifier = modifier
             .fillMaxHeight()
             .width(64.dp)
-            .then(glassModifier)
-            .background(Color.Black.copy(alpha = 0.16f))
-            .padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clip(RoundedCornerShape(0.dp))
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = timeText,
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            softWrap = false,
-            modifier = Modifier.rotate(-90f)
+        if (!LocalInspectionMode.current) {
+            Image(
+                painter = painterResource(id = R.drawable.my_background),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF1A1A2E),
+                                Color(0xFF16213E),
+                                Color(0xFF0F3460)
+                            )
+                        )
+                    )
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.25f))
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = batteryPercent?.let { "$it%" } ?: "--%",
-            color = Color.White.copy(alpha = 0.75f),
-            style = MaterialTheme.typography.bodySmall,
-            softWrap = false
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
-        Spacer(modifier = Modifier.height(8.dp))
-        MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
-        Spacer(modifier = Modifier.weight(1f))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = timeText,
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                softWrap = false,
+                modifier = Modifier.rotate(-90f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = batteryPercent?.let { "$it%" } ?: "--%",
+                color = Color.White.copy(alpha = 0.75f),
+                style = MaterialTheme.typography.bodySmall,
+                softWrap = false
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
+            Spacer(modifier = Modifier.height(8.dp))
+            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
