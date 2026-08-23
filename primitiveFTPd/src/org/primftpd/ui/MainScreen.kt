@@ -128,7 +128,7 @@ fun MainScreen(
     // 侧边栏状态：外部传入时由外部控制（preview），否则内部自持（真实 App 默认正常切换）
     var railVisibleInternal by remember { mutableStateOf(true) }
     val resolvedRailVisible = railVisible ?: railVisibleInternal
-    val resolvedOnRailVisibleChange = onRailVisibleChange ?: { }
+    val resolvedOnRailVisibleChange = onRailVisibleChange ?: { railVisibleInternal = it }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -199,10 +199,24 @@ fun MainScreen(
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MainBackground(
+        // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .hazeSource(state = hazeState)
+        ) {
+            WallpaperBase(wallpaperBitmap = wallpaperBitmap)
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeEffect(state = hazeState) {
+                    inputScale = HazeInputScale.Auto
+                    blurEffect {
+                        blurRadius = 24.dp
+                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.25f))
+                    }
+                }
         )
 
         // YumeBox 风格左侧窄边栏
@@ -218,8 +232,8 @@ fun MainScreen(
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.CenterStart)
         ) {
+            // 透明侧栏：不传图片，直接透出根部打底模糊背景
             NarrowWallpaperRail(
-                wallpaperBitmap = wallpaperBitmap,
                 currentTime = currentTime,
                 batteryPercent = batteryPercent,
                 gearRotation = gearRotation,
@@ -231,52 +245,22 @@ fun MainScreen(
         }
 
         // 主内容
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = railPadding)
                 .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {/**
-            Row(
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AnimatedVisibility(
-                    visible = !resolvedRailVisible && !sidebarOpen,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    MenuButton(
-                        iconRes = R.drawable.gear,
-                        rotation = gearRotation,
-                        onClick = {
-                            leftMenuVisible = true
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(56.dp))
-                AnimatedVisibility(
-                    visible = !resolvedRailVisible && !sidebarOpen,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    MenuButton(
-                        iconRes = R.drawable.link,
-                        rotation = gearRotation,
-                        onClick = {
-                            rightMenuVisible = true
-                        }
-                    )
-                }
-            }
-            **/
 
+
+            Spacer(modifier = Modifier.height(16.dp))
             // 原 Spacer(weight = 0.7f) 替换为自定义图片，并做上下渐隐；长按更换图片
             MainHeroImage(
                 wallpaperBitmap = wallpaperBitmap,
@@ -330,6 +314,7 @@ fun MainScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+            }
         }
 
         // 背景遮罩 (Scrim)
@@ -495,10 +480,45 @@ fun MainScreen(
 }
 
 @Composable
-private fun MainBackground(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.background(MaterialTheme.colorScheme.background)
-    )
+private fun WallpaperBase(
+    wallpaperBitmap: ImageBitmap?,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        when {
+            wallpaperBitmap != null -> Image(
+                bitmap = wallpaperBitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            !LocalInspectionMode.current -> Image(
+                painter = painterResource(id = R.drawable.my_background),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            else -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF1A1A2E),
+                                Color(0xFF16213E),
+                                Color(0xFF0F3460)
+                            )
+                        )
+                    )
+            )
+        }
+        // 轻微压暗，保证前景内容可读
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.12f))
+        )
+    }
 }
 
 @Composable
@@ -560,7 +580,6 @@ private fun MainHeroImage(
 
 @Composable
 private fun NarrowWallpaperRail(
-    wallpaperBitmap: ImageBitmap?,
     currentTime: Long,
     batteryPercent: Int?,
     gearRotation: Float,
@@ -573,64 +592,12 @@ private fun NarrowWallpaperRail(
         java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
             .format(java.util.Date(currentTime))
     }
-    val railHazeState = rememberHazeState()
+    // 透明侧栏：不再自己画壁纸/模糊，直接透出根部打底模糊背景，与主内容圆角外露的背景连成一片
     Box(
         modifier = modifier
             .fillMaxHeight()
             .width(64.dp)
-            .clip(RoundedCornerShape(0.dp))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .hazeSource(state = railHazeState)
-        ) {
-            if (wallpaperBitmap != null) {
-                Image(
-                    bitmap = wallpaperBitmap,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else if (!LocalInspectionMode.current) {
-                Image(
-                    painter = painterResource(id = R.drawable.my_background),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color(0xFF1A1A2E),
-                                    Color(0xFF16213E),
-                                    Color(0xFF0F3460)
-                                )
-                            )
-                        )
-                )
-            }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .hazeEffect(state = railHazeState) {
-                    inputScale = HazeInputScale.Auto
-                    blurEffect {
-                        blurRadius = 20.dp
-                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.30f))
-                    }
-                }
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.25f))
-        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
