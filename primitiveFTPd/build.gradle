@@ -125,6 +125,9 @@ dependencies {
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.compose.material.icons.core
     implementation libs.vico.compose.m3
+    implementation libs.haze
+    implementation libs.haze.blur
+    implementation libs.haze.blur.materials
     //implementation libs.androidx.compose.material.icons.extended
 
     coreLibraryDesugaring(libs.google.desugar)

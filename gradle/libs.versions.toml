@@ -43,6 +43,7 @@ composeBom = "2026.03.00"
 # 新增 navigation 版本
 androidxNavigation = "2.9.7"
  animationGraphics = "1.11.0"
+haze = "2.0.0-alpha03"
 
  [libraries]
 # 明确命名以避免路径冲突
@@ -95,6 +96,10 @@ androidx-compose-material-icons-core = { group = "androidx.compose.material", na
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }
  androidx-compose-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics", version.ref = "animationGraphics" }
+
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
+haze-blur-materials = { module = "dev.chrisbanes.haze:haze-blur-materials", version.ref = "haze" }
 
 
  [plugins]
