@@ -61,6 +61,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
@@ -115,14 +116,20 @@ fun MainScreen(
                         android.content.pm.PackageManager.PERMISSION_GRANTED
             } else true
             ),
-    viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel()
+    viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    railVisible: Boolean? = null,
+    onRailVisibleChange: ((Boolean) -> Unit)? = null,
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    var railVisible by remember { mutableStateOf(true) }
     var permissionsCardExpanded by remember { mutableStateOf(true) }
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    // 侧边栏状态：外部传入时由外部控制（preview），否则内部自持（真实 App 默认正常切换）
+    var railVisibleInternal by remember { mutableStateOf(true) }
+    val resolvedRailVisible = railVisible ?: railVisibleInternal
+    val resolvedOnRailVisibleChange = onRailVisibleChange ?: { railVisibleInternal = it }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -189,7 +196,7 @@ fun MainScreen(
 
     val sidebarOpen = leftMenuVisible || rightMenuVisible
     val railPadding by animateDpAsState(
-        targetValue = if (railVisible) 64.dp else 0.dp,
+        targetValue = if (resolvedRailVisible) 64.dp else 0.dp,
         label = "RailPadding"
     )
 
@@ -202,7 +209,7 @@ fun MainScreen(
 
         // YumeBox 风格左侧窄边栏：竖排时间 + 两个 MenuButton
         AnimatedVisibility(
-            visible = railVisible,
+            visible = resolvedRailVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { -it },
                 animationSpec = tween(300)
@@ -231,7 +238,7 @@ fun MainScreen(
                 .padding(start = railPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        ) {/**
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,7 +248,7 @@ fun MainScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 AnimatedVisibility(
-                    visible = !railVisible && !sidebarOpen,
+                    visible = !resolvedRailVisible && !sidebarOpen,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -255,7 +262,7 @@ fun MainScreen(
                 }
                 Spacer(modifier = Modifier.height(56.dp))
                 AnimatedVisibility(
-                    visible = !railVisible && !sidebarOpen,
+                    visible = !resolvedRailVisible && !sidebarOpen,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -268,6 +275,7 @@ fun MainScreen(
                     )
                 }
             }
+            **/
 
             // 原 Spacer(weight = 0.7f) 替换为自定义图片，并做上下渐隐；长按更换图片
             MainHeroImage(
@@ -282,13 +290,15 @@ fun MainScreen(
                     }
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 GlassBackgroundToggleButton(
-                    enabled = railVisible,
-                    onClick = { railVisible = !railVisible }
+                    enabled = resolvedRailVisible,
+                    onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) }
                 )
                 ServerControlButton(
                     isRunning = isServerRunning,
@@ -309,7 +319,7 @@ fun MainScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(0.1f))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // 图表和权限卡片固定同一高度，卡片滑入滑出时不再挤压上下布局
             Box(contentAlignment = Alignment.TopCenter) {
@@ -336,7 +346,7 @@ fun MainScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(0.2f))
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
         // 背景遮罩 (Scrim)
@@ -524,25 +534,33 @@ private fun MainHeroImage(
     wallpaperBitmap: ImageBitmap?,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
+    Box(modifier = modifier
+            .fillMaxHeight()
+            .padding(horizontal = 8.dp)) {
         if (wallpaperBitmap != null) {
             Image(
                 bitmap = wallpaperBitmap,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
             )
         } else if (!LocalInspectionMode.current) {
             Image(
                 painter = painterResource(id = R.drawable.my_background),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
             )
         } else {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
+                    //.fillMaxHeight()
+                    //.padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -559,10 +577,9 @@ private fun MainHeroImage(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
-                        0.35f to Color.Transparent,
-                        0.65f to Color.Transparent,
-                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f)
+                        0f to Color.Transparent,
+                        0.8f to Color.Transparent,
+                        1f to MaterialTheme.colorScheme.background.copy(alpha = 1f)
                     )
                 )
         )
@@ -921,7 +938,7 @@ fun PermissionsCard(
                         text = "Permissions Status",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 0.dp)
                     )
 
                     // Android 11+ 完整存储访问权限
@@ -1012,7 +1029,9 @@ fun PermissionItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,                        // 只占一行
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 AnimatedContent(
@@ -1066,6 +1085,7 @@ fun PermissionItem(
 )
 @Composable
 fun MainScreenPreview() {
+    var railVisible by remember { mutableStateOf(true) }
     ShizukuFtpTheme {
         MainScreen(
             isServerRunning = false,
@@ -1078,6 +1098,8 @@ fun MainScreenPreview() {
             fullStorageAccess = true,
             mediaLocationAccess = true,
             notificationPermission = false,
+            railVisible = railVisible,
+            onRailVisibleChange = { railVisible = it },
             //initialLeftVisible = true
         )
     }
