@@ -148,7 +148,7 @@ fun MainScreen(
                     }
                 )
             }
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.weight(0.7F))
             ServerControlButton(
                 isRunning = isServerRunning,
                 onClick = {
@@ -159,15 +159,18 @@ fun MainScreen(
                     }
                 }
             )
+
+            /**
             Text(
                 text = "Click to switch server status",
                 modifier = Modifier.padding(top = 16.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            **/
 
             // >>> 新增：权限状态卡片
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.weight(0.1F))
             Box(contentAlignment = Alignment.TopCenter) {
                 // 背景图表放在权限卡片下层，数据由 NetworkViewModel 提供。
                 if (viewModel != null) {
@@ -192,7 +195,7 @@ fun MainScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.weight(0.2f))
         }
 
         // 背景遮罩 (Scrim) - 添加淡入淡出动画
@@ -453,9 +456,19 @@ fun PermissionsCard(
                     dampingRatio = 0.5f,
                     stiffness = Spring.StiffnessMediumLow
                 )
+            ) + expandVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
             ) + fadeIn(),
             exit = slideOutHorizontally(
                 targetOffsetX = { -it },
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + shrinkVertically(
                 animationSpec = spring(
                     dampingRatio = 0.5f,
                     stiffness = Spring.StiffnessMediumLow
@@ -544,11 +557,21 @@ fun PermissionsCard(
             enter = scaleIn(animationSpec = spring(
                 dampingRatio = 0.5f,
                 stiffness = Spring.StiffnessMediumLow
-            )) + fadeIn(),
+            )) + expandVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(),
             exit = scaleOut(animationSpec = spring(
                 dampingRatio = 0.5f,
                 stiffness = Spring.StiffnessMediumLow
-            )) + fadeOut(),
+            )) + shrinkVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.5f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeOut(),
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
             val buttonOffsetX by animateDpAsState(
