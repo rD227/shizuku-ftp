@@ -444,11 +444,18 @@ fun MainScreen(
 @Composable
 private fun MainBackground(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        Image(
-            painter = painterResource(id = R.drawable.main_background),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF1A1A2E),
+                            Color(0xFF16213E),
+                            Color(0xFF0F3460)
+                        )
+                    )
+                )
         )
         Box(
             modifier = Modifier
@@ -467,11 +474,18 @@ private fun MainBackground(modifier: Modifier = Modifier) {
 @Composable
 private fun MainHeroImage(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        Image(
-            painter = painterResource(id = R.drawable.main_background),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF1A1A2E),
+                            Color(0xFF16213E),
+                            Color(0xFF0F3460)
+                        )
+                    )
+                )
         )
         Box(
             modifier = Modifier
