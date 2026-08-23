@@ -119,9 +119,8 @@ fun MainScreen(
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    var glassEnabled by remember { mutableStateOf(true) }
+    var railVisible by remember { mutableStateOf(true) }
     var permissionsCardExpanded by remember { mutableStateOf(true) }
-    var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val scope = rememberCoroutineScope()
@@ -139,25 +138,6 @@ fun MainScreen(
         while (true) {
             currentTime = System.currentTimeMillis()
             delay(30_000)
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        wallpaperBitmap = loadWallpaperBitmap(context)
-    }
-
-    val wallpaperPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            scope.launch {
-                val savedPath = saveWallpaperToLocal(context, uri)
-                if (savedPath != null) {
-                    wallpaperBitmap = BitmapFactory.decodeFile(savedPath)?.asImageBitmap()
-                } else {
-                    Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
-                }
-            }
         }
     }
 
@@ -188,32 +168,48 @@ fun MainScreen(
     )
 
     val sidebarOpen = leftMenuVisible || rightMenuVisible
+    val railPadding by animateDpAsState(
+        targetValue = if (railVisible) 64.dp else 0.dp,
+        label = "RailPadding"
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         MainBackground(
-            wallpaperBitmap = wallpaperBitmap,
             modifier = Modifier
                 .fillMaxSize()
                 .hazeSource(state = hazeState)
         )
 
         // YumeBox 风格左侧窄边栏：竖排时间 + 两个 MenuButton
-        NarrowWallpaperRail(
-            currentTime = currentTime,
-            batteryPercent = batteryPercent,
-            gearRotation = gearRotation,
-            hazeState = hazeState,
-            glassEnabled = glassEnabled,
-            onGearClick = { leftMenuVisible = true },
-            onLinkClick = { rightMenuVisible = true },
+        AnimatedVisibility(
+            visible = railVisible,
+            enter = slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.CenterStart)
-        )
+        ) {
+            NarrowWallpaperRail(
+                currentTime = currentTime,
+                batteryPercent = batteryPercent,
+                gearRotation = gearRotation,
+                hazeState = hazeState,
+                glassEnabled = true,
+                onGearClick = { leftMenuVisible = true },
+                onLinkClick = { rightMenuVisible = true },
+                modifier = Modifier.fillMaxHeight()
+            )
+        }
 
         // 主内容
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 64.dp)
+                .padding(start = railPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -226,7 +222,7 @@ fun MainScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 AnimatedVisibility(
-                    visible = !sidebarOpen,
+                    visible = !railVisible && !sidebarOpen,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -244,7 +240,7 @@ fun MainScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 AnimatedVisibility(
-                    visible = !sidebarOpen,
+                    visible = !railVisible && !sidebarOpen,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -260,15 +256,9 @@ fun MainScreen(
 
             // 原 Spacer(weight = 0.7f) 替换为自定义图片，并做上下渐隐；长按更换图片
             MainHeroImage(
-                wallpaperBitmap = wallpaperBitmap,
                 modifier = Modifier
                     .weight(0.7f)
                     .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onLongPress = { wallpaperPicker.launch("image/*") }
-                        )
-                    }
             )
 
             Row(
@@ -276,8 +266,8 @@ fun MainScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 GlassBackgroundToggleButton(
-                    enabled = glassEnabled,
-                    onClick = { glassEnabled = !glassEnabled }
+                    enabled = railVisible,
+                    onClick = { railVisible = !railVisible }
                 )
                 ServerControlButton(
                     isRunning = isServerRunning,
@@ -365,7 +355,7 @@ fun MainScreen(
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                glassEnabled = glassEnabled,
+                glassEnabled = true,
                 modifier = Modifier.width(270.dp)
             ) {
                 SidebarTopButtons(
@@ -448,7 +438,7 @@ fun MainScreen(
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                glassEnabled = glassEnabled,
+                glassEnabled = true,
                 modifier = Modifier.width(280.dp)
             ) {
                 SidebarTopButtons(
@@ -502,40 +492,21 @@ fun MainScreen(
 }
 
 @Composable
-private fun MainBackground(
-    wallpaperBitmap: ImageBitmap?,
-    modifier: Modifier = Modifier
-) {
+private fun MainBackground(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        if (wallpaperBitmap != null) {
-            Image(
-                bitmap = wallpaperBitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (!LocalInspectionMode.current) {
-            Image(
-                painter = painterResource(id = R.drawable.my_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                                Color(0xFF0F3460)
-                            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF1A1A2E),
+                            Color(0xFF16213E),
+                            Color(0xFF0F3460)
                         )
                     )
-            )
-        }
+                )
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -551,40 +522,21 @@ private fun MainBackground(
 }
 
 @Composable
-private fun MainHeroImage(
-    wallpaperBitmap: ImageBitmap?,
-    modifier: Modifier = Modifier
-) {
+private fun MainHeroImage(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        if (wallpaperBitmap != null) {
-            Image(
-                bitmap = wallpaperBitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (!LocalInspectionMode.current) {
-            Image(
-                painter = painterResource(id = R.drawable.my_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                                Color(0xFF0F3460)
-                            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF1A1A2E),
+                            Color(0xFF16213E),
+                            Color(0xFF0F3460)
                         )
                     )
-            )
-        }
+                )
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -741,36 +693,6 @@ private fun BoxScope.GlassSidebarBox(
         Column(content = content)
     }
 }
-
-private suspend fun loadWallpaperBitmap(context: Context): ImageBitmap? =
-    withContext(Dispatchers.IO) {
-        val prefs = context.getSharedPreferences("main_wallpaper", Context.MODE_PRIVATE)
-        val path = prefs.getString("wallpaper_path", null)
-        if (path.isNullOrBlank()) return@withContext null
-        val file = File(path)
-        if (!file.exists()) return@withContext null
-        runCatching { BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap() }.getOrNull()
-    }
-
-private suspend fun saveWallpaperToLocal(context: Context, sourceUri: Uri): String? =
-    withContext(Dispatchers.IO) {
-        runCatching {
-            val dir = File(context.filesDir, "wallpaper").apply { mkdirs() }
-            val target = File(dir, "main_wallpaper")
-            val tmp = File(dir, "main_wallpaper.tmp")
-            context.contentResolver.openInputStream(sourceUri).use { input ->
-                requireNotNull(input) { "Unable to open wallpaper source: $sourceUri" }
-                tmp.outputStream().use { input.copyTo(it) }
-            }
-            if (!tmp.renameTo(target)) {
-                target.delete()
-                check(tmp.renameTo(target)) { "Failed to swap wallpaper temp file" }
-            }
-            context.getSharedPreferences("main_wallpaper", Context.MODE_PRIVATE)
-                .edit().putString("wallpaper_path", target.absolutePath).commit()
-            target.absolutePath
-        }.getOrNull()
-    }
 
 @Composable
 fun PermissionsCard(
