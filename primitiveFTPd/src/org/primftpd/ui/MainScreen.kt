@@ -32,7 +32,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -122,14 +121,14 @@ fun MainScreen(
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    var permissionsCardExpanded by remember { mutableStateOf(true) }
+    var showPermissionsDialog by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     // 侧边栏状态：外部传入时由外部控制（preview），否则内部自持（真实 App 默认正常切换）
     var railVisibleInternal by remember { mutableStateOf(true) }
     val resolvedRailVisible = railVisible ?: railVisibleInternal
-    val resolvedOnRailVisibleChange = onRailVisibleChange ?: { railVisibleInternal = it }
+    val resolvedOnRailVisibleChange = onRailVisibleChange ?: { }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -194,7 +193,6 @@ fun MainScreen(
         label = "GearRotation"
     )
 
-    val sidebarOpen = leftMenuVisible || rightMenuVisible
     val railPadding by animateDpAsState(
         targetValue = if (resolvedRailVisible) 64.dp else 0.dp,
         label = "RailPadding"
@@ -207,7 +205,7 @@ fun MainScreen(
                 .hazeSource(state = hazeState)
         )
 
-        // YumeBox 风格左侧窄边栏：竖排时间 + 两个 MenuButton
+        // YumeBox 风格左侧窄边栏
         AnimatedVisibility(
             visible = resolvedRailVisible,
             enter = slideInHorizontally(
@@ -227,6 +225,7 @@ fun MainScreen(
                 gearRotation = gearRotation,
                 onGearClick = { leftMenuVisible = true },
                 onLinkClick = { rightMenuVisible = true },
+                onShowCardClick = { showPermissionsDialog = true },
                 modifier = Modifier.fillMaxHeight()
             )
         }
@@ -236,6 +235,7 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = railPadding)
+                .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {/**
@@ -310,40 +310,23 @@ fun MainScreen(
                         }
                     }
                 )
-                AnimatedVisibility(
-                    visible = !permissionsCardExpanded,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut()
-                ) {
-                    ShowCardButton(onClick = { permissionsCardExpanded = true })
-                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 图表和权限卡片固定同一高度，卡片滑入滑出时不再挤压上下布局
-            Box(contentAlignment = Alignment.TopCenter) {
-                if (viewModel != null) {
-                    Column {
-                        Spacer(modifier = Modifier.height(28.dp))
-                        NetworkTrafficChart(
-                            modelProducer = viewModel.modelProducer,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .padding(bottom = 0.dp)
-                                .padding(top = 12.dp)
-                        )
-                    }
+            // 流量图表
+            if (viewModel != null) {
+                Column {
+                    Spacer(modifier = Modifier.height(28.dp))
+                    NetworkTrafficChart(
+                        modelProducer = viewModel.modelProducer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(bottom = 0.dp)
+                            .padding(top = 12.dp)
+                    )
                 }
-
-                PermissionsCard(
-                    fullStorageAccess = fullStorageAccess,
-                    mediaLocationAccess = mediaLocationAccess,
-                    notificationPermission = notificationPermission,
-                    isExpanded = permissionsCardExpanded,
-                    onExpandedChange = { permissionsCardExpanded = it }
-                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -373,83 +356,73 @@ fun MainScreen(
         AnimatedVisibility(
             visible = rightMenuVisible,
             enter = slideInHorizontally(
-                initialOffsetX = { it },
+                initialOffsetX = { -it },
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioLowBouncy,
                     stiffness = Spring.StiffnessLow
                 )
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
-                targetOffsetX = { it }
+                targetOffsetX = { -it }
             ) + fadeOut(animationSpec = tween(300)),
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier.align(Alignment.TopStart)
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                glassEnabled = true,
-                modifier = Modifier.width(270.dp)
-            ) {
-                SidebarTopButtons(
-                    gearRotation = gearRotation,
-                    onGearClick = {
-                        rightMenuVisible = false
-                        leftMenuVisible = true
-                    },
-                    onLinkClick = {
-                        leftMenuVisible = false
-                        rightMenuVisible = false
+                modifier = Modifier.width(270.dp),
+                {
+
+                    Text(
+                        text = "Function and tools",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Button(
+                        onClick = {
+                            rightMenuVisible = false
+                        },
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    ) {
+                        Text("Close")
                     }
-                )
-                Text(
-                    text = "Function and tools",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Button(
-                    onClick = {
-                        rightMenuVisible = false
-                    },
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                ) {
-                    Text("Close")
+                    RowClick(
+                        icon = iconNetwork,
+                        text = "Network status",
+                        onClick = { onMenuClick("netWorkStatus") }
+                    )
+                    RowClick(
+                        icon = iconQr,
+                        text = "Scan code",
+                        onClick = { onMenuClick("qr") }
+                    )
+                    RowClick(
+                        icon = iconClean,
+                        text = "Clean cache",
+                        onClick = { onMenuClick("clean") }
+                    )
+                    RowClick(
+                        icon = iconLogs,
+                        text = "Client logs",
+                        onClick = { onMenuClick("clientStatus") }
+                    )
+                    RowClick(
+                        icon = iconFingerprint,
+                        text = "Finger print",
+                        onClick = { onMenuClick("fingerPrint") }
+                    )
+                    RowClick(
+                        icon = iconKey,
+                        text = "Verification Key",
+                        onClick = { onMenuClick("VerificationKey") }
+                    )
+                    RowClick(
+                        icon = iconAbout,
+                        text = "About",
+                        onClick = { onMenuClick("about") }
+                    )
                 }
-                RowClick(
-                    icon = iconNetwork,
-                    text = "Network status",
-                    onClick = { onMenuClick("netWorkStatus") }
-                )
-                RowClick(
-                    icon = iconQr,
-                    text = "Scan code",
-                    onClick = { onMenuClick("qr") }
-                )
-                RowClick(
-                    icon = iconClean,
-                    text = "Clean cache",
-                    onClick = { onMenuClick("clean") }
-                )
-                RowClick(
-                    icon = iconLogs,
-                    text = "Client logs",
-                    onClick = { onMenuClick("clientStatus") }
-                )
-                RowClick(
-                    icon = iconFingerprint,
-                    text = "Finger print",
-                    onClick = { onMenuClick("fingerPrint") }
-                )
-                RowClick(
-                    icon = iconKey,
-                    text = "Verification Key",
-                    onClick = { onMenuClick("VerificationKey") }
-                )
-                RowClick(
-                    icon = iconAbout,
-                    text = "About",
-                    onClick = { onMenuClick("about") }
-                )
-            }
+            )
         }
 
         // 左侧滑菜单
@@ -469,56 +442,55 @@ fun MainScreen(
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                glassEnabled = true,
-                modifier = Modifier.width(280.dp)
-            ) {
-                SidebarTopButtons(
-                    gearRotation = gearRotation,
-                    onGearClick = {
-                        rightMenuVisible = false
-                        leftMenuVisible = false
-                    },
-                    onLinkClick = {
-                        leftMenuVisible = false
-                        rightMenuVisible = true
+                modifier = Modifier.width(280.dp),
+                {
+
+                    Text(
+                        text = "Setting and System",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Button(
+                        onClick = {
+                            leftMenuVisible = false
+                        },
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    ) {
+                        Text("Close")
                     }
-                )
-                Text(
-                    text = "Setting and System",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Button(
-                    onClick = {
-                        leftMenuVisible = false
-                    },
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                ) {
-                    Text("Close")
+                    RowClick(
+                        icon = iconAuth,
+                        text = "Authentication",
+                        onClick = { onMenuClick("settings/auth") }
+                    )
+                    RowClick(
+                        icon = iconPort,
+                        text = "How to connect",
+                        onClick = { onMenuClick("settings/connecting") }
+                    )
+                    RowClick(
+                        icon = iconUi,
+                        text = "UI setting",
+                        onClick = { onMenuClick("settings/ui") }
+                    )
+                    RowClick(
+                        icon = iconSystem,
+                        text = "System",
+                        onClick = { onMenuClick("settings/system") }
+                    )
                 }
-                RowClick(
-                    icon = iconAuth,
-                    text = "Authentication",
-                    onClick = { onMenuClick("settings/auth") }
-                )
-                RowClick(
-                    icon = iconPort,
-                    text = "How to connect",
-                    onClick = { onMenuClick("settings/connecting") }
-                )
-                RowClick(
-                    icon = iconUi,
-                    text = "UI setting",
-                    onClick = { onMenuClick("settings/ui") }
-                )
-                RowClick(
-                    icon = iconSystem,
-                    text = "System",
-                    onClick = { onMenuClick("settings/system") }
-                )
-            }
+            )
         }
+
+        // 权限卡片弹窗：黑色遮罩 + 居中卡片
+        PermissionsDialog(
+            visible = showPermissionsDialog,
+            onDismiss = { showPermissionsDialog = false },
+            fullStorageAccess = fullStorageAccess,
+            mediaLocationAccess = mediaLocationAccess,
+            notificationPermission = notificationPermission
+        )
     }
 }
 
@@ -587,13 +559,14 @@ private fun MainHeroImage(
 }
 
 @Composable
-private fun BoxScope.NarrowWallpaperRail(
+private fun NarrowWallpaperRail(
     wallpaperBitmap: ImageBitmap?,
     currentTime: Long,
     batteryPercent: Int?,
     gearRotation: Float,
     onGearClick: () -> Unit,
     onLinkClick: () -> Unit,
+    onShowCardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val timeText = remember(currentTime) {
@@ -683,6 +656,8 @@ private fun BoxScope.NarrowWallpaperRail(
             MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
             Spacer(modifier = Modifier.height(8.dp))
             MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
+            Spacer(modifier = Modifier.height(8.dp))
+            ShowCardButton(onClick = onShowCardClick)
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -703,15 +678,58 @@ private fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) {
 private fun ShowCardButton(onClick: () -> Unit) {
     OutlinedIconButton(
         onClick = onClick,
-        modifier = Modifier.size(48.dp),
+        modifier = Modifier.size(55.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
     ) {
         Icon(
             painter = painterResource(id = R.drawable.outline_data_alert_24),
             contentDescription = "Show card",
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.primary
         )
+    }
+}
+
+@Composable
+private fun PermissionsDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    fullStorageAccess: Boolean,
+    mediaLocationAccess: Boolean,
+    notificationPermission: Boolean,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 黑色遮罩，点击关闭
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onDismiss() }
+            )
+            // 居中卡片
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                PermissionsCard(
+                    fullStorageAccess = fullStorageAccess,
+                    mediaLocationAccess = mediaLocationAccess,
+                    notificationPermission = notificationPermission,
+                    isExpanded = true,
+                    onExpandedChange = { onDismiss() }
+                )
+            }
+        }
     }
 }
 
@@ -726,46 +744,22 @@ private fun rememberBatteryPercent(context: Context): Int? {
 }
 
 @Composable
-private fun SidebarTopButtons(
-    gearRotation: Float,
-    onGearClick: () -> Unit,
-    onLinkClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
-        MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
-    }
-}
-
-@Composable
-private fun BoxScope.GlassSidebarBox(
+private fun GlassSidebarBox(
     hazeState: HazeState,
-    glassEnabled: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val glassModifier = if (glassEnabled) {
-        Modifier.hazeEffect(state = hazeState) {
-            inputScale = HazeInputScale.Auto
-            blurEffect {
-                blurRadius = 30.dp
-                fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.35f))
-            }
-        }
-    } else {
-        Modifier
-    }
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .then(glassModifier)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (glassEnabled) 0.55f else 1f))
+            .hazeEffect(state = hazeState) {
+                inputScale = HazeInputScale.Auto
+                blurEffect {
+                    blurRadius = 30.dp
+                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.35f))
+                }
+            }
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
             .graphicsLayer { clip = true }
     ) {
         Column(content = content)
@@ -1100,7 +1094,7 @@ fun MainScreenPreview() {
             notificationPermission = false,
             railVisible = railVisible,
             onRailVisibleChange = { railVisible = it },
-            //initialLeftVisible = true
+            //initialRightVisible = true
         )
     }
 }
