@@ -583,41 +583,59 @@ private fun BoxScope.NarrowWallpaperRail(
         java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
             .format(java.util.Date(currentTime))
     }
+    val railHazeState = rememberHazeState()
     Box(
         modifier = modifier
             .fillMaxHeight()
             .width(64.dp)
             .clip(RoundedCornerShape(0.dp))
     ) {
-        if (wallpaperBitmap != null) {
-            Image(
-                bitmap = wallpaperBitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (!LocalInspectionMode.current) {
-            Image(
-                painter = painterResource(id = R.drawable.my_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                                Color(0xFF0F3460)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = railHazeState)
+        ) {
+            if (wallpaperBitmap != null) {
+                Image(
+                    bitmap = wallpaperBitmap,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (!LocalInspectionMode.current) {
+                Image(
+                    painter = painterResource(id = R.drawable.my_background),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFF1A1A2E),
+                                    Color(0xFF16213E),
+                                    Color(0xFF0F3460)
+                                )
                             )
                         )
-                    )
-            )
+                )
+            }
         }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeEffect(state = railHazeState) {
+                    inputScale = HazeInputScale.Auto
+                    blurEffect {
+                        blurRadius = 20.dp
+                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.30f))
+                    }
+                }
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
