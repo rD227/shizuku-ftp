@@ -2,16 +2,19 @@ package org.primftpd.ui
 
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -33,7 +36,7 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .clickable {
                 onClick()
             }
@@ -53,17 +56,21 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
 
 @Composable
 fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
-    Button(
-        onClick = {
-            onClick()
-        },
-        modifier = Modifier.size(160.dp),
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = animateColorAsState( targetValue = if (isRunning) Color(0xFFE57373) else Color(0xFF81C784)
-                , label = "serverButtonColor",
-                animationSpec = telegramSpringSpec()
-            ).value
+    // 先获取动画颜色
+    val buttonColor = animateColorAsState(
+        targetValue = if (isRunning) Color(0xFFE57373) else Color(0xFF81C784),
+        label = "serverButtonColor",
+        animationSpec = telegramSpringSpec()
+    ).value
+
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(width = 220.dp, height = 45.dp),  // 去掉 alpha
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(2.dp, buttonColor),   // 边框使用动画颜色
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = buttonColor             // 文字颜色也使用动画颜色
         )
     ) {
         Text(
