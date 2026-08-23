@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -213,8 +214,8 @@ fun MainScreen(
                 .hazeEffect(state = hazeState) {
                     inputScale = HazeInputScale.Auto
                     blurEffect {
-                        blurRadius = 24.dp
-                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.25f))
+                        blurRadius = 4.dp
+                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.6f))
                     }
                 }
         )
@@ -605,14 +606,9 @@ private fun NarrowWallpaperRail(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = timeText,
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                softWrap = false,
-                modifier = Modifier.rotate(-90f)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+
+            VerticalTimeText(timeText)
+            Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = batteryPercent?.let { "$it%" } ?: "--%",
                 color = Color.White.copy(alpha = 0.75f),
@@ -627,6 +623,46 @@ private fun NarrowWallpaperRail(
             ShowCardButton(onClick = onShowCardClick)
             Spacer(modifier = Modifier.weight(1f))
         }
+    }
+}
+
+@Composable
+fun VerticalTimeText(timeText: String) {
+    val parts = timeText.split(":")
+    val hour = parts.getOrElse(0) { "00" }
+    val minute = parts.getOrElse(1) { "00" }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+    ) {
+        Text(
+            text = hour,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (6).dp)
+        )
+
+        Text(
+            text = ":",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.W900,
+            fontSize = 30.sp,
+            modifier = Modifier.rotate(90f)
+                .offset(y = (-2).dp)
+        )
+
+        Text(
+            text = minute,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (-8).dp)
+        )
     }
 }
 
@@ -722,8 +758,8 @@ private fun GlassSidebarBox(
             .hazeEffect(state = hazeState) {
                 inputScale = HazeInputScale.Auto
                 blurEffect {
-                    blurRadius = 30.dp
-                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.35f))
+                    blurRadius = 4.dp
+                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.1f))
                 }
             }
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
