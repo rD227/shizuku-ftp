@@ -32,6 +32,7 @@ android {
             debuggable = true
             minifyEnabled = false
             shrinkResources = false
+            applicationIdSuffix = ".debug"
         }
         release {
             //debuggable = true
