@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(cd /tmp)",
-      "Bash(jar xf *)"
+      "Bash(jar xf *)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

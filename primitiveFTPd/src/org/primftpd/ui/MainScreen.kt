@@ -1,5 +1,6 @@
 package org.primftpd.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -116,6 +117,7 @@ import java.io.File
 
 // --- Main Screen ---
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun MainScreen(
     isServerRunning: Boolean,
@@ -145,7 +147,7 @@ fun MainScreen(
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    var showPermissionsDialog by remember { mutableStateOf(true) }
+    var showPermissionsDialog by remember { mutableStateOf(false) }
     //
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     //var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -558,13 +560,20 @@ private fun MainHeroImage(
         .fillMaxHeight()
         .padding(horizontal = 8.dp)) {
         if (wallpaperBitmap != null) {
+            val cornerRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val windowInsets = LocalView.current.rootWindowInsets
+            val roundedCorner = windowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)
+            roundedCorner?.radius?.let { with(LocalDensity.current) { it.toDp() } } ?: 32.dp
+            } else {
+                32.dp
+            }
             Image(
                 bitmap = wallpaperBitmap,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                    .clip(RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius))
             )
         } else if (!LocalInspectionMode.current) {
             Image(
