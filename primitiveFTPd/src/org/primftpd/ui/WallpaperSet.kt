@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -26,8 +27,6 @@ import kotlin.io.copyTo
 @Composable
 fun WallpaperComposable() {
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     val wallpaperPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -44,6 +43,29 @@ fun WallpaperComposable() {
         }
     }
 }
+@Composable
+fun getWallPaperPicker(imageBit : ImageBitmap): ManagedActivityResultLauncher<String, Uri?>{
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val wallpaperPicker = rememberLauncherForActivityResult(
+    ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                val savedPath = saveWallpaperToLocal(context, uri)
+                if (savedPath != null) {
+                    imageBit = BitmapFactory.decodeFile(savedPath)?.asImageBitmap()
+                } else {
+                    Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    return wallpaperPicker;
+}
+
+
 @SuppressLint("UseKtx")
 internal suspend fun saveWallpaperToLocal(context: Context, sourceUri: Uri): String? =
     withContext(Dispatchers.IO) {

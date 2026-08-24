@@ -265,6 +265,7 @@ fun MainScreen(
             )
         }
 
+        //radius of phone
         val cornerRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val windowInsets = LocalView.current.rootWindowInsets
         val roundedCorner = windowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)
@@ -1027,7 +1028,6 @@ fun PermissionItem(
 )
 @Composable
 fun MainScreenPreview() {
-    var railVisible by remember { mutableStateOf(true) }
     ShizukuFtpTheme {
         MainScreen(
             isServerRunning = false,
@@ -1040,8 +1040,6 @@ fun MainScreenPreview() {
             fullStorageAccess = true,
             mediaLocationAccess = true,
             notificationPermission = false,
-            railVisible = railVisible,
-            onRailVisibleChange = { railVisible = it },
             //initialRightVisible = true
         )
     }
