@@ -142,7 +142,11 @@ fun MainScreen(
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
     var showPermissionsDialog by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    //var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    //val wallpaperPicker = wallpaperBitmap?.let { getWallPaperPicker(imageBit = it) }
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    val wallpaperPicker = rememberWallpaperPicker { wallpaperBitmap = it }
+
     val context = LocalContext.current
 
     val prefs = context.getSharedPreferences("ui_state", Context.MODE_PRIVATE)
@@ -173,23 +177,10 @@ fun MainScreen(
         wallpaperBitmap = loadWallpaperBitmap(context)
     }
 
-    val wallpaperPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            scope.launch {
-                val savedPath = saveWallpaperToLocal(context, uri)
-                if (savedPath != null) {
-                    wallpaperBitmap = BitmapFactory.decodeFile(savedPath)?.asImageBitmap()
-                } else {
-                    Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     // 预加载图标
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
+
     val iconQr = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24)
     val iconClean = ImageVector.vectorResource(id = R.drawable.cleaner)
     val iconLogs = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24)
@@ -300,7 +291,7 @@ fun MainScreen(
                     .fillMaxWidth()
                     .pointerInput(Unit) {
                         detectTapGestures(
-                            onLongPress = { wallpaperPicker.launch("image/*") }
+                            onLongPress = { wallpaperPicker?.launch("image/*") }
                         )
                     }
             )
