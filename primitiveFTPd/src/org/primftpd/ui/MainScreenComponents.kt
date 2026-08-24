@@ -1,5 +1,6 @@
 package org.primftpd.ui
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -22,11 +23,14 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import org.primftpd.R
 
 // --- Shared UI components ---
@@ -126,6 +130,10 @@ fun ShizukuFtpTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val view = LocalView.current
+    val window = (view.context as Activity).getWindow()
+    WindowCompat.getInsetsController(window, view)
+        .hide(WindowInsetsCompat.Type.statusBars())
     val colorScheme = when {
         dynamicColor && !LocalInspectionMode.current && Build.VERSION.SDK_INT >= 31 -> {
             val context = LocalContext.current
