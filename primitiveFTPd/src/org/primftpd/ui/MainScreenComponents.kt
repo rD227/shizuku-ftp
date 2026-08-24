@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,7 +52,7 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
             modifier = Modifier
                 .size(28.dp)
                 .rotate(rotation),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
         )
     }
 }
@@ -139,6 +140,74 @@ fun ShizukuFtpTheme(
         Surface(content = content)
     }
 }
+
+@Composable
+fun VerticalTimeText(timeText: String) {
+    val parts = timeText.split(":")
+    val hour = parts.getOrElse(0) { "00" }
+    val minute = parts.getOrElse(1) { "00" }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+    ) {
+        Text(
+            text = hour,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (6).dp)
+        )
+
+        Text(
+            text = ":",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.W900,
+            fontSize = 30.sp,
+            modifier = Modifier.rotate(90f)
+                .offset(y = (-2).dp)
+        )
+
+        Text(
+            text = minute,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (-8).dp)
+        )
+    }
+}
+
+@Composable
+internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) {
+    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(
+            painter = painterResource(id = if (enabled) R.drawable.visiable else R.drawable.baseline_disabled_visible_24),
+            contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+@Composable
+internal fun ShowCardButton(onClick: () -> Unit) {
+    OutlinedIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(55.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.outline_data_alert_24),
+            contentDescription = "Show card",
+            modifier = Modifier.size(32.dp),
+            tint = MaterialTheme.colorScheme.secondaryContainer
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
