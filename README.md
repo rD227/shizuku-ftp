@@ -14,7 +14,7 @@ Now the Shizuku function works
 ~~I will work hard~~
 
 # Exterior
-<img src="Pictures/Screenshot_20260515-022532_Shizuku-ftp.png" width="48%" /> <img src="Pictures/Screenshot_20260515-022539_Shizuku-ftp.png" width="48%" />
+<img width="48%" alt="Screenshot_2026-08-24-20-07-34-63_b788f64c42a51c2" src="https://github.com/user-attachments/assets/15829623-9856-4293-a7dd-fb89418600a9" /><img width="48%" alt="Screenshot_2026-08-24-20-09-53-30_b788f64c42a51c2" src="https://github.com/user-attachments/assets/8b4b7024-05bf-4c7a-9ddc-4950c9bc8ac6" />
 
 # I need to do learn more about it recently,don't worry, I won't forget it,
 
