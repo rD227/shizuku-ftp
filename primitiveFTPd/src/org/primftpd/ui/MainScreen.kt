@@ -32,6 +32,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -40,15 +41,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -64,6 +68,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -140,8 +145,9 @@ fun MainScreen(
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    var showPermissionsDialog by remember { mutableStateOf(false) }
-    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showPermissionsDialog by remember { mutableStateOf(true) }
+    //
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     //var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     //val wallpaperPicker = wallpaperBitmap?.let { getWallPaperPicker(imageBit = it) }
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -549,8 +555,8 @@ private fun MainHeroImage(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 8.dp)) {
+        .fillMaxHeight()
+        .padding(horizontal = 8.dp)) {
         if (wallpaperBitmap != null) {
             Image(
                 bitmap = wallpaperBitmap,
@@ -571,7 +577,8 @@ private fun MainHeroImage(
             )
         } else {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
                     //.fillMaxHeight()
                     //.padding(horizontal = 16.dp)
                     .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
@@ -676,6 +683,7 @@ private fun PermissionsDialog(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
+                    .offset(y = 50.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
@@ -815,7 +823,8 @@ fun PermissionsCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp,
+            .padding(
+                start = 16.dp,
                 end = animatedPadding.coerceAtLeast(0.dp)
             )
     ) {
@@ -944,63 +953,76 @@ fun PermissionItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+        Box(
+            modifier = Modifier.clickable(onClick = onClick,
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+            ),
         ) {
-            // 3. 替换原来的 Icon
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                //我应该把颜色改成不那么荧光的
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,                        // 只占一行
-                    overflow = TextOverflow.Ellipsis
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+            ) {
+                // 3. 替换原来的 Icon
+                Image(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    //我应该把颜色改成不那么荧光的
                 )
 
-                AnimatedContent(
-                    targetState = hasPermission,
-                    transitionSpec = {
-                        (slideInVertically { it / 2 } + fadeIn())
-                            .togetherWith(slideOutVertically { -it / 2 } + fadeOut())
-                            .using(SizeTransform(clip = false))
-                    },
-                    label = "statusText"
-                ) { targetPermission ->
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Column {
                     Text(
-                        text = if (targetPermission) "Granted" else "Not granted",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (targetPermission)
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        else
-                            MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,                        // 只占一行
+                        overflow = TextOverflow.Ellipsis
                     )
+
+                    AnimatedContent(
+                        targetState = hasPermission,
+                        transitionSpec = {
+                            (slideInVertically { it / 2 } + fadeIn())
+                                .togetherWith(slideOutVertically { -it / 2 } + fadeOut())
+                                .using(SizeTransform(clip = false))
+                        },
+                        label = "statusText"
+                    ) { targetPermission ->
+                        Text(
+                            text = if (targetPermission) "Granted" else "Not granted",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (targetPermission)
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            else
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                        )
+                    }
                 }
             }
         }
-
+        /**
         AnimatedVisibility(
             visible = !hasPermission,
             enter = scaleIn(animationSpec = telegramSpringSpec()) + fadeIn(),
-            exit = scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)) + fadeOut()
+            exit = scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)) + fadeOut(),
+            modifier = Modifier.size(width = 60.dp, height = 38.dp)
+            //modifier = Modifier.weight(1f)
         ) {
-            TextButton(onClick = onClick) {
+            TextButton(
+                onClick = onClick,//contentPadding = PaddingValues(0.dp)
+                //contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+            ) {
                 Text(
                     text = "Grant",
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.W800,
                     textDecoration = TextDecoration.Underline
                 )
             }
         }
+        **/
     }
 }
 
