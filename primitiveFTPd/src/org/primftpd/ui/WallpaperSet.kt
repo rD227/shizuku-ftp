@@ -9,11 +9,7 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -22,47 +18,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.io.copyTo
+
 
 @Composable
-fun WallpaperComposable() {
-    var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-
-    val wallpaperPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            scope.launch {
-                val savedPath = saveWallpaperToLocal(context, uri)
-                if (savedPath != null) {
-                    wallpaperBitmap = BitmapFactory.decodeFile(savedPath)?.asImageBitmap()
-                } else {
-                    Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-}
-@Composable
-fun getWallPaperPicker(imageBit : ImageBitmap): ManagedActivityResultLauncher<String, Uri?>{
-
+fun rememberWallpaperPicker(
+    onLoaded: (ImageBitmap?) -> Unit
+): ManagedActivityResultLauncher<String, Uri?> {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val wallpaperPicker = rememberLauncherForActivityResult(
-    ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
+    return rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             scope.launch {
                 val savedPath = saveWallpaperToLocal(context, uri)
-                if (savedPath != null) {
-                    imageBit = BitmapFactory.decodeFile(savedPath)?.asImageBitmap()
-                } else {
-                    Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
-                }
+                val bitmap = savedPath?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() }
+                if (bitmap != null) onLoaded(bitmap)
+                else Toast.makeText(context, "Failed to import wallpaper", Toast.LENGTH_SHORT).show()
             }
         }
     }
-    return wallpaperPicker;
 }
 
 
