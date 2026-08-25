@@ -2,8 +2,10 @@ package org.primftpd.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
@@ -111,14 +113,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.primftpd.R
-import org.primftpd.ui.BatteryIcon
-import org.primftpd.ui.GlassBackgroundToggleButton
-import org.primftpd.ui.MenuButton
-import org.primftpd.ui.RowClick
-import org.primftpd.ui.ServerControlButton
-import org.primftpd.ui.ShizukuFtpTheme
-import org.primftpd.ui.ShowCardButton
-import org.primftpd.ui.VerticalTimeText
+import org.primftpd.ui.data.BatteryState
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -175,11 +170,10 @@ fun MainScreen(
 
     val scope = rememberCoroutineScope()
     val hazeState = rememberHazeState()
-    val batteryPercent = rememberBatteryPercent(context)
-    val chargeState = rememberBatteryCharging(context)
-    LaunchedEffect(
-        batteryPercent) {
-        if (batteryPercent == null) {
+    val batteryState = rememberBatteryState(context)
+    //val chargeState = rememberBatteryCharging(context)
+    LaunchedEffect(batteryState) {
+        if (batteryState == null) {
             Toast.makeText(context, "Unable to read battery level", Toast.LENGTH_SHORT).show()
         }
     }
@@ -265,7 +259,7 @@ fun MainScreen(
             // 透明侧栏：不传图片，直接透出根部打底模糊背景
             NarrowWallpaperRail(
                 currentTime = currentTime,
-                batteryPercent = batteryPercent,
+                batteryState = batteryState,
                 gearRotation = gearRotation,
                 onGearClick = { leftMenuVisible = true },
                 onLinkClick = { rightMenuVisible = true },
@@ -413,7 +407,7 @@ fun MainScreen(
                     }
                     RowClick(
                         icon = iconNetwork,
-                        text = "Network status",
+                        text = "Memory access method",
                         onClick = { onMenuClick("netWorkStatus") }
                     )
                     RowClick(
@@ -629,7 +623,7 @@ private fun MainHeroImage(
 @Composable
 private fun NarrowWallpaperRail(
     currentTime: Long,
-    batteryPercent: Int?,
+    batteryState: BatteryState,
     gearRotation: Float,
     onGearClick: () -> Unit,
     onLinkClick: () -> Unit,
@@ -657,18 +651,17 @@ private fun NarrowWallpaperRail(
             VerticalTimeText(timeText)
             Spacer(modifier = Modifier.height(32.dp))
 
-            batteryPercent?.let {
-                BatteryIcon(
-                    it.toFloat()/100,
-                    isCharging = true
-                )
-            }
+            BatteryIcon(
+                batteryState.percent?.toFloat()?.div(100) ?: 0f,
+                isCharging = batteryState.isCharging
+            )
             Text(
-                text = batteryPercent?.let { "$it%" } ?: "--%",
+                text = batteryState.percent?.let { "$it%" } ?: "--%",
                 color = Color.White.copy(alpha = 0.75f),
                 style = MaterialTheme.typography.bodySmall,
                 softWrap = false
             )
+
             Spacer(modifier = Modifier.weight(1f))
             MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
             Spacer(modifier = Modifier.height(8.dp))
@@ -726,24 +719,39 @@ private fun PermissionsDialog(
 }
 
 @Composable
-private fun rememberBatteryPercent(context: Context): Int? {
-    return remember(context) {
-        runCatching {
-            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-            bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
-        }.getOrNull()
+private fun rememberBatteryState(context: Context): BatteryState {
+    if (LocalInspectionMode.current) return BatteryState(percent = 39, isCharging = false)
+    var state by remember {
+        val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+        mutableStateOf(
+            BatteryState(
+                percent = runCatching {
+                    bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
+                }.getOrNull(),
+                isCharging = runCatching { bm?.isCharging }.getOrNull() ?: false
+            )
+        )
     }
-}
-@Composable
-private fun rememberBatteryCharging(context: Context): Boolean? {
-    return remember(context) {
-        runCatching {
-            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-            bm?.isCharging
-        }.getOrNull()
-    }
-}
 
+    DisposableEffect(context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+                state = BatteryState(
+                    percent = runCatching {
+                        bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
+                    }.getOrNull(),
+                    isCharging = runCatching { bm?.isCharging }.getOrNull() ?: false
+                )
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        context.registerReceiver(receiver, filter)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
+
+    return state
+}
 @Composable
 private fun GlassSidebarBox(
     hazeState: HazeState,
@@ -1068,7 +1076,7 @@ fun PermissionItem(
 @OptIn(ExperimentalMaterial3Api::class)
 
 // --- Preview ---
-/**
+
 @Preview(
     showBackground = true,
     name = "Main Screen",
@@ -1088,14 +1096,13 @@ fun MainScreenPreview() {
         )
     }
 }
-**/
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+/**@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun NarrowWallpaperRailPreview() {
     ShizukuFtpTheme {
         NarrowWallpaperRail(
             currentTime = System.currentTimeMillis(),
-            batteryPercent = 42,   // 改这里测不同电量
+            batteryState = BatteryState(percent = 20, isCharging = true),   // 改这里测不同电量
             gearRotation = 0f,
             onGearClick = {},
             onLinkClick = {},
@@ -1104,3 +1111,4 @@ private fun NarrowWallpaperRailPreview() {
     }
 }
 
+**/

@@ -457,7 +457,7 @@ fun NetworkStatusScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Network Status") },
+                title = { Text(stringResource(R.string.storageType))  },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (!hasNavigatedBack) {
