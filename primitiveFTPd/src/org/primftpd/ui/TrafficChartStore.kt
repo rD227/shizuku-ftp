@@ -4,16 +4,13 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import org.primftpd.ui.data.TrafficChartSample
 import org.slf4j.LoggerFactory
 
 /**
  * A single per-second traffic-chart sample. Timestamps are Unix timestamps in seconds.
  */
-data class TrafficChartSample(
-    val timestampSeconds: Long,
-    val ftpBytesPerSecond: Long,
-    val sftpBytesPerSecond: Long,
-)
+
 
 /**
  * Persists the traffic-chart history in a small SQLite database.

@@ -8,6 +8,7 @@ build
 .gradle
 local.properties
 COMPILE_README.md
+*.log
 
 #logs
 .kotlin

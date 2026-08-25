@@ -1,8 +1,10 @@
 package org.primftpd.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -25,15 +27,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -42,7 +43,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -53,7 +53,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -64,7 +63,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -92,7 +90,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceAtLeast
@@ -100,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
@@ -113,7 +111,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.primftpd.R
+import org.primftpd.ui.BatteryIcon
+import org.primftpd.ui.GlassBackgroundToggleButton
+import org.primftpd.ui.MenuButton
+import org.primftpd.ui.RowClick
+import org.primftpd.ui.ServerControlButton
+import org.primftpd.ui.ShizukuFtpTheme
+import org.primftpd.ui.ShowCardButton
+import org.primftpd.ui.VerticalTimeText
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // --- Main Screen ---
 
@@ -132,14 +141,14 @@ fun MainScreen(
             ),
     mediaLocationAccess: Boolean = if (LocalInspectionMode.current) false else (
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                LocalContext.current.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                LocalContext.current.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED
             } else true
             ),
     notificationPermission: Boolean = if (LocalInspectionMode.current) false else (
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                LocalContext.current.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                LocalContext.current.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                        PackageManager.PERMISSION_GRANTED
             } else true
             ),
     viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
@@ -167,8 +176,9 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val hazeState = rememberHazeState()
     val batteryPercent = rememberBatteryPercent(context)
-
-    LaunchedEffect(batteryPercent) {
+    val chargeState = rememberBatteryCharging(context)
+    LaunchedEffect(
+        batteryPercent) {
         if (batteryPercent == null) {
             Toast.makeText(context, "Unable to read battery level", Toast.LENGTH_SHORT).show()
         }
@@ -627,10 +637,10 @@ private fun NarrowWallpaperRail(
     modifier: Modifier = Modifier
 ) {
     val timeText = remember(currentTime) {
-        java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-            .format(java.util.Date(currentTime))
+        SimpleDateFormat("HH:mm", Locale.getDefault())
+            .format(Date(currentTime))
     }
-    // 透明侧栏：不再自己画壁纸/模糊，直接透出根部打底模糊背景，与主内容圆角外露的背景连成一片
+    // 透明侧栏
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -646,6 +656,13 @@ private fun NarrowWallpaperRail(
 
             VerticalTimeText(timeText)
             Spacer(modifier = Modifier.height(32.dp))
+
+            batteryPercent?.let {
+                BatteryIcon(
+                    it.toFloat()/100,
+                    isCharging = true
+                )
+            }
             Text(
                 text = batteryPercent?.let { "$it%" } ?: "--%",
                 color = Color.White.copy(alpha = 0.75f),
@@ -717,6 +734,15 @@ private fun rememberBatteryPercent(context: Context): Int? {
         }.getOrNull()
     }
 }
+@Composable
+private fun rememberBatteryCharging(context: Context): Boolean? {
+    return remember(context) {
+        runCatching {
+            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            bm?.isCharging
+        }.getOrNull()
+    }
+}
 
 @Composable
 private fun GlassSidebarBox(
@@ -782,7 +808,7 @@ fun PermissionsCard(
     }
 
     // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && !inspectionMode) {
@@ -790,12 +816,12 @@ fun PermissionsCard(
                     storageGranted = Environment.isExternalStorageManager()
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    mediaGranted = context.checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                            android.content.pm.PackageManager.PERMISSION_GRANTED
+                    mediaGranted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                            PackageManager.PERMISSION_GRANTED
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationGranted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
-                            android.content.pm.PackageManager.PERMISSION_GRANTED
+                    notificationGranted = context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                            PackageManager.PERMISSION_GRANTED
                 }
             }
         }
@@ -912,7 +938,7 @@ fun PermissionsCard(
                             title = "Media Location Access",
                             hasPermission = mediaGranted,
                             onClick = {
-                                mediaLocationLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+                                mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
                             }
                         )
                     }
@@ -923,7 +949,7 @@ fun PermissionsCard(
                             title = "Notification Permission",
                             hasPermission = notificationGranted,
                             onClick = {
-                                notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             }
                         )
                     }
@@ -948,9 +974,9 @@ fun PermissionItem(
     onClick: () -> Unit
 ) {
     // 1. 加载 AVD 资源
-    val image = androidx.compose.animation.graphics.vector.AnimatedImageVector.animatedVectorResource(R.drawable.avd_anim)
+    val image = AnimatedImageVector.animatedVectorResource(R.drawable.avd_anim)
     // 2. 使用 painter 驱动动画，hasPermission 改变时动画会自动触发
-    val painter = androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter(
+    val painter = rememberAnimatedVectorPainter(
         animatedImageVector = image,
         atEnd = hasPermission
     )
@@ -1042,7 +1068,7 @@ fun PermissionItem(
 @OptIn(ExperimentalMaterial3Api::class)
 
 // --- Preview ---
-
+/**
 @Preview(
     showBackground = true,
     name = "Main Screen",
@@ -1053,16 +1079,27 @@ fun MainScreenPreview() {
     ShizukuFtpTheme {
         MainScreen(
             isServerRunning = false,
-            onStartServer = {
-            },
-            onStopServer = {
-            },
-            onNavigate = {
-            },
+            onStartServer = {},
+            onStopServer = {},
+            onNavigate = {},
             fullStorageAccess = true,
             mediaLocationAccess = true,
             notificationPermission = false,
-            //initialRightVisible = true
+        )
+    }
+}
+**/
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun NarrowWallpaperRailPreview() {
+    ShizukuFtpTheme {
+        NarrowWallpaperRail(
+            currentTime = System.currentTimeMillis(),
+            batteryPercent = 42,   // 改这里测不同电量
+            gearRotation = 0f,
+            onGearClick = {},
+            onLinkClick = {},
+            onShowCardClick = {},
         )
     }
 }

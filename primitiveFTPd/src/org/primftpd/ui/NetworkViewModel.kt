@@ -14,6 +14,8 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.events.DataTransferredEvent
+import org.primftpd.ui.data.TrafficChartSample
+import org.primftpd.ui.TrafficChartStore
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 

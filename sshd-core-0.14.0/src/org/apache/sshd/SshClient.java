@@ -19,15 +19,11 @@
 package org.apache.sshd;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -59,7 +55,6 @@ import org.apache.sshd.client.session.ClientConnectionService;
 import org.apache.sshd.client.session.ClientSessionImpl;
 import org.apache.sshd.client.session.ClientUserAuthService;
 import org.apache.sshd.common.AbstractFactoryManager;
-import org.apache.sshd.common.Channel;
 import org.apache.sshd.common.Closeable;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.KeyPairProvider;
@@ -71,7 +66,6 @@ import org.apache.sshd.common.io.IoConnectFuture;
 import org.apache.sshd.common.io.IoConnector;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.session.AbstractSession;
-import org.apache.sshd.common.util.CloseableUtils;
 import org.apache.sshd.common.util.NoCloseInputStream;
 import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.apache.sshd.common.util.SecurityUtils;
@@ -467,7 +461,7 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
         if (f.exists() && f.isFile() && f.canRead()) {
             files.add(f.getAbsolutePath());
         }
-        if (files.size() > 0) {
+        if (!files.isEmpty()) {
             // SSHD-292: we need to use a different class to load the FileKeyPairProvider
             //  in order to break the link between SshClient and BouncyCastle
             try {

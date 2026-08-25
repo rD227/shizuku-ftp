@@ -21,6 +21,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
+import org.primftpd.ui.ShizukuFtpTheme
 import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
