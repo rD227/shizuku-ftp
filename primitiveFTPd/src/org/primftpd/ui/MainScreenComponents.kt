@@ -189,7 +189,11 @@ fun BatteryIcon(
         val innerMaxHeight = bodyHeight - padding * 2
         val currentFillWidth = innerMaxWidth * progress.coerceIn(0f, 1f)
 
-        val fillColor = if (isCharging) chargingColor else batteryColor
+        val fillColor = if (isCharging) {
+            chargingColor }
+        else {
+                if (progress > 0.2f) batteryColor else Color(0xFFFF9800)
+        }
         if (currentFillWidth > 0f) {
             drawRoundRect(
                 color = fillColor,
@@ -270,12 +274,13 @@ fun VerticalTimeText(timeText: String) {
 }
 
 @Composable
-internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) {
+internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,rotation: Float) {
     FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
         Icon(
-            painter = painterResource(id = if (enabled) R.drawable.visiable else R.drawable.baseline_disabled_visible_24),
+            painter = painterResource(id = if (enabled) R.drawable.outline_rotate_incenter else R.drawable.outline_notsee),
             contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
             modifier = Modifier.size(24.dp)
+                .rotate(rotation)
         )
     }
 }

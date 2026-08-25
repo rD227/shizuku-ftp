@@ -216,6 +216,10 @@ fun MainScreen(
         targetValue = if (leftMenuVisible || rightMenuVisible) 180f else 0f,
         label = "GearRotation"
     )
+    val barVisibleRotation by animateFloatAsState(
+        targetValue = if (resolvedRailVisible) 180f else 0f,
+        label = "BarVisibleRotation"
+    )
 
     val railPadding by animateDpAsState(
         targetValue = if (resolvedRailVisible) 64.dp else 0.dp,
@@ -312,12 +316,16 @@ fun MainScreen(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
+                Spacer(modifier = Modifier.padding(4.dp))
                 GlassBackgroundToggleButton(
                     enabled = resolvedRailVisible,
-                    onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) }
+                    onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
+                    rotation = barVisibleRotation
                 )
+                Spacer(modifier = Modifier.weight(0.4f))
                 ServerControlButton(
                     isRunning = isServerRunning,
                     onClick = {
@@ -328,6 +336,7 @@ fun MainScreen(
                         }
                     }
                 )
+                Spacer(modifier = Modifier.weight(0.6f))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -723,7 +732,7 @@ private fun chargingFromStatus(status: Int) =
 
 @Composable
 private fun rememberBatteryState(context: Context): BatteryState {
-    if (LocalInspectionMode.current) return BatteryState(percent = 50, isCharging = false)
+    if (LocalInspectionMode.current) return BatteryState(percent = 14, isCharging = false)
     var state by remember {
         val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
         val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
