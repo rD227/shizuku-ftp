@@ -64,7 +64,7 @@ import org.primftpd.R
 @Composable
 fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
     Box(
-        modifier = Modifier.Companion
+        modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.secondaryContainer)
@@ -72,15 +72,15 @@ fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
                 onClick()
             }
             .padding(12.dp),
-        contentAlignment = Alignment.Companion.Center
+        contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = iconRes),
             contentDescription = null,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .size(28.dp)
                 .rotate(rotation),
-            colorFilter = ColorFilter.Companion.tint(MaterialTheme.colorScheme.onSecondaryContainer)
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
         )
     }
 }
@@ -96,7 +96,7 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
 
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier.Companion
+        modifier = Modifier
             .size(width = 220.dp, height = 45.dp),  // 去掉 alpha
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(2.dp, buttonColor),   // 边框使用动画颜色
@@ -107,7 +107,7 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
         Text(
             text = if (isRunning) "stop" else "start",
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.Companion.offset(y = (-2).dp),
+            modifier = Modifier.offset(y = (-2).dp),
             fontSize = 20.sp
         )
         //Spacer(modifier = Modifier.height(8.dp))
@@ -117,8 +117,8 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
 @Composable
 fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
     Row(
-        verticalAlignment = Alignment.Companion.CenterVertically,
-        modifier = Modifier.Companion
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 onClick()
@@ -126,20 +126,20 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Box(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary),
-            contentAlignment = Alignment.Companion.Center
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.Companion.padding(9.dp)
+                modifier = Modifier.padding(9.dp)
             )
         }
-        Spacer(modifier = Modifier.Companion.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
@@ -152,11 +152,11 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
 fun BatteryIcon(
     progress: Float,
     isCharging: Boolean, // 是否在充电
-    modifier: Modifier = Modifier.Companion,
-    batteryColor: Color = Color.Companion.White,
-    chargingColor: Color = Color.Companion.Green
+    modifier: Modifier = Modifier,
+    batteryColor: Color = Color.White,
+    chargingColor: Color = Color.Green
 ) {
-    Canvas(modifier = modifier.size(width = 48.dp, height = 16.dp)) {
+    Canvas(modifier = modifier.size(width = 48.dp, height = 16.dp).offset(x = (4).dp)) {
         val strokeWidth = 2.dp.toPx()
         val cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
 
@@ -236,46 +236,46 @@ fun VerticalTimeText(timeText: String) {
     val minute = parts.getOrElse(1) { "00" }
 
     Column(
-        horizontalAlignment = Alignment.Companion.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.Companion
     ) {
         Text(
             text = hour,
-            color = Color.Companion.White,
+            color = Color.White,
             style = MaterialTheme.typography.titleLarge,
             fontSize = 40.sp,
-            fontWeight = FontWeight.Companion.Bold,
-            modifier = Modifier.Companion.offset(y = (6).dp)
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (6).dp)
         )
 
         Text(
             text = ":",
-            color = Color.Companion.White,
+            color = Color.White,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Companion.W900,
+            fontWeight = FontWeight.W900,
             fontSize = 30.sp,
-            modifier = Modifier.Companion.rotate(90f)
+            modifier = Modifier.rotate(90f)
                 .offset(y = (-2).dp)
         )
 
         Text(
             text = minute,
-            color = Color.Companion.White,
+            color = Color.White,
             style = MaterialTheme.typography.titleLarge,
             fontSize = 40.sp,
-            fontWeight = FontWeight.Companion.Bold,
-            modifier = Modifier.Companion.offset(y = (-8).dp)
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.offset(y = (-8).dp)
         )
     }
 }
 
 @Composable
 internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) {
-    FilledTonalIconButton(onClick = onClick, modifier = Modifier.Companion.size(48.dp)) {
+    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
         Icon(
             painter = painterResource(id = if (enabled) R.drawable.visiable else R.drawable.baseline_disabled_visible_24),
             contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
-            modifier = Modifier.Companion.size(24.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -284,13 +284,13 @@ internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit) 
 internal fun ShowCardButton(onClick: () -> Unit) {
     OutlinedIconButton(
         onClick = onClick,
-        modifier = Modifier.Companion.size(55.dp),
+        modifier = Modifier.size(55.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Icon(
             painter = painterResource(id = R.drawable.outline_data_alert_24),
             contentDescription = "Show card",
-            modifier = Modifier.Companion.size(32.dp),
+            modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.secondaryContainer
         )
     }
@@ -299,7 +299,7 @@ internal fun ShowCardButton(onClick: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun startButtonPreview(){
+fun StartButtonPreview(){
     ShizukuFtpTheme() {
         ServerControlButton(isRunning = false, onClick = {})
     }

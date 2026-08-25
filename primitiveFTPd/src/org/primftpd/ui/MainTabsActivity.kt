@@ -62,7 +62,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                                 )
                             }
                             showPasswordDialog = false
-                            ServicesStartStopUtil.startServers(this)
+                            handleStart()
                         }
                     )
                 }
@@ -188,6 +188,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
         ServicesStartStopUtil.startServers(this)
     }
+
 
     private fun handleStop() {
         ServicesStartStopUtil.stopServers(this)

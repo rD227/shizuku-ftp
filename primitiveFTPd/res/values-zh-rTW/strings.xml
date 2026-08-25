@@ -110,4 +110,5 @@
     <string name="pubkeyInvalid">輸入的內容不是有效的密鑰，已被忽略。</string>
     <string name="noKeysPresent">沒有可用的密鑰。</string>
     <string name="prefBindIp">要綁定的 IP 地址</string>
+    <string name="passwordDialogMessage">請設定密碼以啟動伺服器</string>
 </resources>

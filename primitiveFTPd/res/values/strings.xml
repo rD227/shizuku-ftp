@@ -196,4 +196,6 @@
     <string-array name="prefHostkeyAlgosDefaults">
         <item>ed25519</item>
     </string-array>
+
+    <string name="passwordDialogMessage">Please set a password to start the server</string>
 </resources>

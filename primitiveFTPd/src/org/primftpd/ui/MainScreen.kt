@@ -718,17 +718,22 @@ private fun PermissionsDialog(
     }
 }
 
+private fun chargingFromStatus(status: Int) =
+    status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+
 @Composable
 private fun rememberBatteryState(context: Context): BatteryState {
-    if (LocalInspectionMode.current) return BatteryState(percent = 39, isCharging = false)
+    if (LocalInspectionMode.current) return BatteryState(percent = 50, isCharging = false)
     var state by remember {
         val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+        val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val status = sticky?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
         mutableStateOf(
             BatteryState(
                 percent = runCatching {
                     bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
                 }.getOrNull(),
-                isCharging = runCatching { bm?.isCharging }.getOrNull() ?: false
+                isCharging = chargingFromStatus(status)
             )
         )
     }
@@ -737,16 +742,21 @@ private fun rememberBatteryState(context: Context): BatteryState {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
                 state = BatteryState(
                     percent = runCatching {
                         bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it >= 0 }
                     }.getOrNull(),
-                    isCharging = runCatching { bm?.isCharging }.getOrNull() ?: false
+                    isCharging = chargingFromStatus(status)
                 )
             }
         }
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        context.registerReceiver(receiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(receiver, filter)
+        }
         onDispose { context.unregisterReceiver(receiver) }
     }
 

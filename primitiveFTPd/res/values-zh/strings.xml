@@ -157,4 +157,6 @@
     <string name="usernameLabel">用户名：%s</string>
     <string name="prefChooseBindIp">在主用户界面选择要绑定的 IP</string>
     <string name="prefSummaryChooseBindIp">在主用户界面显示单选按钮选择在服务器启动时要绑定的 IP。优先级高于上面的绑定 IP。如果服务器由其他一些机制启动则不生效。</string>
+
+    <string name="passwordDialogMessage">请设置密码以启动服务器</string>
 </resources>

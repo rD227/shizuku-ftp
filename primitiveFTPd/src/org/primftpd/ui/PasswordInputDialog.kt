@@ -45,7 +45,7 @@ fun PasswordInputDialog(
         text = {
             Column {
                 Text(
-                    text =  stringResource(R.string.generateKeysMessage),
+                    text = stringResource(R.string.passwordDialogMessage),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)

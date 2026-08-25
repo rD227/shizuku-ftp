@@ -138,6 +138,13 @@ public class ServicesStartStopUtil {
                         showGenKeyDialog(fragment);
                         continueServerStart = false;
                     }
+                } else {
+                    keyPresent = isKeyPresent(keyFingerprintProvider, context);
+                    if (!keyPresent) {
+                        // cannot start sftp server when key is not present and no UI is available
+                        // skip SFTP rather than failing silently
+                        LOGGER.warn("Cannot start SFTP because host key is not present and no UI fragment is available");
+                    }
                 }
                 if (keyPresent) {
                     LOGGER.debug("going to start sshd");
