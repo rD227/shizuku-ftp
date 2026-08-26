@@ -151,6 +151,8 @@ fun MainScreen(
 ) {
     var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
     var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
+    //其实可以直接用 viewModel 来管理这个状态，~~但为了简单起见~~因为历史残留，先用本地状态
+
     var showPermissionsDialog by remember { mutableStateOf(false) }
     //
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -188,21 +190,6 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         wallpaperBitmap = loadWallpaperBitmap(context)
     }
-
-
-    // 预加载图标
-    val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
-
-    val iconQr = ImageVector.vectorResource(id = R.drawable.outline_barcode_scanner_24)
-    val iconClean = ImageVector.vectorResource(id = R.drawable.cleaner)
-    val iconLogs = ImageVector.vectorResource(id = R.drawable.outline_dialogs_24)
-    val iconFingerprint = ImageVector.vectorResource(id = R.drawable.outline_fingerprint_24)
-    val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
-    val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
-    val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
-    val iconPort = ImageVector.vectorResource(id = R.drawable.port)
-    val iconUi = ImageVector.vectorResource(id = R.drawable.uisetting_coarse)
-    val iconSystem = ImageVector.vectorResource(id = R.drawable.system)
 
     val onMenuClick: (String) -> Unit = { route ->
         rightMenuVisible = false
@@ -381,135 +368,16 @@ fun MainScreen(
         }
 
         // 右侧滑菜单
-        AnimatedVisibility(
-            visible = rightMenuVisible,
-            enter = slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { -it }
-            ) + fadeOut(animationSpec = tween(300)),
-            modifier = Modifier.align(Alignment.TopStart)
-        ) {
-            GlassSidebarBox(
-                hazeState = hazeState,
-                modifier = Modifier.width(270.dp),
-                {
-
-                    Text(
-                        text = "Function and tools",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Button(
-                        onClick = {
-                            rightMenuVisible = false
-                        },
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    ) {
-                        Text("Close")
-                    }
-                    RowClick(
-                        icon = iconNetwork,
-                        text = "Memory access method",
-                        onClick = { onMenuClick("netWorkStatus") }
-                    )
-                    RowClick(
-                        icon = iconQr,
-                        text = "Scan code",
-                        onClick = { onMenuClick("qr") }
-                    )
-                    RowClick(
-                        icon = iconClean,
-                        text = "Clean cache",
-                        onClick = { onMenuClick("clean") }
-                    )
-                    RowClick(
-                        icon = iconLogs,
-                        text = "Client logs",
-                        onClick = { onMenuClick("clientStatus") }
-                    )
-                    RowClick(
-                        icon = iconFingerprint,
-                        text = "Finger print",
-                        onClick = { onMenuClick("fingerPrint") }
-                    )
-                    RowClick(
-                        icon = iconKey,
-                        text = "Verification Key",
-                        onClick = { onMenuClick("VerificationKey") }
-                    )
-                    RowClick(
-                        icon = iconAbout,
-                        text = "About",
-                        onClick = { onMenuClick("about") }
-                    )
-                }
-            )
+        LinkSideMenu(rightMenuVisible,onMenuClick,hazeState) {
+            rightMenuVisible = false
         }
 
+
+        GearSideMenu(leftMenuVisible,onMenuClick,hazeState) {
+            leftMenuVisible = false
+        }
         // 左侧滑菜单
-        AnimatedVisibility(
-            visible = leftMenuVisible,
-            enter = slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { -it }
-            ) + fadeOut(animationSpec = tween(300)),
-            modifier = Modifier.align(Alignment.TopStart)
-        ) {
-            GlassSidebarBox(
-                hazeState = hazeState,
-                modifier = Modifier.width(280.dp),
-                {
 
-                    Text(
-                        text = "Setting and System",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Button(
-                        onClick = {
-                            leftMenuVisible = false
-                        },
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    ) {
-                        Text("Close")
-                    }
-                    RowClick(
-                        icon = iconAuth,
-                        text = "Authentication",
-                        onClick = { onMenuClick("settings/auth") }
-                    )
-                    RowClick(
-                        icon = iconPort,
-                        text = "How to connect",
-                        onClick = { onMenuClick("settings/connecting") }
-                    )
-                    RowClick(
-                        icon = iconUi,
-                        text = "UI setting",
-                        onClick = { onMenuClick("settings/ui") }
-                    )
-                    RowClick(
-                        icon = iconSystem,
-                        text = "System",
-                        onClick = { onMenuClick("settings/system") }
-                    )
-                }
-            )
-        }
 
         // 权限卡片弹窗：黑色遮罩 + 居中卡片
         PermissionsDialog(
@@ -770,28 +638,6 @@ private fun rememberBatteryState(context: Context): BatteryState {
     }
 
     return state
-}
-@Composable
-private fun GlassSidebarBox(
-    hazeState: HazeState,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .hazeEffect(state = hazeState) {
-                inputScale = HazeInputScale.Auto
-                blurEffect {
-                    blurRadius = 4.dp
-                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.1f))
-                }
-            }
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-            .graphicsLayer { clip = true }
-    ) {
-        Column(content = content)
-    }
 }
 
 private suspend fun loadWallpaperBitmap(context: Context): ImageBitmap? =

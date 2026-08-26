@@ -11,8 +11,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -43,6 +45,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -54,6 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import dev.chrisbanes.haze.HazeInputScale
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.blurEffect
+import dev.chrisbanes.haze.hazeEffect
 import org.primftpd.R
 
 // --- Shared UI components ---
@@ -277,7 +285,7 @@ fun VerticalTimeText(timeText: String) {
 internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,rotation: Float) {
     FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
         Icon(
-            painter = painterResource(id = if (enabled) R.drawable.outline_rotate_incenter else R.drawable.outline_notsee),
+            painter = painterResource(id = if (enabled) R.drawable.boldincenter else R.drawable.blodcantsee),
             contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
             modifier = Modifier.size(24.dp)
                 .rotate(rotation)
@@ -298,6 +306,29 @@ internal fun ShowCardButton(onClick: () -> Unit) {
             modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.secondaryContainer
         )
+    }
+}
+
+@Composable
+internal fun GlassSidebarBox(
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .hazeEffect(state = hazeState) {
+                inputScale = HazeInputScale.Auto
+                blurEffect {
+                    blurRadius = 4.dp
+                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.1f))
+                }
+            }
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+            .graphicsLayer { clip = true }
+    ) {
+        Column(content = content)
     }
 }
 
