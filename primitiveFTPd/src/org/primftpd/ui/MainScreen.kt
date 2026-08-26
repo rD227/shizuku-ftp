@@ -105,13 +105,13 @@ import dev.chrisbanes.haze.blur.blurEffect
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
-import java.io.File
+import org.primftpd.ui.data.PermissionState
+import org.primftpd.ui.viewmodel.PermissionViewModel
+import org.primftpd.ui.viewmodel.TabViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -125,24 +125,8 @@ fun MainScreen(
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
     onNavigate: (String) -> Unit,
-    //initialLeftVisible: Boolean = false,
-    //initialRightVisible: Boolean = false,
-    // 权限状态模拟参数，默认为系统真实值
-    fullStorageAccess: Boolean = if (LocalInspectionMode.current) false else (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
-            ),
-    mediaLocationAccess: Boolean = if (LocalInspectionMode.current) false else (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                LocalContext.current.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                        PackageManager.PERMISSION_GRANTED
-            } else true
-            ),//这种权限申请可以放到viewmodel里面吗
-    notificationPermission: Boolean = if (LocalInspectionMode.current) false else (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                LocalContext.current.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-                        PackageManager.PERMISSION_GRANTED
-            } else true
-            ),
+    tabViewModel: TabViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    permissionViewModel: PermissionViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
 ) {
@@ -153,10 +137,9 @@ fun MainScreen(
     var showPermissionsDialog by remember { mutableStateOf(false) }
     //
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    //var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    //val wallpaperPicker = wallpaperBitmap?.let { getWallPaperPicker(imageBit = it) }
-    var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    val wallpaperPicker = rememberWallpaperPicker { wallpaperBitmap = it }
+    val permState = permissionViewModel?.permState?.collectAsState()?.value ?: PermissionState()
+    val wallpaperBitmap: ImageBitmap? = tabViewModel?.wallpaper?.collectAsState()?.value
+    val wallpaperPicker = rememberWallpaperPicker { tabViewModel?.updateWallpaper(it) }
 
     val context = LocalContext.current
 
@@ -184,8 +167,13 @@ fun MainScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        wallpaperBitmap = loadWallpaperBitmap(context)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) permissionViewModel?.refresh()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val onMenuClick: (String) -> Unit = { route ->
@@ -380,9 +368,9 @@ fun MainScreen(
         PermissionsDialog(
             visible = showPermissionsDialog,
             onDismiss = { showPermissionsDialog = false },
-            fullStorageAccess = fullStorageAccess,
-            mediaLocationAccess = mediaLocationAccess,
-            notificationPermission = notificationPermission
+            fullStorageAccess = permState.fullStorage,
+            mediaLocationAccess = permState.mediaLocation,
+            notificationPermission = permState.notification
         )
     }
 }
@@ -637,16 +625,6 @@ private fun rememberBatteryState(context: Context): BatteryState {
     return state
 }
 
-private suspend fun loadWallpaperBitmap(context: Context): ImageBitmap? =
-    withContext(Dispatchers.IO) {
-        val prefs = context.getSharedPreferences("main_wallpaper", Context.MODE_PRIVATE)
-        val path = prefs.getString("wallpaper_path", null)
-        if (path.isNullOrBlank()) return@withContext null
-        val file = File(path)
-        if (!file.exists()) return@withContext null
-        runCatching { BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap() }.getOrNull()
-    }
-
 
 @Composable
 fun PermissionsCard(
@@ -657,7 +635,6 @@ fun PermissionsCard(
     onExpandedChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val inspectionMode = LocalInspectionMode.current
 
     // 将传入的初始值状态化，以便监听更新
     var storageGranted by remember(fullStorageAccess) { mutableStateOf(fullStorageAccess) }
@@ -674,30 +651,6 @@ fun PermissionsCard(
             shouldStickToEdge = true
         } else {
             shouldStickToEdge = false
-        }
-    }
-
-    // 监听生命周期：当从系统设置页面返回应用时（onResume），重新检查权限
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && !inspectionMode) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    storageGranted = Environment.isExternalStorageManager()
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    mediaGranted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                            PackageManager.PERMISSION_GRANTED
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationGranted = context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-                            PackageManager.PERMISSION_GRANTED
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -952,9 +905,6 @@ fun MainScreenPreview() {
             onStartServer = {},
             onStopServer = {},
             onNavigate = {},
-            fullStorageAccess = true,
-            mediaLocationAccess = true,
-            notificationPermission = false,
         )
     }
 }

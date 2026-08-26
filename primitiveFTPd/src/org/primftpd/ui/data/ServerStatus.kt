@@ -7,3 +7,9 @@ data class ServerState(
 data class TabState(
     val isServerRunning: Boolean = false,
 )
+
+data class PermissionState(
+    val fullStorage: Boolean = true,
+    val mediaLocation: Boolean = true,
+    val notification: Boolean = true,
+)
