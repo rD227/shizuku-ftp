@@ -12,7 +12,6 @@ import android.os.BatteryManager
 import android.os.Build
 import android.provider.Settings
 import android.view.RoundedCorner
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -150,11 +149,6 @@ fun MainScreen(
     val hazeState = rememberHazeState()
     val batteryState = rememberBatteryState(context)
     //val chargeState = rememberBatteryCharging(context)
-    LaunchedEffect(batteryState) {
-        if (batteryState == null) {
-            Toast.makeText(context, "Unable to read battery level", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -275,7 +269,7 @@ fun MainScreen(
                     .fillMaxWidth()
                     .pointerInput(Unit) {
                         detectTapGestures(
-                            onLongPress = { wallpaperPicker?.launch("image/*") }
+                            onLongPress = { wallpaperPicker.launch("image/*") }
                         )
                     }
             )
