@@ -6,13 +6,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
-import android.os.Environment
 import android.provider.Settings
 import android.view.RoundedCorner
 import android.widget.Toast
@@ -79,7 +76,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -111,7 +107,7 @@ import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.PermissionState
 import org.primftpd.ui.viewmodel.PermissionViewModel
-import org.primftpd.ui.viewmodel.TabViewModel
+import org.primftpd.ui.viewmodel.WallpaperViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -125,8 +121,8 @@ fun MainScreen(
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
     onNavigate: (String) -> Unit,
-    tabViewModel: TabViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     permissionViewModel: PermissionViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    wallpaperViewModel: WallpaperViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
 ) {
@@ -138,8 +134,8 @@ fun MainScreen(
     //
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val permState = permissionViewModel?.permState?.collectAsState()?.value ?: PermissionState()
-    val wallpaperBitmap: ImageBitmap? = tabViewModel?.wallpaper?.collectAsState()?.value
-    val wallpaperPicker = rememberWallpaperPicker { tabViewModel?.updateWallpaper(it) }
+    val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
+    val wallpaperPicker = rememberWallpaperPicker { wallpaperViewModel?.update(it) }
 
     val context = LocalContext.current
 
