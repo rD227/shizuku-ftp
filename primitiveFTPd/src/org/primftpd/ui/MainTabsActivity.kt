@@ -6,6 +6,7 @@ import android.view.Menu
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,6 +24,7 @@ import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
 import org.primftpd.ui.ShizukuFtpTheme
 import org.primftpd.prefs.LoadPrefsUtil
+import org.primftpd.ui.viewmodel.TabViewModel
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 
@@ -37,9 +39,10 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
         const val DIALOG_TAG = "dialogs"
     }
 
+    private val tabViewModel: TabViewModel by viewModels()
+
     private var isServerRunning by mutableStateOf(false)
     private var showPasswordDialog by mutableStateOf(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -196,7 +199,9 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     fun onEvent(event: ServerStateChangedEvent) {
-        isServerRunning = ServicesStartStopUtil.checkServicesRunning(this).atLeastOneRunning()
+        val running = ServicesStartStopUtil.checkServicesRunning(this).atLeastOneRunning()
+        isServerRunning = running
+        tabViewModel.updateServerRunning(running)  // 同步给 ViewModel
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

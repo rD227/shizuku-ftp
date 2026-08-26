@@ -44,7 +44,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -58,7 +57,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +66,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -81,7 +80,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -102,7 +100,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.haze.HazeInputScale
-import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.blurEffect
 import dev.chrisbanes.haze.hazeEffect
@@ -128,8 +125,8 @@ fun MainScreen(
     onStartServer: () -> Unit,
     onStopServer: () -> Unit,
     onNavigate: (String) -> Unit,
-    initialLeftVisible: Boolean = false,
-    initialRightVisible: Boolean = false,
+    //initialLeftVisible: Boolean = false,
+    //initialRightVisible: Boolean = false,
     // 权限状态模拟参数，默认为系统真实值
     fullStorageAccess: Boolean = if (LocalInspectionMode.current) false else (
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
@@ -139,19 +136,19 @@ fun MainScreen(
                 LocalContext.current.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
                         PackageManager.PERMISSION_GRANTED
             } else true
-            ),
+            ),//这种权限申请可以放到viewmodel里面吗
     notificationPermission: Boolean = if (LocalInspectionMode.current) false else (
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 LocalContext.current.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
                         PackageManager.PERMISSION_GRANTED
             } else true
             ),
-    viewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
 ) {
-    var rightMenuVisible by remember { mutableStateOf(initialRightVisible) }
-    var leftMenuVisible by remember { mutableStateOf(initialLeftVisible) }
-    //其实可以直接用 viewModel 来管理这个状态，~~但为了简单起见~~因为历史残留，先用本地状态
+
+    var rightMenuVisible by remember { mutableStateOf(false) }
+    var leftMenuVisible by remember { mutableStateOf(false) }
 
     var showPermissionsDialog by remember { mutableStateOf(false) }
     //
@@ -329,11 +326,11 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             // 流量图表
-            if (viewModel != null) {
+            if (networkViewModel != null) {
                 Column {
                     Spacer(modifier = Modifier.height(28.dp))
                     NetworkTrafficChart(
-                        modelProducer = viewModel.modelProducer,
+                        modelProducer = networkViewModel.modelProducer,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
