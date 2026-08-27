@@ -8,13 +8,13 @@ import androidx.core.content.edit
 //实在要考虑封装可以考虑直接用方法获取私有对象的属性？
 object UiPreferences {
     const val PREF_KEY_BLUR_INTENSITY = "blurIntensityPref"
-    const val DEFAULT_BLUR_INTENSITY = 4f
+    const val DEFAULT_BLUR_INTENSITY = 4
 
     fun getBlurIntensity(prefs: SharedPreferences) =
-        prefs.getFloat(PREF_KEY_BLUR_INTENSITY, DEFAULT_BLUR_INTENSITY)
+        prefs.getInt(PREF_KEY_BLUR_INTENSITY, DEFAULT_BLUR_INTENSITY)
 
-    fun setBlurIntensity(prefs: SharedPreferences, intensity: Float) {
-        prefs.edit { putFloat(PREF_KEY_BLUR_INTENSITY, intensity) }
+    fun setBlurIntensity(prefs: SharedPreferences, intensity: Int) {
+        prefs.edit { putInt(PREF_KEY_BLUR_INTENSITY, intensity) }
     }
 
     const val PREF_KEY_TOP_COMPONENT_PRESSED_DOWN = "topComponentPressedDownPref"

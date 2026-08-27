@@ -103,7 +103,6 @@ import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.PermissionState
-import org.primftpd.ui.data.UiPreferences
 import org.primftpd.ui.util.getRadius
 import org.primftpd.ui.util.getCarmaHeight
 import org.primftpd.ui.viewmodel.PermissionViewModel
@@ -190,6 +189,7 @@ fun MainScreen(
         label = "RailPadding"
     )
 
+    val blurIntensity = uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
         Box(
@@ -200,15 +200,19 @@ fun MainScreen(
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         }
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .hazeEffect(state = hazeState) {
-                    inputScale = HazeInputScale.Auto
-                    blurEffect {
-                        blurRadius = 4.dp
-                        fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.6f))
+            modifier = if (blurIntensity != 0) {
+                Modifier
+                    .fillMaxSize()
+                    .hazeEffect(state = hazeState) {
+                        inputScale = HazeInputScale.Auto
+                        blurEffect {
+                            blurIntensity?.let { blurRadius = it.dp }
+                            fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.6f))
+                        }
                     }
-                }
+            } else {
+                Modifier.fillMaxSize()
+            }
         )
 
         // YumeBox 风格左侧窄边栏
@@ -348,14 +352,26 @@ fun MainScreen(
         }
 
         // 右侧滑菜单
-        LinkSideMenu(rightMenuVisible,onMenuClick,hazeState) {
-            rightMenuVisible = false
-        }
+        LinkSideMenu(
+            rightMenuVisible,
+            onMenuClick,
+            hazeState,
+            blurIntensity = blurIntensity,
+            onClick = {
+                rightMenuVisible = false
+            }
+        )
 
 
-        GearSideMenu(leftMenuVisible,onMenuClick,hazeState) {
-            leftMenuVisible = false
-        }
+        GearSideMenu(
+            leftMenuVisible,
+            onMenuClick,
+            hazeState,
+            blurIntensity = blurIntensity,
+            onClick = {
+                leftMenuVisible = false
+            }
+        )
         // 左侧滑菜单
 
 

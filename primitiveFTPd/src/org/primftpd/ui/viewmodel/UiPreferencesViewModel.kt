@@ -24,4 +24,17 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getTopComponentPressedDown(): Boolean {
         return UiPreferences.getTopComponentPressedDown(barDownPrefs)
     }
+
+    private val blurIntensityPrefs = application.getSharedPreferences("blur_intensity", Context.MODE_PRIVATE)
+    private val _blurIntensity = MutableStateFlow(
+        UiPreferences.getBlurIntensity(blurIntensityPrefs)
+    )
+    val blurIntensity = _blurIntensity.asStateFlow()
+    fun setBlurIntensity(value: Int) {
+        UiPreferences.setBlurIntensity(blurIntensityPrefs, value)
+        _blurIntensity.value = value
+    }
+    fun getBlurIntensity(): Int {
+        return UiPreferences.getBlurIntensity(blurIntensityPrefs)
+    }
 }

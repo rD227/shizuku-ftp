@@ -313,7 +313,8 @@ internal fun ShowCardButton(onClick: () -> Unit) {
 internal fun GlassSidebarBox(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
+    blurIntensity: Int?
 ) {
     Box(
         modifier = modifier
@@ -321,7 +322,7 @@ internal fun GlassSidebarBox(
             .hazeEffect(state = hazeState) {
                 inputScale = HazeInputScale.Auto
                 blurEffect {
-                    blurRadius = 4.dp
+                    blurIntensity?.let { blurRadius = it.dp }
                     fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.1f))
                 }
             }

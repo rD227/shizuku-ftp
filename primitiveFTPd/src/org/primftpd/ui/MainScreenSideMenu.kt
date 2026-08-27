@@ -15,10 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -29,10 +25,11 @@ import org.primftpd.R
 
 @Composable
 internal fun LinkSideMenu(
-        rightMenuVisible : Boolean,
-        onMenuClick: (String) -> Unit,
-        hazeState: HazeState,
-        onClick: () -> Unit
+    rightMenuVisible: Boolean,
+    onMenuClick: (String) -> Unit,
+    hazeState: HazeState,
+    onClick: () -> Unit,
+    blurIntensity: Int?,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -60,8 +57,9 @@ internal fun LinkSideMenu(
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
+                blurIntensity = blurIntensity,
                 modifier = Modifier.width(270.dp),
-                {
+                content = {
 
                     Text(
                         text = "Function and tools",
@@ -120,7 +118,8 @@ internal fun GearSideMenu(
         leftMenuVisible : Boolean,
         onMenuClick: (String) -> Unit,
         hazeState: HazeState,
-        onClick: () -> Unit
+        onClick: () -> Unit,
+        blurIntensity: Int?,
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
@@ -146,7 +145,8 @@ internal fun GearSideMenu(
             GlassSidebarBox(
                 hazeState = hazeState,
                 modifier = Modifier.width(280.dp),
-                {
+                blurIntensity = blurIntensity,
+                content = {
 
                     Text(
                         text = "Setting and System",
