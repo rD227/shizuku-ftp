@@ -3,6 +3,8 @@ package org.primftpd.ui
 import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,6 +66,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
+import org.primftpd.ui.data.UiPreferences
 
 enum class SettingsSection(val route: String) {
     AUTH("auth"),
@@ -77,7 +81,8 @@ enum class SettingsSection(val route: String) {
 @Composable
 fun SettingsScreen(
     section: SettingsSection = SettingsSection.AUTH,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel()
 ) {
     var hasNatigatedBack by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -138,7 +143,7 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.UI] = it.positionInParent().y.toInt()
                     }
             ) {
-                UiCategory()
+                UiCategory(uiPreferencesViewModel = uiPreferencesViewModel)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             Column(
@@ -854,7 +859,9 @@ private fun ConnectivityCategory() {
 // ─── Category: UI ────────────────────────────────────────────────
 
 @Composable
-private fun UiCategory() {
+private fun UiCategory(
+    uiPreferencesViewModel: UiPreferencesViewModel? = null
+) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
 
@@ -873,6 +880,7 @@ private fun UiCategory() {
     var quickSettingsUnlock by remember {
         mutableStateOf(LoadPrefsUtil.quickSettingsRequiresUnlock(prefs))
     }
+    var stateBatPressDown by remember { mutableStateOf(uiPreferencesViewModel?.getTopComponentPressedDown() ?: UiPreferences.getTopComponentPressedDown(prefs)) }
 
     Text(
         text = stringResource(R.string.prefsCategoryTitleUi),
@@ -880,6 +888,16 @@ private fun UiCategory() {
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
+    )
+
+    SwitchPrefRow(
+        title = "Weather Top Component Pressed Down",
+        description = "Look bigger?",
+        checked = stateBatPressDown,
+        onCheckedChange = {
+            stateBatPressDown = it
+            uiPreferencesViewModel?.setTopComponentPressedDown(it)
+        }
     )
 
     SwitchPrefRow(
@@ -1161,7 +1179,10 @@ private fun SystemCategory() {
 @Composable
 fun PrefsPreview() {
     MaterialTheme {
-        SettingsScreen(onBack = {})
+        SettingsScreen(
+            onBack = {},
+            section = SettingsSection.UI
+        )
     }
 }
 

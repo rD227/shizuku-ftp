@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.provider.Settings
-import android.view.RoundedCorner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -79,9 +78,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -101,11 +98,16 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.PermissionState
+import org.primftpd.ui.data.UiPreferences
+import org.primftpd.ui.util.getRadius
+import org.primftpd.ui.util.getCarmaHeight
 import org.primftpd.ui.viewmodel.PermissionViewModel
+import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import org.primftpd.ui.viewmodel.WallpaperViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -123,6 +125,7 @@ fun MainScreen(
     permissionViewModel: PermissionViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     wallpaperViewModel: WallpaperViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
 ) {
 
@@ -148,7 +151,6 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val hazeState = rememberHazeState()
     val batteryState = rememberBatteryState(context)
-    //val chargeState = rememberBatteryCharging(context)
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -235,13 +237,8 @@ fun MainScreen(
         }
 
         //radius of phone
-        val cornerRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val windowInsets = LocalView.current.rootWindowInsets
-        val roundedCorner = windowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)
-            roundedCorner?.radius?.let { with(LocalDensity.current) { it.toDp() } } ?: 32.dp
-        } else {
-            32.dp
-        }
+
+        val cornerRadius = getRadius()
 
 
         // 主内容
@@ -258,10 +255,18 @@ fun MainScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+            Spacer(modifier = Modifier.height(8.dp))
 
+            val stateBarHeight = if (!LocalInspectionMode.current) getCarmaHeight() else 16.dp
 
-            Spacer(modifier = Modifier.height(16.dp))
-            // 原 Spacer(weight = 0.7f) 替换为自定义图片，并做上下渐隐；长按更换图片
+            //var topBarWeatherPress by remember { mutableStateOf(UiPreferences.getTopComponentPressedDown(prefs)) }
+
+            //var topBarWeatherPress by remember { mutableStateOf(uiPreferencesViewModel?.topComponentPressedDown?.collectAsState()?.value ?: false) }
+
+            val topBarWeatherPress by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
+
+            if (topBarWeatherPress) Spacer(modifier = Modifier.height(stateBarHeight - 8.dp))
+
             MainHeroImage(
                 wallpaperBitmap = wallpaperBitmap,
                 modifier = Modifier
@@ -416,13 +421,7 @@ private fun MainHeroImage(
         .fillMaxHeight()
         .padding(horizontal = 8.dp)) {
         if (wallpaperBitmap != null) {
-            val cornerRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val windowInsets = LocalView.current.rootWindowInsets
-            val roundedCorner = windowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)
-            roundedCorner?.radius?.let { with(LocalDensity.current) { it.toDp() } } ?: 32.dp
-            } else {
-                32.dp
-            }
+            val cornerRadius = getRadius()
             Image(
                 bitmap = wallpaperBitmap,
                 contentDescription = null,

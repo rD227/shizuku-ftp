@@ -53,8 +53,13 @@ public final class Defaults {
 		} catch (Throwable t) {
 			// ignore
 		}
-		// Fallback to internal files dir if external is not available (e.g. in Preview)
-		return dir != null ? dir : ctxt.getFilesDir();
+		if (dir != null) return dir;
+		try {
+			dir = ctxt.getFilesDir();
+		} catch (Throwable t) {
+			// ignore
+		}
+		return dir != null ? dir : HOME_DIR;
 	}
 	public static String pubKeyAuthKeyPath(Context ctxt) {
 		return homeDirScoped(ctxt).getAbsolutePath() + "/.ssh/authorized_keys";

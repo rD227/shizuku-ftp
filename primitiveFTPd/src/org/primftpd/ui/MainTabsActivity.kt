@@ -25,6 +25,7 @@ import org.primftpd.events.ServerStateChangedEvent
 import org.primftpd.ui.ShizukuFtpTheme
 import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.ui.viewmodel.TabViewModel
+import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import org.primftpd.util.EncryptionUtil
 import org.primftpd.util.ServicesStartStopUtil
 
@@ -40,6 +41,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     }
 
     private val tabViewModel: TabViewModel by viewModels()
+    private val uiPreferencesViewModel: UiPreferencesViewModel by viewModels()
 
     private var isServerRunning by mutableStateOf(false)
     private var showPasswordDialog by mutableStateOf(false)
@@ -79,7 +81,8 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             isServerRunning = isServerRunning,
                             onStartServer = { handleStart() },
                             onStopServer = { handleStop() },
-                            onNavigate = { route -> navController.navigate(route) }
+                            onNavigate = { route -> navController.navigate(route) },
+                            uiPreferencesViewModel = uiPreferencesViewModel
                         )
                     }
                     composable("about") {
@@ -107,7 +110,8 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         }
                         SettingsScreen(
                             section = settingsSection,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            uiPreferencesViewModel = uiPreferencesViewModel
                         )
                     }
                     composable("netWorkStatus") {
