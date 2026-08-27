@@ -6,7 +6,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +66,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.flow.flowOf
 import org.primftpd.ui.data.UiPreferences
 
 enum class SettingsSection(val route: String) {
@@ -880,7 +881,12 @@ private fun UiCategory(
     var quickSettingsUnlock by remember {
         mutableStateOf(LoadPrefsUtil.quickSettingsRequiresUnlock(prefs))
     }
-    var stateBatPressDown by remember { mutableStateOf(uiPreferencesViewModel?.getTopComponentPressedDown() ?: UiPreferences.getTopComponentPressedDown(prefs)) }
+    var stateBarPressDown by remember { mutableStateOf(uiPreferencesViewModel?.getTopComponentPressedDown()
+        ?: UiPreferences.getTopComponentPressedDown(prefs)) }
+
+    val testStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
+        UiPreferences.getTopComponentPressedDown(prefs)
+    )).collectAsState(UiPreferences.getTopComponentPressedDown(prefs))
 
     Text(
         text = stringResource(R.string.prefsCategoryTitleUi),
@@ -893,9 +899,9 @@ private fun UiCategory(
     SwitchPrefRow(
         title = "Weather Top Component Pressed Down",
         description = "Look bigger?",
-        checked = stateBatPressDown,
+        checked = stateBarPressDown,
         onCheckedChange = {
-            stateBatPressDown = it
+            stateBarPressDown = it
             uiPreferencesViewModel?.setTopComponentPressedDown(it)
         }
     )
