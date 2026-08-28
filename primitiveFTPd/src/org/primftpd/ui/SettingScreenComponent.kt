@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.primftpd.R
+import org.primftpd.ui.data.ColorBag
 
 @Composable
 internal fun SwitchPrefRow(
@@ -150,7 +152,8 @@ internal fun SliderRow(
     sliderTitle: String,
     sliderDescription: String,
     rememberedSliderPosition: Float,
-    onSliderValueChange: (Float) -> Unit = {}
+    onSliderValueChange: (Float) -> Unit = {},
+    colorBag: ColorBag
 ){
     Row(
         modifier = Modifier
@@ -162,9 +165,10 @@ internal fun SliderRow(
             Text(
                 text = sliderDescription,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color =  MaterialTheme.colorScheme.onSurfaceVariant
             )
-            SliderAdvancedExample(sliderStep, maxSlideValue, rememberedSliderPosition = rememberedSliderPosition, onSliderValueChange = onSliderValueChange)
+            SliderAdvancedExample(sliderStep, maxSlideValue, rememberedSliderPosition = rememberedSliderPosition, onSliderValueChange = onSliderValueChange,
+                colorBag = colorBag)
         }
     }
 }
@@ -174,19 +178,30 @@ internal fun SliderAdvancedExample(
     sliderStep: Int,
     maxSlideValue: Float,
     rememberedSliderPosition: Float,
-    onSliderValueChange: (Float) -> Unit
+    onSliderValueChange: (Float) -> Unit,
+    colorBag: ColorBag
 ) {
     var sliderPosition by remember { mutableFloatStateOf(rememberedSliderPosition) }
+    val sliderColors = if (!colorBag.useM3Color) {
+        SliderDefaults.colors(
+            thumbColor = colorBag.vibrantLight,
+            activeTrackColor = colorBag.vibrantLight,
+            inactiveTrackColor = colorBag.darkMuted,
+            activeTickColor = colorBag.darkMuted,
+            inactiveTickColor = colorBag.vibrant
+        )
+    } else {
+        SliderDefaults.colors(
+        )
+    }
     Column {
         Slider(
-            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
             value = sliderPosition,
             onValueChange = { sliderPosition = it; onSliderValueChange(it) },
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.secondary,
-                activeTrackColor = MaterialTheme.colorScheme.secondary,
-                inactiveTrackColor = MaterialTheme.colorScheme.secondaryContainer,
-            ),
+            colors = sliderColors,
             steps = sliderStep,
             valueRange = 0f..maxSlideValue
         )
@@ -225,6 +240,7 @@ internal fun EditTextDialog(
         },
         confirmButton = {
             TextButton(
+                modifier = Modifier.offset(y = (-2).dp),
                 onClick = {
                     if (error == null) {
                         onConfirm(text)
@@ -233,12 +249,14 @@ internal fun EditTextDialog(
                 },
                 enabled = error == null && text.isNotEmpty()
             ) {
-                Text("OK")
+                Text("OK", fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+            TextButton(onClick = onDismiss,
+                modifier = Modifier.offset(y = (-2).dp)
+            ) {
+                Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         }
     )
@@ -294,14 +312,16 @@ internal fun PasswordEditDialog(
                         onConfirm(text)
                     }
                     onDismiss()
-                }
+                },
+                modifier = Modifier.offset(y = (-2).dp)
             ) {
-                Text("OK")
+                Text("OK",fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+            TextButton(onClick = onDismiss,
+                modifier = Modifier.offset(y = (-2).dp)) {
+                Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         }
     )
@@ -402,13 +422,19 @@ internal fun MultiSelectDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(selected); onDismiss() }) {
-                Text("OK")
+            TextButton(
+                onClick = { onConfirm(selected); onDismiss() },
+                modifier = Modifier.offset(y = (-8).dp)
+            ) {
+                Text("OK", fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.offset(y = (-8).dp)
+                ) {
+                Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         }
     )
@@ -439,7 +465,13 @@ fun SliderOfRowPreview() {
             maxSlideValue = 40f,
             sliderTitle = "Slider Title",
             sliderDescription = "Slider Description",
-            rememberedSliderPosition = 20f
+            rememberedSliderPosition = 20f,
+            colorBag = ColorBag(
+                useM3Color = true,
+                vibrantLight = MaterialTheme.colorScheme.primary,
+                darkMuted = MaterialTheme.colorScheme.onSurfaceVariant,
+                vibrant = MaterialTheme.colorScheme.secondary
+            )
         )
     }
 }

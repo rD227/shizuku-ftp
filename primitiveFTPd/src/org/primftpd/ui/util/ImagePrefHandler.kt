@@ -77,6 +77,37 @@ object ImagePrefHandler {
                 onResult(Color(argb))
             }
     }
+    //_______
+    fun extractLightVibrantColor(bitmap: ImageBitmap, fallback: Color): Color {
+        val android = bitmap.asAndroidBitmap()
+        if (android.isRecycled) return fallback
+        val sampled = scaleDown(android, maxSize = 192)
+        val p = Palette.from(sampled).maximumColorCount(16).generate()  // 同步
+        val dominant = p.swatches.maxByOrNull { it.population }?.rgb
+        val argb = p.getLightVibrantColor(dominant ?: fallback.toArgb()) ?: dominant ?: fallback.toArgb()
+        return Color(argb)
+    }
+    fun extractLightVibrantColorAsync(
+        bitmap: ImageBitmap,
+        fallback: Color,
+        onResult: (Color) -> Unit
+    ) {
+        val android = bitmap.asAndroidBitmap()
+        if (android.isRecycled) {
+            onResult(fallback)
+            return
+        }
+        val sampled = scaleDown(android, maxSize = 192)
+        Palette.from(sampled)
+            .maximumColorCount(16)
+            .generate { palette ->
+                val dominant = palette?.swatches?.maxByOrNull { it.population }?.rgb
+                val argb = palette?.getLightVibrantColor(dominant ?: fallback.toArgb())
+                    ?: dominant
+                    ?: fallback.toArgb()
+                onResult(Color(argb))
+            }
+    }
 
     /** 最长边缩到不超过 [maxSize]，避免大图让 Palette 卡顿或取色失败 */
     private fun scaleDown(src: Bitmap, maxSize: Int): Bitmap {

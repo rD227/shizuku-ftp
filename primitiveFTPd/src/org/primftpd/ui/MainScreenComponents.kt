@@ -133,7 +133,12 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
+fun RowClick(
+        icon: ImageVector,
+        text: String,
+        onClick: () -> Unit,
+        colorBag: ColorBag
+    ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -147,13 +152,14 @@ fun RowClick(icon: ImageVector, text: String, onClick: () -> Unit) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
+                .background(if (colorBag.useM3Color) MaterialTheme.colorScheme.primary else colorBag.vibrant),
+            //TODO: 这里可以给util.ColorBag加一个其他颜色，然后加到data里面，专门用于按钮的背景色，避免和vibrant混用
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = if (colorBag.useM3Color) MaterialTheme.colorScheme.onPrimary else colorBag.darkMuted,
                 modifier = Modifier.padding(9.dp)
             )
         }
@@ -374,7 +380,7 @@ internal fun GlassSidebarBox(
     }
 }
 
-
+/**
 @SuppressLint("LocalContextResourcesRead")
 @Preview(
     showBackground = true,
@@ -392,7 +398,9 @@ fun MenuButtonPreview(){
         //replaced by ColorBag data class
         val colorBag = ColorBag(
             vibrant = Color(0xFF81C784),
-            darkMuted = Color(0xFFE57373)
+            darkMuted = Color(0xFFE57373),
+            vibrantLight = Color(0xFFF48FB1),
+            useM3Color = false
         )
         MenuButton(
             iconRes = R.drawable.link,
@@ -403,3 +411,4 @@ fun MenuButtonPreview(){
         )
     }
 }
+        **/

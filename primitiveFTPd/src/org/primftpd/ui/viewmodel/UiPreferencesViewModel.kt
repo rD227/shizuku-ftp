@@ -51,4 +51,13 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getUsrM3ToPickColors(): Boolean {
         return UiPreferences.getUsrM3ToPickColors(useM3ToPickColors)
     }
+    ///_______
+    /**
+    private val colorBagPrefs = application.getSharedPreferences("color_bag", Context.MODE_PRIVATE)
+    private val _colorBag = MutableStateFlow<org.primftpd.ui.data.ColorBag?>(null)
+    val colorBag = _colorBag.asStateFlow()
+    fun setColorBag(value: org.primftpd.ui.data.ColorBag?) {
+        _colorBag.value = value
+    }
+    **/
 }

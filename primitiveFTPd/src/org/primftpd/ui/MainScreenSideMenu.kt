@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import org.primftpd.R
+import org.primftpd.ui.data.ColorBag
 
 @Composable
 internal fun LinkSideMenu(
@@ -30,6 +32,7 @@ internal fun LinkSideMenu(
     hazeState: HazeState,
     onClick: () -> Unit,
     blurIntensity: Float?,
+    colorBag: ColorBag,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -69,43 +72,56 @@ internal fun LinkSideMenu(
                     )
                     Button(
                         onClick = onClick,
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                        colors = MaterialTheme.colorScheme.run {
+                            ButtonDefaults.buttonColors(
+                                containerColor = if (colorBag.useM3Color) surfaceVariant else colorBag.vibrant,
+                                contentColor = if (colorBag.useM3Color) onSurfaceVariant else colorBag.darkMuted
+                            )
+                        }
                     ) {
                         Text("Close")
                     }
                     RowClick(
                         icon = iconNetwork,
                         text = "Devices access",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("netWorkStatus") }
                     )
                     RowClick(
                         icon = iconQr,
                         text = "Scan code",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("qr") }
                     )
                     RowClick(
                         icon = iconClean,
                         text = "Clean cache",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("clean") }
                     )
                     RowClick(
                         icon = iconLogs,
                         text = "Client logs",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("clientStatus") }
                     )
                     RowClick(
                         icon = iconFingerprint,
                         text = "Finger print",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("fingerPrint") }
                     )
                     RowClick(
                         icon = iconKey,
                         text = "Verification Key",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("VerificationKey") }
                     )
                     RowClick(
                         icon = iconAbout,
                         text = "About",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("about") }
                     )
                 }
@@ -120,6 +136,7 @@ internal fun GearSideMenu(
         hazeState: HazeState,
         onClick: () -> Unit,
         blurIntensity: Float?,
+        colorBag: ColorBag
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
@@ -156,6 +173,10 @@ internal fun GearSideMenu(
                     )
                     Button(
                         onClick = onClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.surfaceVariant else colorBag.vibrant,
+                            contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurfaceVariant else colorBag.darkMuted,
+                        ),
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     ) {
                         Text("Close")
@@ -163,21 +184,25 @@ internal fun GearSideMenu(
                     RowClick(
                         icon = iconAuth,
                         text = "Authentication",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("settings/auth") }
                     )
                     RowClick(
                         icon = iconPort,
                         text = "How to connect",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("settings/connecting") }
                     )
                     RowClick(
                         icon = iconUi,
                         text = "UI setting",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("settings/ui") }
                     )
                     RowClick(
                         icon = iconSystem,
                         text = "System",
+                        colorBag = colorBag,
                         onClick = { onMenuClick("settings/system") }
                     )
                 }

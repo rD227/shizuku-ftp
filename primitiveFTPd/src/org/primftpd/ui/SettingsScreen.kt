@@ -12,25 +12,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
@@ -50,8 +43,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import org.apache.ftpserver.impl.PassivePorts
 import org.primftpd.R
@@ -61,13 +52,14 @@ import org.primftpd.prefs.Logging
 import org.primftpd.prefs.ServerToStart
 import org.primftpd.util.Defaults
 import org.primftpd.util.EncryptionUtil
-import org.primftpd.util.NotificationUtil
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
-import kotlinx.coroutines.flow.flowOf
-import org.primftpd.ui.data.UiPreferences
+import org.primftpd.ui.data.ColorBag
+import org.primftpd.ui.util.WallpaperPalette
+import org.primftpd.ui.util.rememberWallpaperAccentColor
+import org.primftpd.ui.viewmodel.WallpaperViewModel
 
 enum class SettingsSection(val route: String) {
     AUTH("auth"),
@@ -83,9 +75,11 @@ enum class SettingsSection(val route: String) {
 fun SettingsScreen(
     section: SettingsSection = SettingsSection.AUTH,
     onBack: () -> Unit,
+    previewColorBag: ColorBag? = null,
+    wallpaperViewModel: WallpaperViewModel? = if(LocalInspectionMode.current) null else viewModel(),
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel()
 ) {
-    var hasNatigatedBack by remember { mutableStateOf(false) }
+    var hasNavigatedBack by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val sectionOffsets = remember { mutableStateMapOf<SettingsSection, Int>() }
 
@@ -95,14 +89,31 @@ fun SettingsScreen(
             ?.let { scrollState.animateScrollTo(it) }
     }
 
+    val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
+    val colorBag = if (LocalInspectionMode.current && previewColorBag != null) {
+        previewColorBag
+    } else {
+        ColorBag(
+            vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+            darkMuted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "dark_muted"
+            ),
+            vibrantLight = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "light_vibrant"
+            ),
+            useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.prefs)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        if (!hasNatigatedBack) {
-                            hasNatigatedBack = true
+                        if (!hasNavigatedBack) {
+                            hasNavigatedBack = true
                             onBack()
                         }
                     }) {
@@ -144,7 +155,7 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.UI] = it.positionInParent().y.toInt()
                     }
             ) {
-                UiCategory(uiPreferencesViewModel = uiPreferencesViewModel)
+                UiCategory(uiPreferencesViewModel = uiPreferencesViewModel, colorBag = colorBag)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             Column(

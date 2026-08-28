@@ -21,6 +21,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.flow.flowOf
 import org.primftpd.R
 import org.primftpd.prefs.LoadPrefsUtil
+import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.UiPreferences
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import org.primftpd.util.NotificationUtil
@@ -28,7 +29,8 @@ import org.primftpd.util.NotificationUtil
 
 @Composable
 internal fun UiCategory(
-    uiPreferencesViewModel: UiPreferencesViewModel? = null
+    uiPreferencesViewModel: UiPreferencesViewModel? = null,
+    colorBag: ColorBag
 ) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
@@ -96,8 +98,9 @@ internal fun UiCategory(
         onSliderValueChange = { newValue ->
             blurIntensity = newValue
             uiPreferencesViewModel?.setBlurIntensity(newValue)
-        }
-)
+        },
+        colorBag = colorBag
+    )
 
     SwitchPrefRow(
         title = stringResource(R.string.prefShowTabNames),

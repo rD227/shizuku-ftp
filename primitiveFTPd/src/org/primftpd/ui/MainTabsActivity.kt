@@ -111,7 +111,8 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         SettingsScreen(
                             section = settingsSection,
                             onBack = { navController.popBackStack() },
-                            uiPreferencesViewModel = uiPreferencesViewModel
+                            uiPreferencesViewModel = uiPreferencesViewModel,
+                            //wallpaperViewModel = uiPreferencesViewModel.wallpaperViewModel
                         )
                     }
                     composable("netWorkStatus") {

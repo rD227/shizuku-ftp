@@ -127,7 +127,7 @@ fun MainScreen(
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
-    PreviewAccentColor: Color ? = null
+    previewColorBag: ColorBag ? = null
 ) {
 
     var rightMenuVisible by remember { mutableStateOf(false) }
@@ -142,14 +142,22 @@ fun MainScreen(
     val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
     val wallpaperPicker = rememberWallpaperPicker { wallpaperViewModel?.update(it) }
 
-    val colorBag = ColorBag(
-        vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
-        darkMuted = rememberWallpaperAccentColor(
-            WallpaperPalette(bitmap = wallpaperBitmap),
-            type = "dark_muted"
+    val colorBag = if (LocalInspectionMode.current && previewColorBag != null) {
+        previewColorBag
+    } else {
+        ColorBag(
+            vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+            darkMuted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "dark_muted"
+            ),
+            vibrantLight = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "light_vibrant"
+            ),
+            useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
         )
-    )
-    val useOriginColor = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
+    }
     //val accentColor =PreviewAccentColor ?: rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap))
     //val accentColorDarkMuted =rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap), type = "dark_muted")
 
@@ -251,7 +259,7 @@ fun MainScreen(
                 onShowCardClick = { showPermissionsDialog = true },
                 colorBag = colorBag,
                 modifier = Modifier.fillMaxHeight(),
-                useM3Color = useOriginColor
+                useM3Color = colorBag.useM3Color
             )
         }
 
@@ -311,7 +319,7 @@ fun MainScreen(
                     onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
                     rotation = barVisibleRotation,
                     colorBag = colorBag,
-                    useOriginColor = useOriginColor
+                    useOriginColor = colorBag.useM3Color
                 )
                 Spacer(modifier = Modifier.weight(0.4f))
                 ServerControlButton(
@@ -373,10 +381,11 @@ fun MainScreen(
             rightMenuVisible,
             onMenuClick,
             hazeState,
-            blurIntensity = blurIntensity,
             onClick = {
                 rightMenuVisible = false
-            }
+            },
+            colorBag = colorBag,
+            blurIntensity = blurIntensity,
         )
 
 
@@ -385,6 +394,7 @@ fun MainScreen(
             onMenuClick,
             hazeState,
             blurIntensity = blurIntensity,
+            colorBag = colorBag,
             onClick = {
                 leftMenuVisible = false
             }
@@ -903,12 +913,24 @@ fun MainScreenPreview() {
         val imageBitmap = ImageBitmap.imageResource(id = R.drawable.my_background)
         val wallPaperMonitor = remember { app?.let {  WallpaperViewModel(it).apply { update(bitmap = imageBitmap) } } }
         val wallpaperBitmap: ImageBitmap? = wallPaperMonitor?.wallpaper?.collectAsState()?.value
+        val previewColorBag = ColorBag(
+            vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+            darkMuted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "dark_muted"
+            ),
+            vibrantLight = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = "light_vibrant"
+            ),
+            useM3Color = true,
+        )
         MainScreen(
             isServerRunning = false,
             onStartServer = {},
             onStopServer = {},
             onNavigate = {},
-            PreviewAccentColor = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+            previewColorBag = previewColorBag,
         )
     }
 }

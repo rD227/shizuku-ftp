@@ -54,6 +54,23 @@ fun rememberWallpaperAccentColor(palette: WallpaperPalette,type: String = "vibra
             }
             return if (palette.pickImageColor) color else fallback
         }
+        //因为preview的表现太诡异了，所以就不写同步方法了
+        "light_vibrant" -> {
+            var color by remember(palette.bitmap) { mutableStateOf(fallback) }
+            if(LocalInspectionMode.current) {
+                val bmp = palette.bitmap ?: return fallback
+                if (palette.pickImageColor) ImagePrefHandler.extractLightVibrantColorAsync(
+                    bmp, fallback,
+                    onResult = {color = it}
+                )
+                return if (palette.pickImageColor) color else fallback
+            }
+            LaunchedEffect(palette.bitmap) {
+                val bmp = palette.bitmap ?: return@LaunchedEffect
+                ImagePrefHandler.extractLightVibrantColorAsync(bmp, fallback) { color = it }
+            }
+            return if (palette.pickImageColor) color else fallback
+        }
     }
     return Color.Red
 }
