@@ -129,6 +129,9 @@ dependencies {
     implementation libs.haze.blur
     implementation libs.haze.blur.materials
     //implementation libs.androidx.compose.material.icons.extended
+    //取色
+    implementation libs.androidx.palette.ktx
+
 
     coreLibraryDesugaring(libs.google.desugar)
     implementation libs.google.material

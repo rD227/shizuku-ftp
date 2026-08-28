@@ -1,5 +1,6 @@
 package org.primftpd.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
@@ -35,6 +36,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,12 +50,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.palette.graphics.Palette
 import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeColorEffect
@@ -70,15 +80,35 @@ import org.primftpd.R
 
 
 @Composable
-fun MenuButton(iconRes: Int, rotation: Float, onClick: () -> Unit) {
+fun MenuButton(
+    iconRes: Int,
+    rotation: Float,
+    onClick: () -> Unit,
+    pickImageColor: Boolean,
+    bitMap: ImageBitmap?
+) {
+    val fallback = MaterialTheme.colorScheme.secondaryContainer
+    var pickedColor by remember { mutableStateOf(fallback) }
+
+    LaunchedEffect(bitMap) {
+        val androidBitmap = bitMap?.asAndroidBitmap()   // ImageBitmap -> android.graphics.Bitmap
+        //ImageBitmap 本身不能直接给 Palette，containerColor = bitMap.calculateDominantColor(fallback)是实验性api
+        if (androidBitmap?.isRecycled == true) return@LaunchedEffect
+        androidBitmap?.let { Palette.from(it) }?.generate { palette ->
+            val argb = palette?.getVibrantColor(fallback.toArgb())
+                ?: palette?.getLightVibrantColor(fallback.toArgb())
+                ?: palette?.getMutedColor(fallback.toArgb())
+                ?: fallback.toArgb()
+            pickedColor = Color(argb)
+        }
+    }
+
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable {
-                onClick()
-            }
+            .background(if (pickImageColor) pickedColor else fallback)
+            .clickable { onClick() }
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -338,10 +368,12 @@ internal fun GlassSidebarBox(
 }
 
 
+@SuppressLint("LocalContextResourcesRead")
 @Preview(showBackground = true)
 @Composable
-fun StartButtonPreview(){
+fun MenuButtonPreview(){
     ShizukuFtpTheme() {
-        ServerControlButton(isRunning = false, onClick = {})
+        val imageBitmap = ImageBitmap.imageResource(id = R.drawable.my_background)
+        MenuButton(iconRes = R.drawable.link, rotation = 0f, onClick = {}, pickImageColor = true, bitMap = imageBitmap)
     }
 }

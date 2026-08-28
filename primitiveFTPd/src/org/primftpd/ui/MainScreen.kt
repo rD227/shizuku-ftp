@@ -244,6 +244,7 @@ fun MainScreen(
                 onGearClick = { leftMenuVisible = true },
                 onLinkClick = { rightMenuVisible = true },
                 onShowCardClick = { showPermissionsDialog = true },
+                wallpaperBitmap = wallpaperBitmap,
                 modifier = Modifier.fillMaxHeight()
             )
         }
@@ -407,24 +408,11 @@ private fun WallpaperBase(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            !LocalInspectionMode.current -> Image(
+            else -> Image(
                 painter = painterResource(id = R.drawable.my_background),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
-            )
-            else -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                                Color(0xFF0F3460)
-                            )
-                        )
-                    )
             )
         }
         // 轻微压暗，保证前景内容可读
@@ -454,7 +442,7 @@ private fun MainHeroImage(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius))
             )
-        } else if (!LocalInspectionMode.current) {
+        } else {
             Image(
                 painter = painterResource(id = R.drawable.my_background),
                 contentDescription = null,
@@ -462,23 +450,6 @@ private fun MainHeroImage(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    //.fillMaxHeight()
-                    //.padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                                Color(0xFF0F3460)
-                            )
-                        )
-                    )
             )
         }
         Box(
@@ -503,7 +474,9 @@ private fun NarrowWallpaperRail(
     onGearClick: () -> Unit,
     onLinkClick: () -> Unit,
     onShowCardClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pickImageColor: Boolean = true,
+    wallpaperBitmap: ImageBitmap?
 ) {
     val timeText = remember(currentTime) {
         SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -538,9 +511,9 @@ private fun NarrowWallpaperRail(
             )
 
             Spacer(modifier = Modifier.weight(1f))
-            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick)
+            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick, pickImageColor = pickImageColor, bitMap = wallpaperBitmap)
             Spacer(modifier = Modifier.height(8.dp))
-            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick)
+            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick, pickImageColor = pickImageColor, bitMap = wallpaperBitmap)
             Spacer(modifier = Modifier.height(8.dp))
             ShowCardButton(onClick = onShowCardClick)
             Spacer(modifier = Modifier.weight(1f))
