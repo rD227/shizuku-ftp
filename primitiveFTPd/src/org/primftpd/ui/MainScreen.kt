@@ -86,6 +86,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -190,6 +191,8 @@ fun MainScreen(
     )
 
     val blurIntensity = uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value
+    val isDark = isSystemInDarkTheme()
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
         Box(
@@ -201,13 +204,18 @@ fun MainScreen(
         }
         Box(
             modifier = if (blurIntensity != 0f) {
+                val overlayColor = if (isDark) Color.Black.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.20f)
+                val fallback = if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.65f)
+
                 Modifier
                     .fillMaxSize()
                     .hazeEffect(state = hazeState) {
                         inputScale = HazeInputScale.Auto
                         blurEffect {
                             blurIntensity?.let { blurRadius = it.dp }
-                            fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.6f))
+                            noiseFactor = 0.06f
+                            colorEffects = listOf(HazeColorEffect.tint(overlayColor))
+                            fallbackTint = HazeColorEffect.tint(fallback)
                         }
                     }
             } else {

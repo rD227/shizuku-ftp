@@ -19,7 +19,7 @@ object UiPreferences {
 
 //----------
     const val PREF_KEY_BLUR_INTENSITY = "blurIntensityPref"
-    const val DEFAULT_BLUR_INTENSITY = 4
+    const val DEFAULT_BLUR_INTENSITY = 30
 
     fun getBlurIntensity(prefs: SharedPreferences): Float =
         prefs.getFloat(PREF_KEY_BLUR_INTENSITY, DEFAULT_BLUR_INTENSITY.toFloat())

@@ -316,18 +316,22 @@ internal fun GlassSidebarBox(
     content: @Composable ColumnScope.() -> Unit,
     blurIntensity: Float?
 ) {
+    val isDark = isSystemInDarkTheme()
+    val overlayColor = if (isDark) Color.Black.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.28f)
+    val fallback = if (isDark) Color.Black.copy(alpha = 0.62f) else Color.White.copy(alpha = 0.82f)
+
     Box(
         modifier = modifier
             .fillMaxHeight()
             .hazeEffect(state = hazeState) {
                 inputScale = HazeInputScale.Auto
                 blurEffect {
-                    blurIntensity?.toInt()?.let { blurRadius = it.dp }
-                    fallbackTint = HazeColorEffect.tint(Color.Black.copy(alpha = 0.1f))
+                    blurIntensity?.let { blurRadius = it.dp }
+                    noiseFactor = 0.06f
+                    colorEffects = listOf(HazeColorEffect.tint(overlayColor))
+                    fallbackTint = HazeColorEffect.tint(fallback)
                 }
             }
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-            .graphicsLayer { clip = true }
     ) {
         Column(content = content)
     }

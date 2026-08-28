@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -415,6 +414,21 @@ internal fun MultiSelectDialog(
     )
 }
 
+
+@Preview
+@Composable
+fun MutiSelectDialogPreview() {
+    MaterialTheme {
+        MultiSelectDialog(
+            title = "Select Options",
+            entries = listOf("Option 1", "Option 2", "Option 3"),
+            entryValues = listOf("opt1", "opt2", "opt3"),
+            initialSelected = setOf("opt1"),
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
