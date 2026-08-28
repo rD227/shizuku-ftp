@@ -200,7 +200,7 @@ fun MainScreen(
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         }
         Box(
-            modifier = if (blurIntensity != 0) {
+            modifier = if (blurIntensity != 0f) {
                 Modifier
                     .fillMaxSize()
                     .hazeEffect(state = hazeState) {

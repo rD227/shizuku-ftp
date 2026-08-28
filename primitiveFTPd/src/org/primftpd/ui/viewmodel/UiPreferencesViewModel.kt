@@ -30,11 +30,11 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
         UiPreferences.getBlurIntensity(blurIntensityPrefs)
     )
     val blurIntensity = _blurIntensity.asStateFlow()
-    fun setBlurIntensity(value: Int) {
+    fun setBlurIntensity(value: Float) {
         UiPreferences.setBlurIntensity(blurIntensityPrefs, value)
         _blurIntensity.value = value
     }
-    fun getBlurIntensity(): Int {
+    fun getBlurIntensity(): Float {
         return UiPreferences.getBlurIntensity(blurIntensityPrefs)
     }
 }

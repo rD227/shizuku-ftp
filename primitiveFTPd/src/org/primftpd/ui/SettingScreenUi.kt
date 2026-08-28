@@ -6,6 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,6 +55,8 @@ internal fun UiCategory(
         UiPreferences.getTopComponentPressedDown(prefs)
     )).collectAsState(UiPreferences.getTopComponentPressedDown(prefs))
 
+    var blurIntensity by remember { mutableFloatStateOf(uiPreferencesViewModel?.getBlurIntensity() ?: UiPreferences.getBlurIntensity(prefs)) }
+
     Text(
         text = stringResource(R.string.prefsCategoryTitleUi),
         style = MaterialTheme.typography.titleSmall,
@@ -70,6 +74,19 @@ internal fun UiCategory(
             uiPreferencesViewModel?.setTopComponentPressedDown(it)
         }
     )
+
+    SliderRow(
+        sliderStep = 7,
+        maxSlideValue = 40f,
+        sliderTitle = "Blur Intensity",
+        sliderDescription = "Adjust the blur intensity of the background.",
+        //rememberedSliderPosition = uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value ?: blurIntensity,
+        rememberedSliderPosition  = blurIntensity,
+        onSliderValueChange = { newValue ->
+            blurIntensity = newValue
+            uiPreferencesViewModel?.setBlurIntensity(newValue)
+        }
+)
 
     SwitchPrefRow(
         title = stringResource(R.string.prefShowTabNames),

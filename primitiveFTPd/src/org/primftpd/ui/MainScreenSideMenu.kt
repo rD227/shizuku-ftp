@@ -29,7 +29,7 @@ internal fun LinkSideMenu(
     onMenuClick: (String) -> Unit,
     hazeState: HazeState,
     onClick: () -> Unit,
-    blurIntensity: Int?,
+    blurIntensity: Float?,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -119,7 +119,7 @@ internal fun GearSideMenu(
         onMenuClick: (String) -> Unit,
         hazeState: HazeState,
         onClick: () -> Unit,
-        blurIntensity: Int?,
+        blurIntensity: Float?,
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)

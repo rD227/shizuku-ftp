@@ -155,7 +155,7 @@ internal fun SliderRow(
 ){
     Row(
         modifier = Modifier
-            .fillMaxWidth(),
+            .padding(horizontal = 16.dp, vertical = 12.dp)
         //verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -171,7 +171,7 @@ internal fun SliderRow(
 }
 
 @Composable
-fun SliderAdvancedExample(
+internal fun SliderAdvancedExample(
     sliderStep: Int,
     maxSlideValue: Float,
     rememberedSliderPosition: Float,
@@ -191,7 +191,9 @@ fun SliderAdvancedExample(
             steps = sliderStep,
             valueRange = 0f..maxSlideValue
         )
-        Text(text = sliderPosition.toString())
+        Text(
+            text = "Current intensity: ${sliderPosition.toInt()}",
+            style = MaterialTheme.typography.bodySmall)
     }
 }
 // ─── Dialog Composables ──────────────────────────────────────────
