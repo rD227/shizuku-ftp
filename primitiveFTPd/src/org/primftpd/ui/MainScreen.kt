@@ -2,6 +2,7 @@ package org.primftpd.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -79,6 +80,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -86,16 +88,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.chrisbanes.haze.HazeInputScale
-import dev.chrisbanes.haze.blur.HazeColorEffect
-import dev.chrisbanes.haze.blur.blurEffect
-import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
@@ -103,9 +100,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
+import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.PermissionState
+import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.getRadius
 import org.primftpd.ui.util.getCarmaHeight
+import org.primftpd.ui.util.rememberWallpaperAccentColor
 import org.primftpd.ui.viewmodel.PermissionViewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import org.primftpd.ui.viewmodel.WallpaperViewModel
@@ -127,17 +127,30 @@ fun MainScreen(
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
+    PreviewAccentColor: Color ? = null
 ) {
 
     var rightMenuVisible by remember { mutableStateOf(false) }
     var leftMenuVisible by remember { mutableStateOf(false) }
 
     var showPermissionsDialog by remember { mutableStateOf(false) }
-    //
+
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val permState = permissionViewModel?.permState?.collectAsState()?.value ?: PermissionState()
+
+
     val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
     val wallpaperPicker = rememberWallpaperPicker { wallpaperViewModel?.update(it) }
+
+    val colorBag = ColorBag(
+        vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+        darkMuted = rememberWallpaperAccentColor(
+            WallpaperPalette(bitmap = wallpaperBitmap),
+            type = "dark_muted"
+        )
+    )
+    //val accentColor =PreviewAccentColor ?: rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap))
+    //val accentColorDarkMuted =rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap), type = "dark_muted")
 
     val context = LocalContext.current
 
@@ -190,8 +203,7 @@ fun MainScreen(
         label = "RailPadding"
     )
 
-    val blurIntensity = uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value
-    val isDark = isSystemInDarkTheme()
+    val blurIntensity = if (!LocalInspectionMode.current) uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value else 5f
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
@@ -203,24 +215,16 @@ fun MainScreen(
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         }
         Box(
-            modifier = if (blurIntensity != 0f) {
-                val overlayColor = if (isDark) Color.Black.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.20f)
-                val fallback = if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.65f)
-
-                Modifier
-                    .fillMaxSize()
-                    .hazeEffect(state = hazeState) {
-                        inputScale = HazeInputScale.Auto
-                        blurEffect {
-                            blurIntensity?.let { blurRadius = it.dp }
-                            noiseFactor = 0.06f
-                            colorEffects = listOf(HazeColorEffect.tint(overlayColor))
-                            fallbackTint = HazeColorEffect.tint(fallback)
-                        }
-                    }
-            } else {
-                Modifier.fillMaxSize()
-            }
+            modifier = Modifier
+                .fillMaxSize()
+                .glassHaze(
+                    hazeState = hazeState,
+                    blurIntensity = blurIntensity,
+                    darkTint = Color.Black.copy(alpha = 0.15f),
+                    lightTint = Color.White.copy(alpha = 0.20f),
+                    darkFallback = Color.Black.copy(alpha = 0.50f),
+                    lightFallback = Color.White.copy(alpha = 0.65f),
+                )
         )
 
         // YumeBox 风格左侧窄边栏
@@ -244,7 +248,7 @@ fun MainScreen(
                 onGearClick = { leftMenuVisible = true },
                 onLinkClick = { rightMenuVisible = true },
                 onShowCardClick = { showPermissionsDialog = true },
-                wallpaperBitmap = wallpaperBitmap,
+                colorBag = colorBag,
                 modifier = Modifier.fillMaxHeight()
             )
         }
@@ -303,7 +307,9 @@ fun MainScreen(
                 GlassBackgroundToggleButton(
                     enabled = resolvedRailVisible,
                     onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
-                    rotation = barVisibleRotation
+                    rotation = barVisibleRotation,
+                    colorBag = colorBag,
+                    useOriginColor = false
                 )
                 Spacer(modifier = Modifier.weight(0.4f))
                 ServerControlButton(
@@ -475,8 +481,7 @@ private fun NarrowWallpaperRail(
     onLinkClick: () -> Unit,
     onShowCardClick: () -> Unit,
     modifier: Modifier = Modifier,
-    pickImageColor: Boolean = true,
-    wallpaperBitmap: ImageBitmap?
+    colorBag: ColorBag,
 ) {
     val timeText = remember(currentTime) {
         SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -511,11 +516,11 @@ private fun NarrowWallpaperRail(
             )
 
             Spacer(modifier = Modifier.weight(1f))
-            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick, pickImageColor = pickImageColor, bitMap = wallpaperBitmap)
+            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick, colorBag = colorBag)
             Spacer(modifier = Modifier.height(8.dp))
-            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick, pickImageColor = pickImageColor, bitMap = wallpaperBitmap)
+            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick, colorBag = colorBag)
             Spacer(modifier = Modifier.height(8.dp))
-            ShowCardButton(onClick = onShowCardClick)
+            ShowCardButton(onClick = onShowCardClick, containerColor = colorBag.darkMuted)
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -883,14 +888,24 @@ fun PermissionItem(
     name = "Main Screen",
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
+@Preview(
+    showBackground = true,
+    name = "Main Screen",
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+)
 @Composable
 fun MainScreenPreview() {
+    val app = LocalContext.current.applicationContext as? Application
     ShizukuFtpTheme {
+        val imageBitmap = ImageBitmap.imageResource(id = R.drawable.my_background)
+        val wallPaperMonitor = remember { app?.let {  WallpaperViewModel(it).apply { update(bitmap = imageBitmap) } } }
+        val wallpaperBitmap: ImageBitmap? = wallPaperMonitor?.wallpaper?.collectAsState()?.value
         MainScreen(
             isServerRunning = false,
             onStartServer = {},
             onStopServer = {},
             onNavigate = {},
+            PreviewAccentColor = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
         )
     }
 }

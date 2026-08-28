@@ -2,6 +2,7 @@ package org.primftpd.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
@@ -36,11 +38,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,10 +47,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -66,13 +61,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.palette.graphics.Palette
 import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.blurEffect
 import dev.chrisbanes.haze.hazeEffect
 import org.primftpd.R
+import org.primftpd.ui.data.ColorBag
+import org.primftpd.ui.util.WallpaperPalette
+import org.primftpd.ui.util.rememberWallpaperAccentColor
 
 // --- Shared UI components ---
 
@@ -84,30 +81,13 @@ fun MenuButton(
     iconRes: Int,
     rotation: Float,
     onClick: () -> Unit,
-    pickImageColor: Boolean,
-    bitMap: ImageBitmap?
+    colorBag: ColorBag,
 ) {
-    val fallback = MaterialTheme.colorScheme.secondaryContainer
-    var pickedColor by remember { mutableStateOf(fallback) }
-
-    LaunchedEffect(bitMap) {
-        val androidBitmap = bitMap?.asAndroidBitmap()   // ImageBitmap -> android.graphics.Bitmap
-        //ImageBitmap 本身不能直接给 Palette，containerColor = bitMap.calculateDominantColor(fallback)是实验性api
-        if (androidBitmap?.isRecycled == true) return@LaunchedEffect
-        androidBitmap?.let { Palette.from(it) }?.generate { palette ->
-            val argb = palette?.getVibrantColor(fallback.toArgb())
-                ?: palette?.getLightVibrantColor(fallback.toArgb())
-                ?: palette?.getMutedColor(fallback.toArgb())
-                ?: fallback.toArgb()
-            pickedColor = Color(argb)
-        }
-    }
-
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(if (pickImageColor) pickedColor else fallback)
+            .background(colorBag.vibrant)
             .clickable { onClick() }
             .padding(12.dp),
         contentAlignment = Alignment.Center
@@ -118,14 +98,13 @@ fun MenuButton(
             modifier = Modifier
                 .size(28.dp)
                 .rotate(rotation),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
+            colorFilter = ColorFilter.tint(colorBag.darkMuted)
         )
     }
 }
 
 @Composable
 fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
-    // 先获取动画颜色
     val buttonColor = animateColorAsState(
         targetValue = if (isRunning) Color(0xFFE57373) else Color(0xFF81C784),
         label = "serverButtonColor",
@@ -135,7 +114,7 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier
-            .size(width = 220.dp, height = 45.dp),  // 去掉 alpha
+            .size(width = 220.dp, height = 45.dp),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(2.dp, buttonColor),   // 边框使用动画颜色
         colors = ButtonDefaults.outlinedButtonColors(
@@ -312,30 +291,61 @@ fun VerticalTimeText(timeText: String) {
 }
 
 @Composable
-internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,rotation: Float) {
-    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
-        Icon(
+internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,rotation: Float,useOriginColor : Boolean = false, colorBag: ColorBag) {
+    FilledTonalIconButton(
+            onClick = onClick,
+            modifier = Modifier.size(48.dp),
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = if (useOriginColor) colorBag.vibrant else MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = if (useOriginColor) colorBag.darkMuted else MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+        Image(
             painter = painterResource(id = if (enabled) R.drawable.boldincenter else R.drawable.blodcantsee),
             contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
             modifier = Modifier.size(24.dp)
-                .rotate(rotation)
+                .rotate(rotation),
+            colorFilter = if (useOriginColor) ColorFilter.tint(colorBag.darkMuted) else ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
         )
     }
 }
 
 @Composable
-internal fun ShowCardButton(onClick: () -> Unit) {
+internal fun ShowCardButton(onClick: () -> Unit, containerColor: Color = MaterialTheme.colorScheme.secondaryContainer) {
     OutlinedIconButton(
         onClick = onClick,
         modifier = Modifier.size(55.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer)
+        border = BorderStroke(1.dp, containerColor)
     ) {
         Icon(
             painter = painterResource(id = R.drawable.outline_data_alert_24),
             contentDescription = "Show card",
             modifier = Modifier.size(32.dp),
-            tint = MaterialTheme.colorScheme.secondaryContainer
+            tint = containerColor
         )
+    }
+}
+
+/** 全屏模糊 Box 与 GlassSidebarBox 共用的玻璃模糊修饰符，避免重复配置 haze 参数 */
+@Composable
+internal fun Modifier.glassHaze(
+    hazeState: HazeState,
+    blurIntensity: Float?,
+    darkTint: Color = Color.Black.copy(alpha = 0.22f),
+    lightTint: Color = Color.White.copy(alpha = 0.28f),
+    darkFallback: Color = Color.Black.copy(alpha = 0.62f),
+    lightFallback: Color = Color.White.copy(alpha = 0.82f),
+): Modifier {
+    if (blurIntensity == null || blurIntensity == 0f) return this
+    val isDark = isSystemInDarkTheme()
+    return this.hazeEffect(state = hazeState) {
+        inputScale = HazeInputScale.Auto
+        blurEffect {
+            blurRadius = blurIntensity.dp
+            noiseFactor = 0.06f
+            colorEffects = listOf(HazeColorEffect.tint(if (isDark) darkTint else lightTint))
+            fallbackTint = HazeColorEffect.tint(if (isDark) darkFallback else lightFallback)
+        }
     }
 }
 
@@ -346,22 +356,10 @@ internal fun GlassSidebarBox(
     content: @Composable ColumnScope.() -> Unit,
     blurIntensity: Float?
 ) {
-    val isDark = isSystemInDarkTheme()
-    val overlayColor = if (isDark) Color.Black.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.28f)
-    val fallback = if (isDark) Color.Black.copy(alpha = 0.62f) else Color.White.copy(alpha = 0.82f)
-
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .hazeEffect(state = hazeState) {
-                inputScale = HazeInputScale.Auto
-                blurEffect {
-                    blurIntensity?.let { blurRadius = it.dp }
-                    noiseFactor = 0.06f
-                    colorEffects = listOf(HazeColorEffect.tint(overlayColor))
-                    fallbackTint = HazeColorEffect.tint(fallback)
-                }
-            }
+            .glassHaze(hazeState, blurIntensity)
     ) {
         Column(content = content)
     }
@@ -369,11 +367,30 @@ internal fun GlassSidebarBox(
 
 
 @SuppressLint("LocalContextResourcesRead")
-@Preview(showBackground = true)
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+)
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
 @Composable
 fun MenuButtonPreview(){
     ShizukuFtpTheme() {
         val imageBitmap = ImageBitmap.imageResource(id = R.drawable.my_background)
-        MenuButton(iconRes = R.drawable.link, rotation = 0f, onClick = {}, pickImageColor = true, bitMap = imageBitmap)
+        //val accentColor = rememberWallpaperAccentColor(WallpaperPalette(bitmap = imageBitmap))
+        //replaced by ColorBag data class
+        val colorBag = ColorBag(
+            vibrant = Color(0xFF81C784),
+            darkMuted = Color(0xFFE57373)
+        )
+        MenuButton(
+            iconRes = R.drawable.link,
+            rotation = 0f,
+            onClick = {},
+            colorBag = colorBag,
+            //containerColor = accentColor,
+        )
     }
 }
