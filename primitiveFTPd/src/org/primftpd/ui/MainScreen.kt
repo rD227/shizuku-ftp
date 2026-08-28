@@ -149,6 +149,7 @@ fun MainScreen(
             type = "dark_muted"
         )
     )
+    val useOriginColor = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
     //val accentColor =PreviewAccentColor ?: rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap))
     //val accentColorDarkMuted =rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap), type = "dark_muted")
 
@@ -249,7 +250,8 @@ fun MainScreen(
                 onLinkClick = { rightMenuVisible = true },
                 onShowCardClick = { showPermissionsDialog = true },
                 colorBag = colorBag,
-                modifier = Modifier.fillMaxHeight()
+                modifier = Modifier.fillMaxHeight(),
+                useM3Color = useOriginColor
             )
         }
 
@@ -309,7 +311,7 @@ fun MainScreen(
                     onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
                     rotation = barVisibleRotation,
                     colorBag = colorBag,
-                    useOriginColor = false
+                    useOriginColor = useOriginColor
                 )
                 Spacer(modifier = Modifier.weight(0.4f))
                 ServerControlButton(
@@ -482,6 +484,7 @@ private fun NarrowWallpaperRail(
     onShowCardClick: () -> Unit,
     modifier: Modifier = Modifier,
     colorBag: ColorBag,
+    useM3Color: Boolean = false
 ) {
     val timeText = remember(currentTime) {
         SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -516,11 +519,11 @@ private fun NarrowWallpaperRail(
             )
 
             Spacer(modifier = Modifier.weight(1f))
-            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick, colorBag = colorBag)
+            MenuButton(iconRes = R.drawable.gear, rotation = gearRotation, onClick = onGearClick, colorBag = colorBag, useM3Color = useM3Color)
             Spacer(modifier = Modifier.height(8.dp))
-            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick, colorBag = colorBag)
+            MenuButton(iconRes = R.drawable.link, rotation = gearRotation, onClick = onLinkClick, colorBag = colorBag, useM3Color = useM3Color)
             Spacer(modifier = Modifier.height(8.dp))
-            ShowCardButton(onClick = onShowCardClick, containerColor = colorBag.darkMuted)
+            ShowCardButton(onClick = onShowCardClick,colorBag = colorBag, useM3Color = useM3Color,)
             Spacer(modifier = Modifier.weight(1f))
         }
     }

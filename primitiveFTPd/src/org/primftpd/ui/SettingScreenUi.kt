@@ -50,6 +50,8 @@ internal fun UiCategory(
     }
     var stateBarPressDown by remember { mutableStateOf(uiPreferencesViewModel?.getTopComponentPressedDown()
         ?: UiPreferences.getTopComponentPressedDown(prefs)) }
+    var usrM3ToPickColors by remember { mutableStateOf(uiPreferencesViewModel?.getUsrM3ToPickColors()
+        ?: UiPreferences.getUsrM3ToPickColors(prefs)) }
 
     val changeInTimeStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
         UiPreferences.getTopComponentPressedDown(prefs)
@@ -72,6 +74,15 @@ internal fun UiCategory(
         onCheckedChange = {
             stateBarPressDown = it
             uiPreferencesViewModel?.setTopComponentPressedDown(it)
+        }
+    )
+    SwitchPrefRow(
+        title = "Use M3 to Pick Colors?",
+        description = "Pick colors from M3 or wallpaper",
+        checked = usrM3ToPickColors,
+        onCheckedChange = {
+            usrM3ToPickColors = it
+            uiPreferencesViewModel?.setUsrM3ToPickColors(it)
         }
     )
 

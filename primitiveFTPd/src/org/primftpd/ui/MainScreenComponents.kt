@@ -82,12 +82,13 @@ fun MenuButton(
     rotation: Float,
     onClick: () -> Unit,
     colorBag: ColorBag,
+    useM3Color: Boolean = false
 ) {
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(colorBag.vibrant)
+            .background(if (useM3Color) MaterialTheme.colorScheme.secondaryContainer else colorBag.vibrant )
             .clickable { onClick() }
             .padding(12.dp),
         contentAlignment = Alignment.Center
@@ -98,7 +99,7 @@ fun MenuButton(
             modifier = Modifier
                 .size(28.dp)
                 .rotate(rotation),
-            colorFilter = ColorFilter.tint(colorBag.darkMuted)
+            colorFilter = ColorFilter.tint(if (useM3Color) MaterialTheme.colorScheme.onSecondaryContainer else colorBag.darkMuted )
         )
     }
 }
@@ -296,8 +297,8 @@ internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,r
             onClick = onClick,
             modifier = Modifier.size(48.dp),
             colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = if (useOriginColor) colorBag.vibrant else MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = if (useOriginColor) colorBag.darkMuted else MaterialTheme.colorScheme.onSecondaryContainer
+                containerColor = if (useOriginColor) MaterialTheme.colorScheme.secondaryContainer else colorBag.vibrant ,
+                contentColor = if (useOriginColor) MaterialTheme.colorScheme.onSecondaryContainer else colorBag.darkMuted
             )
         ) {
         Image(
@@ -305,23 +306,31 @@ internal fun GlassBackgroundToggleButton(enabled: Boolean, onClick: () -> Unit,r
             contentDescription = if (enabled) "Disable glass background" else "Enable glass background",
             modifier = Modifier.size(24.dp)
                 .rotate(rotation),
-            colorFilter = if (useOriginColor) ColorFilter.tint(colorBag.darkMuted) else ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
+            colorFilter =  ColorFilter.tint( if (useOriginColor) MaterialTheme.colorScheme.onSecondaryContainer else colorBag.darkMuted)
         )
     }
 }
 
 @Composable
-internal fun ShowCardButton(onClick: () -> Unit, containerColor: Color = MaterialTheme.colorScheme.secondaryContainer) {
+internal fun ShowCardButton(
+    onClick: () -> Unit,
+    colorBag: ColorBag,
+    useM3Color: Boolean = false
+) {
     OutlinedIconButton(
         onClick = onClick,
         modifier = Modifier.size(55.dp),
-        border = BorderStroke(1.dp, containerColor)
+        border = BorderStroke(1.dp, if (useM3Color) MaterialTheme.colorScheme.outline else colorBag.darkMuted ),
+        /**colors = IconButtonDefaults.outlinedIconButtonColors(
+            containerColor = if (useM3Color) MaterialTheme.colorScheme.secondaryContainer else colorBag.vibrant,
+            contentColor = if (useM3Color) MaterialTheme.colorScheme.onSecondaryContainer else colorBag.darkMuted
+        )**/
     ) {
         Icon(
             painter = painterResource(id = R.drawable.outline_data_alert_24),
             contentDescription = "Show card",
             modifier = Modifier.size(32.dp),
-            tint = containerColor
+            tint = if (useM3Color) MaterialTheme.colorScheme.onSecondaryContainer else colorBag.darkMuted
         )
     }
 }

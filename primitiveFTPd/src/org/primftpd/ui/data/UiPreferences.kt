@@ -19,7 +19,7 @@ object UiPreferences {
 
 //----------
     const val PREF_KEY_BLUR_INTENSITY = "blurIntensityPref"
-    const val DEFAULT_BLUR_INTENSITY = 30
+    const val DEFAULT_BLUR_INTENSITY = 20
 
     fun getBlurIntensity(prefs: SharedPreferences): Float =
         prefs.getFloat(PREF_KEY_BLUR_INTENSITY, DEFAULT_BLUR_INTENSITY.toFloat())
@@ -27,5 +27,16 @@ object UiPreferences {
     fun setBlurIntensity(prefs: SharedPreferences, intensity: Float) {
         prefs.edit { putFloat(PREF_KEY_BLUR_INTENSITY, intensity) }
     }
+//——————
+    const val PREF_KEY_USR_M3_TO_PICK_COLORS = "usrM3ToPickColorsPref"
+    const val DEFAULT_USR_M3_TO_PICK_COLORS = false
+
+    fun getUsrM3ToPickColors(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(PREF_KEY_USR_M3_TO_PICK_COLORS, DEFAULT_USR_M3_TO_PICK_COLORS)
+
+    fun setUsrM3ToPickColors(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit { putBoolean(PREF_KEY_USR_M3_TO_PICK_COLORS, value) }
+    }
+
 
 }

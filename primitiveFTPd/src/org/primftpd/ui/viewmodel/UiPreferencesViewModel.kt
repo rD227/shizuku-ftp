@@ -38,4 +38,17 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getBlurIntensity(): Float {
         return UiPreferences.getBlurIntensity(blurIntensityPrefs)
     }
+    //______
+    private val useM3ToPickColors = application.getSharedPreferences("usr_m3_to_pick_colors", Context.MODE_PRIVATE)
+    private val _usrM3ToPickColors = MutableStateFlow(
+        UiPreferences.getUsrM3ToPickColors(useM3ToPickColors)
+    )
+    val usrM3ToPickColors = _usrM3ToPickColors.asStateFlow()
+    fun setUsrM3ToPickColors(value: Boolean) {
+        UiPreferences.setUsrM3ToPickColors(useM3ToPickColors, value)
+        _usrM3ToPickColors.value = value
+    }
+    fun getUsrM3ToPickColors(): Boolean {
+        return UiPreferences.getUsrM3ToPickColors(useM3ToPickColors)
+    }
 }
