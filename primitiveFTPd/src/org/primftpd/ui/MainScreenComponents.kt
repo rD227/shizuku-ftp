@@ -351,12 +351,12 @@ internal fun Modifier.glassHaze(
     darkFallback: Color = Color.Black.copy(alpha = 0.62f),
     lightFallback: Color = Color.White.copy(alpha = 0.82f),
 ): Modifier {
-    if (blurIntensity == null || blurIntensity == 0f) return this
+    //if (blurIntensity == null || blurIntensity == 0f) return this
     val isDark = isSystemInDarkTheme()
     return this.hazeEffect(state = hazeState) {
         inputScale = HazeInputScale.Auto
         blurEffect {
-            blurRadius = blurIntensity.dp
+            blurIntensity?.let { blurRadius = it.dp }
             noiseFactor = 0.06f
             colorEffects = listOf(HazeColorEffect.tint(if (isDark) darkTint else lightTint))
             fallbackTint = HazeColorEffect.tint(if (isDark) darkFallback else lightFallback)

@@ -23,7 +23,7 @@ object ImagePrefHandler {
         val sampled = scaleDown(android, maxSize = 192)
         val p = Palette.from(sampled).maximumColorCount(16).generate()  // 同步
         val dominant = p.swatches.maxByOrNull { it.population }?.rgb
-        val argb = p.getVibrantColor(dominant ?: fallback.toArgb()) ?: dominant ?: fallback.toArgb()
+        val argb = p.getVibrantColor(dominant ?: fallback.toArgb())
         return Color(argb)
     }
     fun extractAsync(
@@ -53,7 +53,7 @@ object ImagePrefHandler {
         val sampled = scaleDown(android, maxSize = 192)
         val p = Palette.from(sampled).maximumColorCount(16).generate()  // 同步
         val dominant = p.swatches.maxByOrNull { it.population }?.rgb
-        val argb = p.getDarkMutedColor(dominant ?: fallback.toArgb()) ?: dominant ?: fallback.toArgb()
+        val argb = p.getDarkMutedColor(dominant ?: fallback.toArgb())
         return Color(argb)
     }
     fun extractDarkMutedColorAsync(
@@ -84,10 +84,10 @@ object ImagePrefHandler {
         val sampled = scaleDown(android, maxSize = 192)
         val p = Palette.from(sampled).maximumColorCount(16).generate()  // 同步
         val dominant = p.swatches.maxByOrNull { it.population }?.rgb
-        val argb = p.getLightVibrantColor(dominant ?: fallback.toArgb()) ?: dominant ?: fallback.toArgb()
+        val argb = p.getLightVibrantColor(dominant ?: fallback.toArgb())
         return Color(argb)
     }
-    fun extractLightVibrantColorAsync(
+    fun extractLightMutedColorAsync(
         bitmap: ImageBitmap,
         fallback: Color,
         onResult: (Color) -> Unit
@@ -102,7 +102,28 @@ object ImagePrefHandler {
             .maximumColorCount(16)
             .generate { palette ->
                 val dominant = palette?.swatches?.maxByOrNull { it.population }?.rgb
-                val argb = palette?.getLightVibrantColor(dominant ?: fallback.toArgb())
+                val argb = palette?.getLightMutedColor(dominant ?: fallback.toArgb())
+                    ?: dominant
+                    ?: fallback.toArgb()
+                onResult(Color(argb))
+            }
+    }
+    fun extractMutedColorAsync(
+        bitmap: ImageBitmap,
+        fallback: Color,
+        onResult: (Color) -> Unit
+    ) {
+        val android = bitmap.asAndroidBitmap()
+        if (android.isRecycled) {
+            onResult(fallback)
+            return
+        }
+        val sampled = scaleDown(android, maxSize = 192)
+        Palette.from(sampled)
+            .maximumColorCount(16)
+            .generate { palette ->
+                val dominant = palette?.swatches?.maxByOrNull { it.population }?.rgb
+                val argb = palette?.getMutedColor(dominant ?: fallback.toArgb())
                     ?: dominant
                     ?: fallback.toArgb()
                 onResult(Color(argb))

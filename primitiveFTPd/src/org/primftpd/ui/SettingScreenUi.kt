@@ -1,5 +1,6 @@
 package org.primftpd.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -65,7 +66,9 @@ internal fun UiCategory(
         text = stringResource(R.string.prefsCategoryTitleUi),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+        color = if ( colorBag.useM3Color ) MaterialTheme.colorScheme.primary
+        else if (isSystemInDarkTheme()) colorBag.vibrant
+        else colorBag.muted,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
     )
 
@@ -73,6 +76,7 @@ internal fun UiCategory(
         title = "Weather Top Component Pressed Down",
         description = "Look bigger?",
         checked = stateBarPressDown,
+        colorBag = colorBag,
         onCheckedChange = {
             stateBarPressDown = it
             uiPreferencesViewModel?.setTopComponentPressedDown(it)
@@ -82,6 +86,7 @@ internal fun UiCategory(
         title = "Use M3 to Pick Colors?",
         description = "Pick colors from M3 or wallpaper",
         checked = usrM3ToPickColors,
+        colorBag = colorBag,
         onCheckedChange = {
             usrM3ToPickColors = it
             uiPreferencesViewModel?.setUsrM3ToPickColors(it)
@@ -106,6 +111,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefShowTabNames),
         description = stringResource(R.string.prefSummaryShowTabNames),
         checked = showTabNames,
+        colorBag = colorBag,
         onCheckedChange = {
             showTabNames = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_SHOW_TAB_NAMES, it) }
@@ -116,6 +122,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleStartOnOpen),
         description = stringResource(R.string.prefSummaryStartOnOpen),
         checked = startOnOpen,
+        colorBag = colorBag,
         onCheckedChange = {
             startOnOpen = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_START_ON_OPEN, it) }
@@ -126,6 +133,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleShowConnectionInfoInNotification),
         description = stringResource(R.string.prefSummaryShowConnectionInfoInNotification),
         checked = showConnInfo,
+        colorBag = colorBag,
         onCheckedChange = {
             showConnInfo = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_SHOW_CONN_INFO, it) }
@@ -136,6 +144,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleSshowIpv4InNotification),
         description = stringResource(R.string.prefSummaryShowIpv4InNotification),
         checked = showIpv4,
+        colorBag = colorBag,
         onCheckedChange = {
             showIpv4 = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_SHOW_IPV4, it) }
@@ -146,6 +155,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleSshowIpv6InNotification),
         description = stringResource(R.string.prefSummaryShowIpv6InNotification),
         checked = showIpv6,
+        colorBag = colorBag,
         onCheckedChange = {
             showIpv6 = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_SHOW_IPV6, it) }
@@ -156,6 +166,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleShowStartStopNotification),
         description = stringResource(R.string.prefSummaryShowStartStopNotification),
         checked = showStartStop,
+        colorBag = colorBag,
         onCheckedChange = {
             showStartStop = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_SHOW_START_STOP_NOTIFICATION, it) }
@@ -171,6 +182,7 @@ internal fun UiCategory(
         title = stringResource(R.string.prefTitleQuickSettingsRequiresUnlock),
         description = stringResource(R.string.prefSummaryQuickSettingsRequiresUnlock),
         checked = quickSettingsUnlock,
+        colorBag = colorBag,
         onCheckedChange = {
             quickSettingsUnlock = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_QUICK_SETTINGS_REQUIRES_UNLOCK, it) }

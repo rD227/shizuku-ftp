@@ -102,6 +102,7 @@ import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.PermissionState
+import org.primftpd.ui.util.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.getRadius
 import org.primftpd.ui.util.getCarmaHeight
@@ -149,11 +150,15 @@ fun MainScreen(
             vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
             darkMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "dark_muted"
+                type = WallpaperColorEnum.DARK_MUTED
             ),
-            vibrantLight = rememberWallpaperAccentColor(
+            lightMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "light_vibrant"
+                type = WallpaperColorEnum.LIGHT_MUTED
+            ),
+            muted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = WallpaperColorEnum.MUTED
             ),
             useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
         )
@@ -917,11 +922,15 @@ fun MainScreenPreview() {
             vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
             darkMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "dark_muted"
+                type = WallpaperColorEnum.DARK_MUTED
             ),
-            vibrantLight = rememberWallpaperAccentColor(
+            lightMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "light_vibrant"
+                type = WallpaperColorEnum.LIGHT_MUTED
+            ),
+            muted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = WallpaperColorEnum.MUTED
             ),
             useM3Color = true,
         )

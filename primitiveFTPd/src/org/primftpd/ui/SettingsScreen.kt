@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,6 +58,7 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import org.primftpd.ui.data.ColorBag
+import org.primftpd.ui.util.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.rememberWallpaperAccentColor
 import org.primftpd.ui.viewmodel.WallpaperViewModel
@@ -97,11 +99,15 @@ fun SettingsScreen(
             vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
             darkMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "dark_muted"
+                type = WallpaperColorEnum.DARK_MUTED
             ),
-            vibrantLight = rememberWallpaperAccentColor(
+            lightMuted = rememberWallpaperAccentColor(
                 WallpaperPalette(bitmap = wallpaperBitmap),
-                type = "light_vibrant"
+                type = WallpaperColorEnum.LIGHT_MUTED
+            ),
+            muted = rememberWallpaperAccentColor(
+                WallpaperPalette(bitmap = wallpaperBitmap),
+                type = WallpaperColorEnum.MUTED
             ),
             useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
         )
@@ -135,7 +141,7 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.AUTH] = it.positionInParent().y.toInt()
                     }
             ) {
-                AuthCategory()
+                AuthCategory(colorBag = colorBag)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             Column(
@@ -145,7 +151,7 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.CONNECTIVITY] = it.positionInParent().y.toInt()
                     }
             ) {
-                ConnectivityCategory()
+                ConnectivityCategory(colorBag = colorBag)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             Column(
@@ -165,7 +171,7 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.SYSTEM] = it.positionInParent().y.toInt()
                     }
             ) {
-                SystemCategory()
+                SystemCategory(colorBag = colorBag)
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -180,7 +186,7 @@ internal fun rememberPrefs() = LoadPrefsUtil.getPrefs(LocalContext.current)
 // ─── Category: Auth ──────────────────────────────────────────────
 
 @Composable
-private fun AuthCategory() {
+private fun AuthCategory(colorBag: ColorBag) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
 
@@ -199,7 +205,9 @@ private fun AuthCategory() {
         text = stringResource(R.string.prefsCategoryTitleAuth),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+        color = if(colorBag.useM3Color) MaterialTheme.colorScheme.primary
+        else if(isSystemInDarkTheme()) colorBag.vibrant
+        else colorBag.muted,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
     )
 
@@ -207,6 +215,7 @@ private fun AuthCategory() {
         title = stringResource(R.string.prefTitleAnonymousLogin),
         description = stringResource(R.string.prefSummaryAnonymousLogin),
         checked = anonymousLogin,
+        colorBag = colorBag,
         onCheckedChange = {
             anonymousLogin = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_ANONYMOUS_LOGIN, it) }
@@ -231,6 +240,7 @@ private fun AuthCategory() {
         title = stringResource(R.string.prefTitlePubKeyAuth),
         description = pubKeySummary,
         checked = pubKeyAuth,
+        colorBag = colorBag,
         onCheckedChange = {
             pubKeyAuth = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_PUB_KEY_AUTH, it) }
@@ -273,7 +283,7 @@ private fun AuthCategory() {
 
 @SuppressLint("LocalContextResourcesRead")
 @Composable
-private fun ConnectivityCategory() {
+private fun ConnectivityCategory(colorBag: ColorBag) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
 
@@ -356,7 +366,9 @@ private fun ConnectivityCategory() {
         text = stringResource(R.string.prefsCategoryTitleConnectivity),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+        color = if ( colorBag.useM3Color )MaterialTheme.colorScheme.primary
+        else if (isSystemInDarkTheme()) colorBag.vibrant
+        else colorBag.muted,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
     )
 
@@ -420,10 +432,11 @@ private fun ConnectivityCategory() {
         title = stringResource(R.string.prefChooseBindIp),
         description = stringResource(R.string.prefSummaryChooseBindIp),
         checked = chooseBindIp,
+        colorBag = colorBag,
         onCheckedChange = {
             chooseBindIp = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_CHOOSE_BIND_IP, it) }
-        }
+        },
     )
 
     // ── Dialogs ──
@@ -542,7 +555,7 @@ private fun ConnectivityCategory() {
 // ─── Category: System ────────────────────────────────────────────
 
 @Composable
-private fun SystemCategory() {
+private fun SystemCategory(colorBag: ColorBag) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
 
@@ -598,7 +611,9 @@ private fun SystemCategory() {
         text = stringResource(R.string.prefsCategoryTitleSystem),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+        color = if ( colorBag.useM3Color ) MaterialTheme.colorScheme.primary
+        else if (isSystemInDarkTheme()) colorBag.vibrant
+        else colorBag.muted,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
     )
 
@@ -619,6 +634,7 @@ private fun SystemCategory() {
         title = stringResource(R.string.prefTitleWakelock),
         description = stringResource(R.string.prefSummaryWakelock),
         checked = wakelock,
+        colorBag = colorBag,
         onCheckedChange = {
             wakelock = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_WAKELOCK, it) }
@@ -629,6 +645,7 @@ private fun SystemCategory() {
         title = stringResource(R.string.prefTitleAnnounce),
         description = stringResource(R.string.prefSummaryAnnounce),
         checked = announce,
+        colorBag = colorBag,
         onCheckedChange = {
             announce = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_ANNOUNCE, it) }
@@ -646,6 +663,7 @@ private fun SystemCategory() {
         title = stringResource(R.string.prefTitleStartOnBoot),
         description = stringResource(R.string.prefSummaryStartOnBoot),
         checked = startOnBoot,
+        colorBag = colorBag,
         onCheckedChange = {
             startOnBoot = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_START_ON_BOOT, it) }
@@ -688,6 +706,7 @@ private fun SystemCategory() {
         title = stringResource(R.string.prefRootCopyFiles),
         description = stringResource(R.string.prefSummaryRootCopyFiles),
         checked = rootCopyFiles,
+        colorBag = colorBag,
         onCheckedChange = {
             rootCopyFiles = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_ROOT_COPY_FILES, it) }
@@ -744,7 +763,7 @@ fun PrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.UI
+            section = SettingsSection.AUTH
         )
     }
 }

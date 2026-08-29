@@ -35,6 +35,10 @@ SFTP Shizuku is actually can be used (The initial path is probably can't be used
 
 ~~I want to see if the log4J of [NetWorkViewModel](primitiveFTPd/src/org/primftpd/ui/NetworkViewModel.kt) can be use~~
 
+primitiveFTPd/src/org/primftpd/ui/SettingScreenComponent.kt#193
+
+// Note here: the function for scrolling to the UI option is actually a suspending function, so you may notice a slight delay in the color picker display here.
+
 Beautify the chart
 
 Zip Transform？

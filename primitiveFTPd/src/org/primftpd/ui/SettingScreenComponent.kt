@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -17,6 +18,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,7 +44,8 @@ internal fun SwitchPrefRow(
     title: String,
     description: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    colorBag: ColorBag
 ) {
     Row(
         modifier = Modifier
@@ -58,7 +62,11 @@ internal fun SwitchPrefRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = if(colorBag.useM3Color) ButtonDefaults.buttonColors().containerColor else colorBag.darkMuted
+            )
+        )
     }
 }
 @Composable
@@ -184,12 +192,13 @@ internal fun SliderAdvancedExample(
     var sliderPosition by remember { mutableFloatStateOf(rememberedSliderPosition) }
     val sliderColors = if (!colorBag.useM3Color) {
         SliderDefaults.colors(
-            thumbColor = colorBag.vibrantLight,
-            activeTrackColor = colorBag.vibrantLight,
+            thumbColor = colorBag.vibrant,
+            activeTrackColor = colorBag.vibrant,
             inactiveTrackColor = colorBag.darkMuted,
-            activeTickColor = colorBag.darkMuted,
+            activeTickColor = colorBag.muted,
             inactiveTickColor = colorBag.vibrant
         )
+        //这里记一下，就是滚动到ui选项的函数其实是一个挂起函数，所以这里可能看到取色会慢半拍显示
     } else {
         SliderDefaults.colors(
         )
@@ -468,9 +477,10 @@ fun SliderOfRowPreview() {
             rememberedSliderPosition = 20f,
             colorBag = ColorBag(
                 useM3Color = true,
-                vibrantLight = MaterialTheme.colorScheme.primary,
+                lightMuted = MaterialTheme.colorScheme.primary,
                 darkMuted = MaterialTheme.colorScheme.onSurfaceVariant,
-                vibrant = MaterialTheme.colorScheme.secondary
+                vibrant = MaterialTheme.colorScheme.secondary,
+                muted = MaterialTheme.colorScheme.surfaceVariant
             )
         )
     }

@@ -6,6 +6,7 @@ data class ColorBag (
     //val default: Color,
     val vibrant: Color,
     val darkMuted: Color,
-    val vibrantLight: Color,
+    val lightMuted: Color,
+    val muted: Color,
     val useM3Color: Boolean,
 )
