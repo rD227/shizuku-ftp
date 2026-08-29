@@ -55,6 +55,8 @@ internal fun UiCategory(
         ?: UiPreferences.getTopComponentPressedDown(prefs)) }
     var usrM3ToPickColors by remember { mutableStateOf(uiPreferencesViewModel?.getUsrM3ToPickColors()
         ?: UiPreferences.getUsrM3ToPickColors(prefs)) }
+    var glassSideMenuWallpaper by remember { mutableStateOf(uiPreferencesViewModel?.getGlassSideMenuWallpaper()
+        ?: UiPreferences.getGlassSideMenuWallpaper(prefs)) }
 
     val changeInTimeStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
         UiPreferences.getTopComponentPressedDown(prefs)
@@ -105,6 +107,17 @@ internal fun UiCategory(
             uiPreferencesViewModel?.setBlurIntensity(newValue)
         },
         colorBag = colorBag
+    )
+
+    SwitchPrefRow(
+        title = "Open glassSideMenu wallpaper",
+        description = "Show the wallpaper image on the sliding glass side menus. Turn off if you see flashing during fast open/close.",
+        checked = glassSideMenuWallpaper,
+        colorBag = colorBag,
+        onCheckedChange = {
+            glassSideMenuWallpaper = it
+            uiPreferencesViewModel?.setGlassSideMenuWallpaper(it)
+        }
     )
 
     SwitchPrefRow(

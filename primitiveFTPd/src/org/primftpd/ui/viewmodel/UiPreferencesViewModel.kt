@@ -51,6 +51,19 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getUsrM3ToPickColors(): Boolean {
         return UiPreferences.getUsrM3ToPickColors(useM3ToPickColors)
     }
+    //______
+    private val glassSideMenuWallpaperPrefs = application.getSharedPreferences("glass_side_menu_wallpaper", Context.MODE_PRIVATE)
+    private val _glassSideMenuWallpaper = MutableStateFlow(
+        UiPreferences.getGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs)
+    )
+    val glassSideMenuWallpaper = _glassSideMenuWallpaper.asStateFlow()
+    fun setGlassSideMenuWallpaper(value: Boolean) {
+        UiPreferences.setGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs, value)
+        _glassSideMenuWallpaper.value = value
+    }
+    fun getGlassSideMenuWallpaper(): Boolean {
+        return UiPreferences.getGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs)
+    }
     ///_______
     /**
     private val colorBagPrefs = application.getSharedPreferences("color_bag", Context.MODE_PRIVATE)

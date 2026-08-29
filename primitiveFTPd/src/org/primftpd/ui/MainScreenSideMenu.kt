@@ -34,6 +34,7 @@ internal fun LinkSideMenu(
     onClick: () -> Unit,
     blurIntensity: Float?,
     colorBag: ColorBag,
+    showWallpaper: Boolean = true,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -62,6 +63,7 @@ internal fun LinkSideMenu(
             GlassSidebarBox(
                 hazeState = hazeState,
                 blurIntensity = blurIntensity,
+                showWallpaper = showWallpaper,
                 //modifier = Modifier.width(270.dp),
                 content = {
 
@@ -137,7 +139,8 @@ internal fun GearSideMenu(
         hazeState: HazeState,
         onClick: () -> Unit,
         blurIntensity: Float?,
-        colorBag: ColorBag
+        colorBag: ColorBag,
+        showWallpaper: Boolean = true
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
@@ -164,6 +167,7 @@ internal fun GearSideMenu(
                 hazeState = hazeState,
                 //modifier = Modifier.width(280.dp),
                 blurIntensity = blurIntensity,
+                showWallpaper = showWallpaper,
                 content = {
 
                     Text(

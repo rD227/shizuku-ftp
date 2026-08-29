@@ -38,5 +38,15 @@ object UiPreferences {
         prefs.edit { putBoolean(PREF_KEY_USR_M3_TO_PICK_COLORS, value) }
     }
 
+//——————
+    const val PREF_KEY_GLASS_SIDE_MENU_WALLPAPER = "glassSideMenuWallpaperPref"
+    const val DEFAULT_GLASS_SIDE_MENU_WALLPAPER = true
+
+    fun getGlassSideMenuWallpaper(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(PREF_KEY_GLASS_SIDE_MENU_WALLPAPER, DEFAULT_GLASS_SIDE_MENU_WALLPAPER)
+
+    fun setGlassSideMenuWallpaper(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit { putBoolean(PREF_KEY_GLASS_SIDE_MENU_WALLPAPER, value) }
+    }
 
 }

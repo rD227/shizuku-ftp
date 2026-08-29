@@ -227,6 +227,9 @@ fun MainScreen(
     )
 
     val blurIntensity = if (!LocalInspectionMode.current) uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value else 5f
+    val showGlassSideMenuWallpaper = if (!LocalInspectionMode.current)
+        uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true
+    else true
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
@@ -407,6 +410,7 @@ fun MainScreen(
             },
             colorBag = colorBag,
             blurIntensity = blurIntensity,
+            showWallpaper = showGlassSideMenuWallpaper,
         )
 
 
@@ -418,7 +422,8 @@ fun MainScreen(
             colorBag = colorBag,
             onClick = {
                 leftMenuVisible = false
-            }
+            },
+            showWallpaper = showGlassSideMenuWallpaper,
         )
         // 左侧滑菜单
 
