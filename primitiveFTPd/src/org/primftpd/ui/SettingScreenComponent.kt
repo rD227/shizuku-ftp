@@ -64,7 +64,8 @@ internal fun SwitchPrefRow(
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedTrackColor = if(colorBag.useM3Color) ButtonDefaults.buttonColors().containerColor else colorBag.darkMuted
+                checkedThumbColor = if(colorBag.useM3Color) ButtonDefaults.buttonColors().contentColor else colorBag.darkMuted,
+                checkedTrackColor = if(colorBag.useM3Color) ButtonDefaults.buttonColors().containerColor else colorBag.vibrant
             )
         )
     }

@@ -28,6 +28,7 @@ public class PrefsBean implements Serializable
 	private final String safUrl;
 	private final String allowedIpsPattern;
 	private final boolean rootCopyFiles;
+	private final boolean flushRightAway;
 
 	public PrefsBean(
 		String userName,
@@ -48,7 +49,8 @@ public class PrefsBean implements Serializable
 		StorageType storageType,
 		String safUrl,
 		String allowedIpsPattern,
-		boolean rootCopyFiles)
+		boolean rootCopyFiles,
+		boolean flushRightAway)
 	{
 		super();
 		this.userName = userName;
@@ -72,6 +74,7 @@ public class PrefsBean implements Serializable
 		this.safUrl = safUrl;
 		this.allowedIpsPattern = allowedIpsPattern;
 		this.rootCopyFiles = rootCopyFiles;
+		this.flushRightAway = flushRightAway;
 	}
 
 	public String getUserName() {
@@ -157,5 +160,9 @@ public class PrefsBean implements Serializable
 
 	public boolean isRootCopyFiles() {
 		return rootCopyFiles;
+	}
+
+	public boolean isFlushRightAway() {
+		return flushRightAway;
 	}
 }

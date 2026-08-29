@@ -331,6 +331,9 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
     var chooseBindIp by remember {
         mutableStateOf(prefs.getBoolean(LoadPrefsUtil.PREF_KEY_CHOOSE_BIND_IP, false))
     }
+    var flushRightAway by remember {
+        mutableStateOf(prefs.getBoolean(LoadPrefsUtil.PREF_KEY_FLUSH_RIGHT_AWAY, true))
+    }
 
     var showWhichServerDialog by remember { mutableStateOf(false) }
     var showPortDialog by remember { mutableStateOf(false) }
@@ -436,6 +439,16 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
         onCheckedChange = {
             chooseBindIp = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_CHOOSE_BIND_IP, it) }
+        },
+    )
+    SwitchPrefRow(
+        title = "flush() right away when transport is over",
+        description = "Maybe will cause slower transfer speed fot big files",
+        checked = flushRightAway,
+        colorBag = colorBag,
+        onCheckedChange = {
+            flushRightAway = it
+            prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_FLUSH_RIGHT_AWAY, it) }
         },
     )
 

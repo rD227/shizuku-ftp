@@ -305,7 +305,10 @@ public abstract class RoSafFile<TMina, TFileSystemView extends RoSafFileSystemVi
         Uri uri = DocumentsContract.buildDocumentUriUsingTree(
                 getStartUrl(),
                 documentId);
-        return new TracingBufferedOutputStream(getPftpdService().getContext().getContentResolver().openOutputStream(uri), logger);
+        return new TracingBufferedOutputStream(
+            getPftpdService().getContext().getContentResolver().openOutputStream(uri),
+            logger,
+            getPftpdService().getPrefsBean().isFlushRightAway());
         // TODO no null, throw IOException
     }
 

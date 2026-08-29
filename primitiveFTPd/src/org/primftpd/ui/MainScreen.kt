@@ -136,6 +136,12 @@ fun MainScreen(
 
     var showPermissionsDialog by remember { mutableStateOf(false) }
 
+
+    /**var springOfPermission by animateFloatAsState(
+        targetValue = if (showPermissionsDialog) 1f else 0f,
+        label = "SpringOfPermission",
+    )**/
+
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val permState = permissionViewModel?.permState?.collectAsState()?.value ?: PermissionState()
 

@@ -69,6 +69,8 @@ public class LoadPrefsUtil
 	public static final String PREF_ROOT_COPY_FILES = "rootCopyFilesPref";
 	public static final String PREF_KEY_HOSTKEY_ALGOS = "hostkeyAlgosPref";
 
+	public static final String PREF_KEY_FLUSH_RIGHT_AWAY = "flushRightAwayPref";
+
 	public static final int PORT_DEFAULT_VAL = 12345;
 	static final String PORT_DEFAULT_VAL_STR = String.valueOf(PORT_DEFAULT_VAL);
 	public static final int SECURE_PORT_DEFAULT_VAL = 1234;
@@ -250,6 +252,12 @@ public class LoadPrefsUtil
 				Boolean.FALSE);
 	}
 
+	public static Boolean flushRightAway(SharedPreferences prefs) {
+		return prefs.getBoolean(
+				LoadPrefsUtil.PREF_KEY_FLUSH_RIGHT_AWAY,
+				Boolean.TRUE);
+	}
+
 	public static int loadPortInsecure(
 		Logger logger,
 		SharedPreferences prefs)
@@ -376,6 +384,9 @@ public class LoadPrefsUtil
 		boolean rootCopyFiles = rootCopyFiles(prefs);
 		logger.debug("got rootCopyFiles: {}", rootCopyFiles);
 
+		boolean flushRightAway = flushRightAway(prefs);
+		logger.debug("got flushRightAway: {}", flushRightAway);
+
 		// create prefsBean
 		return new PrefsBean(
 				userName,
@@ -396,6 +407,7 @@ public class LoadPrefsUtil
 				storageType,
 				safUrl,
 				allowedIpsPattern,
-				rootCopyFiles);
+				rootCopyFiles,
+				flushRightAway);
 	}
 }

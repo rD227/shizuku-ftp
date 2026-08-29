@@ -198,7 +198,20 @@ public abstract class RootFile<TMina, TFileSystemView extends RootFileSystemView
         } else {
             os = createOutputStreamDd(offset);
         }
+        final boolean flushRightAway = getPftpdService().getPrefsBean().isFlushRightAway();
         return new BufferedOutputStream(os) {
+            @Override
+            public void write(int b) throws IOException {
+                super.write(b);
+                if (flushRightAway) super.flush();
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                super.write(b, off, len);
+                if (flushRightAway) super.flush();
+            }
+
             @Override
             public void close() throws IOException {
                 super.close();
@@ -236,7 +249,10 @@ public abstract class RootFile<TMina, TFileSystemView extends RootFileSystemView
         logger.trace("dd command: {}", ddCommand);
         ddProcess = processBuilder.start();
 
-        return new TracingBufferedOutputStream(ddProcess.getOutputStream(), logger);
+        return new TracingBufferedOutputStream(
+            ddProcess.getOutputStream(),
+            logger,
+            getPftpdService().getPrefsBean().isFlushRightAway());
     }
 
     public InputStream createInputStreamDd(long offset) throws IOException {

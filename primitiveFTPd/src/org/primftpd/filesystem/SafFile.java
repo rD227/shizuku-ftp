@@ -303,7 +303,10 @@ public abstract class SafFile<TMina, TFileSystemView extends SafFileSystemView> 
         }
         Uri uri = documentFile.getUri();
         logger.trace("   createOutputStream() uri: {}", uri);
-        return new TracingBufferedOutputStream(getPftpdService().getContext().getContentResolver().openOutputStream(uri), logger);
+        return new TracingBufferedOutputStream(
+            getPftpdService().getContext().getContentResolver().openOutputStream(uri),
+            logger,
+            getPftpdService().getPrefsBean().isFlushRightAway());
     }
 
     public InputStream createInputStream(long offset) throws IOException {

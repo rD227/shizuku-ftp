@@ -31,7 +31,20 @@ public class RootFtpFile extends RootFile<FtpFile, RootFtpFileSystemView> implem
     @Override
     public OutputStream createOutputStream(long offset) throws IOException {
         OutputStream superStream = super.createOutputStream(offset);
+        final boolean flushRightAway = getPftpdService().getPrefsBean().isFlushRightAway();
         return new BufferedOutputStream(superStream) {
+            @Override
+            public void write(int b) throws IOException {
+                super.write(b);
+                if (flushRightAway) super.flush();
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                super.write(b, off, len);
+                if (flushRightAway) super.flush();
+            }
+
             @Override
             public void close() throws IOException {
                 super.close();

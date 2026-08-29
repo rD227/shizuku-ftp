@@ -170,7 +170,8 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
         logger.info("[ShizukuFile] createOutputStream: path={}, offset={}", absPath, offset)
         postClientAction(ClientActionEvent.ClientAction.UPLOAD)
 
-        return ShizukuOutputStream(absPath, offset)
+        val flushRightAway = getPftpdService().prefsBean.isFlushRightAway
+        return ShizukuOutputStream(absPath, offset, flushRightAway)
     }
 
     @Throws(IOException::class)
@@ -255,8 +256,11 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
      * OutputStream implementation for Shizuku file writing.
      * Writes in fixed-size chunks to avoid buffering the entire file in memory.
      */
-    private inner class ShizukuOutputStream(private val path: String?, private val offset: Long) :
-        OutputStream() {
+    private inner class ShizukuOutputStream(
+        private val path: String?,
+        private val offset: Long,
+        private val flushRightAway: Boolean
+    ) : OutputStream() {
         private val buffer = ByteArray(CHUNK_SIZE)
         private var bufferPos = 0
         private var isFirstWrite = true
@@ -269,6 +273,7 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
         override fun write(b: Int) {
             if (bufferPos == buffer.size) flushBuffer()
             buffer[bufferPos++] = b.toByte()
+            if (flushRightAway) flushBuffer()
         }
 
         @Throws(IOException::class)
@@ -284,6 +289,7 @@ abstract class ShizukuFile<TMina, TFileSystemView : AbstractFileSystemView>//Kot
                 remaining -= toCopy
                 if (bufferPos == buffer.size) flushBuffer()
             }
+            if (flushRightAway) flushBuffer()
         }
 
         @Throws(IOException::class)

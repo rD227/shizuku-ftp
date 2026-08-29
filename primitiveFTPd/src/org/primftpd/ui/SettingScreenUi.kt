@@ -196,7 +196,7 @@ fun UiPrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.UI
+            section = SettingsSection.CONNECTIVITY
         )
     }
 }

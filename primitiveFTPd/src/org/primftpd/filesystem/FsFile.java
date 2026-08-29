@@ -264,7 +264,20 @@ public abstract class FsFile<TMina, TFileSystemView extends FsFileSystemView>
 			}
 		}
 
+		final boolean flushRightAway = getPftpdService().getPrefsBean().isFlushRightAway();
 		return new BufferedOutputStream(os) {
+			@Override
+			public void write(int b) throws IOException {
+				super.write(b);
+				if (flushRightAway) super.flush();
+			}
+
+			@Override
+			public void write(byte[] b, int off, int len) throws IOException {
+				super.write(b, off, len);
+				if (flushRightAway) super.flush();
+			}
+
 			@Override
 			public void close() throws IOException {
 				super.close();
