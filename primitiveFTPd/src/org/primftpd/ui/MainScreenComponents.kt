@@ -367,14 +367,16 @@ internal fun Modifier.glassHaze(
 @Composable
 internal fun GlassSidebarBox(
     hazeState: HazeState,
-    modifier: Modifier = Modifier,
+    //modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
     blurIntensity: Float?
 ) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxHeight()
             .glassHaze(hazeState, blurIntensity)
+            .width(270.dp)
+            //.background(MaterialTheme.colorScheme.onSecondaryContainer)
     ) {
         Column(content = content)
     }

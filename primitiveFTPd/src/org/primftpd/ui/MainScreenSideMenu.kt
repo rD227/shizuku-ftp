@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -43,7 +44,7 @@ internal fun LinkSideMenu(
     val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
     val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
 
-    Box {
+    Box (modifier = Modifier) {
         AnimatedVisibility(
             visible = rightMenuVisible,
             enter = slideInHorizontally(
@@ -61,7 +62,7 @@ internal fun LinkSideMenu(
             GlassSidebarBox(
                 hazeState = hazeState,
                 blurIntensity = blurIntensity,
-                modifier = Modifier.width(270.dp),
+                //modifier = Modifier.width(270.dp),
                 content = {
 
                     Text(
@@ -161,7 +162,7 @@ internal fun GearSideMenu(
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                modifier = Modifier.width(280.dp),
+                //modifier = Modifier.width(280.dp),
                 blurIntensity = blurIntensity,
                 content = {
 
