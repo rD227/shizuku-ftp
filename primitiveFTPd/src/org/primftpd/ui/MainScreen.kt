@@ -183,6 +183,9 @@ fun MainScreen(
 
     val scope = rememberCoroutineScope()
     val hazeState = rememberHazeState()
+    // Separate HazeState for the sliding glass sidebars, so their blur doesn't fight
+    // with the full-screen haze layer during the slide animation.
+    val sidebarHazeState = rememberHazeState()
     val batteryState = rememberBatteryState(context)
 
     LaunchedEffect(Unit) {
@@ -227,12 +230,19 @@ fun MainScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
+        // 同时作为侧栏独立 HazeState 的 source，让侧栏滑动时不再和全屏 haze 共用同一状态
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .hazeSource(state = hazeState)
         ) {
-            WallpaperBase(wallpaperBitmap = wallpaperBitmap)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .hazeSource(state = sidebarHazeState)
+            ) {
+                WallpaperBase(wallpaperBitmap = wallpaperBitmap)
+            }
         }
         Box(
             modifier = Modifier
@@ -391,7 +401,7 @@ fun MainScreen(
         LinkSideMenu(
             rightMenuVisible,
             onMenuClick,
-            hazeState,
+            sidebarHazeState,
             onClick = {
                 rightMenuVisible = false
             },
@@ -403,7 +413,7 @@ fun MainScreen(
         GearSideMenu(
             leftMenuVisible,
             onMenuClick,
-            hazeState,
+            sidebarHazeState,
             blurIntensity = blurIntensity,
             colorBag = colorBag,
             onClick = {
