@@ -9,6 +9,8 @@ build
 local.properties
 COMPILE_README.md
 *.log
+primitiveFTPd/release/output-metadata.json
+primitiveFTPd/debug/output-metadata.json
 
 #logs
 .kotlin
