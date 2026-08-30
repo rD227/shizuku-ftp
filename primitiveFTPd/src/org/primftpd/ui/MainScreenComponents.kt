@@ -347,14 +347,14 @@ internal fun Modifier.glassHaze(
     hazeState: HazeState,
     blurIntensity: Float?,
     darkTint: Color = Color.Black.copy(alpha = 0.22f),
-    lightTint: Color = Color.White.copy(alpha = 0.28f),
+    lightTint: Color = Color.White.copy(alpha = 0.22f),
     darkFallback: Color = Color.Black.copy(alpha = 0.62f),
     lightFallback: Color = Color.White.copy(alpha = 0.82f),
 ): Modifier {
     //if (blurIntensity == null || blurIntensity == 0f) return this
     val isDark = isSystemInDarkTheme()
     return this.hazeEffect(state = hazeState) {
-        inputScale = HazeInputScale.Auto
+        inputScale = HazeInputScale.Fixed(0.5f)
         blurEffect {
             blurIntensity?.let { blurRadius = it.dp }
             noiseFactor = 0.06f
@@ -379,7 +379,7 @@ internal fun GlassSidebarBox(
                 if (showWallpaper) {
                     Modifier.glassHaze(hazeState, blurIntensity)
                 } else {
-                    Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f))
+                    Modifier.background(MaterialTheme.colorScheme.surface)
                 }
             )
             .width(270.dp)
