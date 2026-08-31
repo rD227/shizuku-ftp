@@ -57,7 +57,8 @@ internal fun UiCategory(
         ?: UiPreferences.getUsrM3ToPickColors(prefs)) }
     var glassSideMenuWallpaper by remember { mutableStateOf(uiPreferencesViewModel?.getGlassSideMenuWallpaper()
         ?: UiPreferences.getGlassSideMenuWallpaper(prefs)) }
-
+    var sideMenuSpringAnimation by remember { mutableStateOf(uiPreferencesViewModel?.getSideMenuSpringAnimation()
+        ?: UiPreferences.getSideMenuSpringAnimation(prefs)) }
     val changeInTimeStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
         UiPreferences.getTopComponentPressedDown(prefs)
     )).collectAsState(UiPreferences.getTopComponentPressedDown(prefs))
@@ -117,6 +118,16 @@ internal fun UiCategory(
         onCheckedChange = {
             glassSideMenuWallpaper = it
             uiPreferencesViewModel?.setGlassSideMenuWallpaper(it)
+        }
+    )
+    SwitchPrefRow(
+        title = "Open glassSideMenu spring animation",
+        description = "Weather use side menu spring animation. Turn off if you see flashing of the haze (Some pictures may cause this).",
+        checked = sideMenuSpringAnimation,
+        colorBag = colorBag,
+        onCheckedChange = {
+            sideMenuSpringAnimation = it
+            uiPreferencesViewModel?.setSideMenuSpringAnimation(it)
         }
     )
 
@@ -209,7 +220,7 @@ fun UiPrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.CONNECTIVITY
+            section = SettingsSection.UI
         )
     }
 }

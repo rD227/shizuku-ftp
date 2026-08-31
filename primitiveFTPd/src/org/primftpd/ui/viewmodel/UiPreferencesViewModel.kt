@@ -64,6 +64,19 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getGlassSideMenuWallpaper(): Boolean {
         return UiPreferences.getGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs)
     }
+    //________
+    private val sideMenuSpringAnimationPrefs = application.getSharedPreferences("side_menu_spring_animation", Context.MODE_PRIVATE)
+    private val _sideMenuSpringAnimation = MutableStateFlow(
+        UiPreferences.getSideMenuSpringAnimation(sideMenuSpringAnimationPrefs)
+    )
+    val sideMenuSpringAnimation = _sideMenuSpringAnimation.asStateFlow()
+    fun setSideMenuSpringAnimation(value: Boolean) {
+        UiPreferences.setSideMenuSpringAnimation(sideMenuSpringAnimationPrefs, value)
+        _sideMenuSpringAnimation.value = value
+    }
+    fun getSideMenuSpringAnimation(): Boolean {
+        return UiPreferences.getSideMenuSpringAnimation(sideMenuSpringAnimationPrefs)
+    }
     ///_______
     /**
     private val colorBagPrefs = application.getSharedPreferences("color_bag", Context.MODE_PRIVATE)

@@ -49,4 +49,14 @@ object UiPreferences {
         prefs.edit { putBoolean(PREF_KEY_GLASS_SIDE_MENU_WALLPAPER, value) }
     }
 
+//________
+    const val PREF_KEY_SIDE_MENU_SPRING_ANIMATION = "sideMenuSpringAnimationPref"
+    const val DEFAULT_SIDE_MENU_SPRING_ANIMATION = true
+
+    fun getSideMenuSpringAnimation(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(PREF_KEY_SIDE_MENU_SPRING_ANIMATION, DEFAULT_SIDE_MENU_SPRING_ANIMATION)
+
+    fun setSideMenuSpringAnimation(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit { putBoolean(PREF_KEY_SIDE_MENU_SPRING_ANIMATION, value) }
+    }
 }

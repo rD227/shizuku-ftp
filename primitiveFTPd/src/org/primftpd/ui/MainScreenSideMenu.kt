@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import org.primftpd.R
 import org.primftpd.ui.data.ColorBag
+import org.primftpd.ui.data.SideMenuPref
 
 @Composable
 internal fun LinkSideMenu(
@@ -34,7 +35,7 @@ internal fun LinkSideMenu(
     onClick: () -> Unit,
     blurIntensity: Float?,
     colorBag: ColorBag,
-    showWallpaper: Boolean = true,
+    sideMenuPref: SideMenuPref,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -45,15 +46,16 @@ internal fun LinkSideMenu(
     val iconKey = ImageVector.vectorResource(id = R.drawable.thinkey)
     val iconAbout = ImageVector.vectorResource(id = R.drawable.outline_info_24)
 
+    val sideMenuAnimation = sideMenuPref.springAnimation
     Box (modifier = Modifier) {
         AnimatedVisibility(
             visible = rightMenuVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { -it },
-                animationSpec = spring(
+                animationSpec = if ( sideMenuAnimation ) spring(
                     dampingRatio = Spring.DampingRatioLowBouncy,
                     stiffness = Spring.StiffnessLow
-                )
+                )else tween(300)
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
                 targetOffsetX = { -it }
@@ -63,7 +65,7 @@ internal fun LinkSideMenu(
             GlassSidebarBox(
                 hazeState = hazeState,
                 blurIntensity = blurIntensity,
-                showWallpaper = showWallpaper,
+                showWallpaper = sideMenuPref.showWallpaper,
                 //modifier = Modifier.width(270.dp),
                 content = {
 
@@ -140,7 +142,7 @@ internal fun GearSideMenu(
         onClick: () -> Unit,
         blurIntensity: Float?,
         colorBag: ColorBag,
-        showWallpaper: Boolean = true
+        sideMenuPref: SideMenuPref
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
@@ -148,15 +150,16 @@ internal fun GearSideMenu(
     val iconUi = ImageVector.vectorResource(id = R.drawable.uisetting_coarse)
     val iconSystem = ImageVector.vectorResource(id = R.drawable.system)
 
+    val sideMenuAnimation = sideMenuPref.springAnimation
     Box {
         AnimatedVisibility(
             visible = leftMenuVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { -it },
-                animationSpec = spring(
+                animationSpec = if (sideMenuAnimation) spring(
                     dampingRatio = Spring.DampingRatioLowBouncy,
                     stiffness = Spring.StiffnessLow
-                )
+                )else tween(300)
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
                 targetOffsetX = { -it }
@@ -167,7 +170,7 @@ internal fun GearSideMenu(
                 hazeState = hazeState,
                 //modifier = Modifier.width(280.dp),
                 blurIntensity = blurIntensity,
-                showWallpaper = showWallpaper,
+                showWallpaper = sideMenuPref.showWallpaper,
                 content = {
 
                     Text(

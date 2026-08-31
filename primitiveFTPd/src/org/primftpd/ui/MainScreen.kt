@@ -102,6 +102,7 @@ import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.PermissionState
+import org.primftpd.ui.data.SideMenuPref
 import org.primftpd.ui.util.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.getRadius
@@ -227,9 +228,11 @@ fun MainScreen(
     )
 
     val blurIntensity = if (!LocalInspectionMode.current) uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value else 5f
-    val showGlassSideMenuWallpaper = if (!LocalInspectionMode.current)
-        uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true
-    else true
+
+    val sideMenuPref = SideMenuPref(
+        springAnimation =  uiPreferencesViewModel?.sideMenuSpringAnimation?.collectAsState()?.value ?: true ,
+        showWallpaper =  uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
@@ -410,7 +413,7 @@ fun MainScreen(
             },
             colorBag = colorBag,
             blurIntensity = blurIntensity,
-            showWallpaper = showGlassSideMenuWallpaper,
+            sideMenuPref = sideMenuPref,
         )
 
 
@@ -423,7 +426,7 @@ fun MainScreen(
             onClick = {
                 leftMenuVisible = false
             },
-            showWallpaper = showGlassSideMenuWallpaper,
+            sideMenuPref = sideMenuPref,
         )
         // 左侧滑菜单
 
