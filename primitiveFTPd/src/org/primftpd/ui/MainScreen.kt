@@ -364,24 +364,33 @@ fun MainScreen(
                 Spacer(modifier = Modifier.weight(0.8f))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+                Row {
+                    Spacer(modifier = Modifier.weight(0.9f))
+                    TriStateSwitch(
+                        state = ChartTriStateEnum.HOUR,
+                        onStateChange = {
 
+                        },
+                        colorBag = colorBag,
+                    )
+                    Spacer(modifier = Modifier.weight(0.1f))
+                }
             // 流量图表
             if (networkViewModel != null) {
                 Column {
-                    Spacer(modifier = Modifier.height(28.dp))
                     NetworkTrafficChart(
                         modelProducer = networkViewModel.modelProducer,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
                             .padding(bottom = 0.dp)
-                            .padding(top = 12.dp)
+                            .padding(top = 2.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             }
         }
 

@@ -64,6 +64,8 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -405,29 +407,39 @@ fun TriStateSwitch(
     modifier: Modifier = Modifier,
     colorBag: ColorBag
 ) {
-    val trackWidth = 78.dp
-    val trackHeight = 35.dp
-    val thumbSize = 30.dp
-    val padding = 3.dp
+    val trackWidth = 84.dp
+    val trackHeight = 22.dp
+    val padding = 2.dp
 
-    val maxOffset = trackWidth - thumbSize - (padding * 2)
+    val contentWidth = trackWidth - (padding * 2)
+    val slotWidth = contentWidth / 3
+
     val targetOffset = when (state) {
         ChartTriStateEnum.HOUR -> 0.dp
-        ChartTriStateEnum.DAY -> maxOffset / 2
-        ChartTriStateEnum.WEEK -> maxOffset
+        ChartTriStateEnum.DAY -> slotWidth
+        ChartTriStateEnum.WEEK -> slotWidth * 2
     }
 
     val animatedOffset by animateDpAsState(
         targetValue = targetOffset,
-        animationSpec = SpringSpec(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow),
+        animationSpec = SpringSpec(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
         label = "ThumbOffsetAnimation"
     )
 
+    val contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
     val trackColor = when (state) {
-        ChartTriStateEnum.HOUR -> if ( colorBag.useM3Color ) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
-        ChartTriStateEnum.DAY -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
-        ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
+        ChartTriStateEnum.HOUR -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
+        ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> contentColor
     }
+
+    val textStyle = TextStyle(
+        fontSize = 9.sp,
+        fontWeight = FontWeight.Bold,
+        platformStyle = PlatformTextStyle(includeFontPadding = false)
+    )
 
     Box(
         modifier = modifier
@@ -449,28 +461,42 @@ fun TriStateSwitch(
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("H", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
-            Text("D", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
-            Text("W", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
+            listOf("H", "D", "W").forEach { label ->
+                Box(
+                    modifier = Modifier
+                        .width(slotWidth)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        color = contentColor.copy(alpha = 0.7f),
+                        style = textStyle
+                    )
+                }
+            }
         }
 
-        // 2. 动画滑块
         Box(
             modifier = Modifier
                 .offset(x = animatedOffset)
-                .size(thumbSize)
+                .width(slotWidth)
+                .fillMaxHeight()
                 .background(color = Color.White, shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             val thumbText = when (state) {
-                ChartTriStateEnum.HOUR -> "O"
+                ChartTriStateEnum.HOUR -> "H" // 修正了原本 HOUR 对应 "O" 的误写
                 ChartTriStateEnum.DAY -> "D"
                 ChartTriStateEnum.WEEK -> "W"
             }
-            Text(text = thumbText, fontSize = 14.sp, color = Color.DarkGray)
+            Text(
+                text = thumbText,
+                color = Color.DarkGray,
+                style = textStyle
+            )
         }
     }
 }
