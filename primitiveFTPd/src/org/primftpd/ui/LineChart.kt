@@ -19,6 +19,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerDimensions
+import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerPadding
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -76,6 +77,17 @@ private val noMarginBottomAxisItemPlacer = object :
         tickThickness: Float,
         maxLabelWidth: Float,
     ): Float = 0f
+
+    // 不要为了让首尾刻度标签完整显示而给数据层加额外内边距。
+    override fun getFirstLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+
+    override fun getLastLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
 }
 
 
@@ -98,6 +110,7 @@ fun NetworkTrafficChart(
             formatAxisSpeed(value)
         }
     }
+
 
     CartesianChartHost(
         chart = rememberCartesianChart(
@@ -131,6 +144,7 @@ fun NetworkTrafficChart(
                 itemPlacer = noMarginBottomAxisItemPlacer,
                 valueFormatter = horizontalAxisValueFormatter,
             ),
+            layerPadding = { CartesianLayerPadding() },
         ),
         modelProducer = modelProducer,
         modifier = modifier,

@@ -180,11 +180,14 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         if (samples.isEmpty()) {
             // 空数据时也给一个完整刻度，左右两点都是 0。
             val rulerStart = nowSeconds - chartMeasuringRule.windowSeconds
+            val rulerEnd = rulerStart + chartMeasuringRule.windowSeconds
             return ChartWindowSamples(
                 samples = listOf(
                     TrafficChartSample(rulerStart, 0L, 0L),
-                    TrafficChartSample(rulerStart + chartMeasuringRule.windowSeconds, 0L, 0L),
+                    TrafficChartSample(rulerEnd, 0L, 0L),
                 ),
+                domainStart = rulerStart,
+                domainEnd = rulerEnd,
             )
         }
 
@@ -200,6 +203,8 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
             ChartWindowSamples(
                 samples = samples,
+                domainStart = earliestTimestamp,
+                domainEnd = rulerEnd,
                 zeroTailStart = zeroStart.takeIf { it <= rulerEnd },
                 zeroTailEnd = rulerEnd.takeIf { it > zeroStart },
             )
@@ -211,6 +216,8 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
             ChartWindowSamples(
                 samples = samples.subList(firstVisibleIndex, samples.size),
+                domainStart = lowerBound,
+                domainEnd = newestTimestamp,
             )
         }
     }
@@ -250,6 +257,17 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         val sftpX = sftpSeries.xValues.toMutableList()
         val sftpY = sftpSeries.yValues.toMutableList()
 
+        // 无论降采样与否，都保证序列的第一个点贴着当前刻度的左边界。
+        if (ftpX.first() > windowSamples.domainStart) {
+            ftpX.add(0, windowSamples.domainStart)
+            ftpY.add(0, 0L)
+        }
+        if (sftpX.first() > windowSamples.domainStart) {
+            sftpX.add(0, windowSamples.domainStart)
+            sftpY.add(0, 0L)
+        }
+
+
         // 数据还没铺满当前刻度时，把右侧未度量区域画成 y=0。
         windowSamples.zeroTailStart?.let { zeroStart ->
             val zeroEnd = windowSamples.zeroTailEnd ?: zeroStart
@@ -268,6 +286,17 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
                 sftpY.add(0L)
             }
         }
+
+        // 确保最后一个点也贴着当前刻度的右边界。
+        if (ftpX.last() < windowSamples.domainEnd) {
+            ftpX.add(windowSamples.domainEnd)
+            ftpY.add(0L)
+        }
+        if (sftpX.last() < windowSamples.domainEnd) {
+            sftpX.add(windowSamples.domainEnd)
+            sftpY.add(0L)
+        }
+
 
 
         modelProducer.runTransaction {
@@ -323,6 +352,18 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             yValues.add(bucketMaximum)
             startIndex = endIndex
         }
+
+        // 降采样后也把首尾真实采样保留下来，避免 x 轴两端因为“只取桶内最大值”
+        // 而丢掉边界点，造成视觉上左右有空隙。
+        if (xValues.first() != samples.first().timestampSeconds) {
+            xValues.add(0, samples.first().timestampSeconds)
+            yValues.add(0, value(samples.first()))
+        }
+        if (xValues.last() != samples.last().timestampSeconds) {
+            xValues.add(samples.last().timestampSeconds)
+            yValues.add(value(samples.last()))
+        }
+
         return RenderSeries(xValues, yValues)
     }
 
@@ -338,6 +379,8 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     private data class ChartWindowSamples(
         val samples: List<TrafficChartSample>,
+        val domainStart: Long,
+        val domainEnd: Long,
         val zeroTailStart: Long? = null,
         val zeroTailEnd: Long? = null,
     )
