@@ -58,7 +58,7 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import org.primftpd.ui.data.ColorBag
-import org.primftpd.ui.util.WallpaperColorEnum
+import org.primftpd.ui.data.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.rememberWallpaperAccentColor
 import org.primftpd.ui.viewmodel.WallpaperViewModel

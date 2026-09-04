@@ -100,14 +100,16 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
+import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.PermissionState
 import org.primftpd.ui.data.SideMenuPref
-import org.primftpd.ui.util.WallpaperColorEnum
+import org.primftpd.ui.data.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.getRadius
 import org.primftpd.ui.util.getCarmaHeight
 import org.primftpd.ui.util.rememberWallpaperAccentColor
+import org.primftpd.ui.viewmodel.NetworkViewModel
 import org.primftpd.ui.viewmodel.PermissionViewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
 import org.primftpd.ui.viewmodel.WallpaperViewModel
@@ -348,7 +350,7 @@ fun MainScreen(
                     colorBag = colorBag,
                     useOriginColor = colorBag.useM3Color
                 )
-                Spacer(modifier = Modifier.weight(0.4f))
+                Spacer(modifier = Modifier.weight(0.2f))
                 ServerControlButton(
                     isRunning = isServerRunning,
                     onClick = {
@@ -359,7 +361,7 @@ fun MainScreen(
                         }
                     }
                 )
-                Spacer(modifier = Modifier.weight(0.6f))
+                Spacer(modifier = Modifier.weight(0.8f))
             }
 
             Spacer(modifier = Modifier.height(12.dp))

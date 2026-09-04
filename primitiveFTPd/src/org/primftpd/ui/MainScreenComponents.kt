@@ -5,18 +5,25 @@ import android.app.Activity
 import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -38,6 +45,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +76,7 @@ import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.blurEffect
 import dev.chrisbanes.haze.hazeEffect
 import org.primftpd.R
+import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.rememberWallpaperAccentColor
@@ -115,7 +125,7 @@ fun ServerControlButton(isRunning: Boolean, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier
-            .size(width = 220.dp, height = 45.dp),
+            .size(width = 210.dp, height = 45.dp),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(2.dp, buttonColor),   // 边框使用动画颜色
         colors = ButtonDefaults.outlinedButtonColors(
@@ -385,6 +395,102 @@ internal fun GlassSidebarBox(
             .width(270.dp)
     ) {
         Column(content = content)
+    }
+}
+
+@Composable
+fun TriStateSwitch(
+    state: ChartTriStateEnum,
+    onStateChange: (ChartTriStateEnum) -> Unit,
+    modifier: Modifier = Modifier,
+    colorBag: ColorBag
+) {
+    val trackWidth = 78.dp
+    val trackHeight = 35.dp
+    val thumbSize = 30.dp
+    val padding = 3.dp
+
+    val maxOffset = trackWidth - thumbSize - (padding * 2)
+    val targetOffset = when (state) {
+        ChartTriStateEnum.HOUR -> 0.dp
+        ChartTriStateEnum.DAY -> maxOffset / 2
+        ChartTriStateEnum.WEEK -> maxOffset
+    }
+
+    val animatedOffset by animateDpAsState(
+        targetValue = targetOffset,
+        animationSpec = SpringSpec(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow),
+        label = "ThumbOffsetAnimation"
+    )
+
+    val trackColor = when (state) {
+        ChartTriStateEnum.HOUR -> if ( colorBag.useM3Color ) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
+        ChartTriStateEnum.DAY -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
+        ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
+    }
+
+    Box(
+        modifier = modifier
+            .size(width = trackWidth, height = trackHeight)
+            .background(color = trackColor, shape = CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                val nextState = when (state) {
+                    ChartTriStateEnum.HOUR -> ChartTriStateEnum.DAY
+                    ChartTriStateEnum.DAY -> ChartTriStateEnum.WEEK
+                    ChartTriStateEnum.WEEK -> ChartTriStateEnum.HOUR
+                }
+                onStateChange(nextState)
+            }
+            .padding(padding),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("H", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
+            Text("D", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
+            Text("W", fontSize = 12.sp, color = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted)
+        }
+
+        // 2. 动画滑块
+        Box(
+            modifier = Modifier
+                .offset(x = animatedOffset)
+                .size(thumbSize)
+                .background(color = Color.White, shape = CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            val thumbText = when (state) {
+                ChartTriStateEnum.HOUR -> "O"
+                ChartTriStateEnum.DAY -> "D"
+                ChartTriStateEnum.WEEK -> "W"
+            }
+            Text(text = thumbText, fontSize = 14.sp, color = Color.DarkGray)
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TriStateSwitchPreview() {
+    ShizukuFtpTheme() {
+        val colorBag = ColorBag(
+            vibrant = Color(0xFF81C784),
+            darkMuted = Color(0xFFE57373),
+            useM3Color = false,
+            lightMuted = Color(0xFFF48FB1),
+            muted = Color(0xFF64B5F6)
+        )
+        TriStateSwitch(
+            state = ChartTriStateEnum.HOUR,
+            onStateChange = {},
+            colorBag = colorBag
+        )
     }
 }
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalInspectionMode
+import org.primftpd.ui.data.WallpaperColorEnum
 
 /**
  * 壁纸取色的输入配置：把"用哪张图"和"是否取色"两个参数包成一个对象。
@@ -19,18 +20,6 @@ data class WallpaperPalette(
     val bitmap: ImageBitmap? = null,
     val pickImageColor: Boolean = true,
 )
-
-enum class WallpaperColorEnum( val value: String ) {
-    VIBRANT("vibrant"),
-    DARK_MUTED("dark_muted"),
-    LIGHT_MUTED("light_muted"),
-    MUTED("muted");
-
-    companion object {
-        fun fromString(type: String): WallpaperColorEnum? =
-            entries.find { it.value == type }
-    }
-}
 
 /**
  * 把 [WallpaperPalette] 解析成最终颜色。

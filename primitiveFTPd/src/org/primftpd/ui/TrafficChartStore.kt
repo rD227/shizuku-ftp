@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
  * Persists the traffic-chart history in a small SQLite database.
  *
  * The chart keeps at most [MAX_AGE_SECONDS] of history. Samples are stored once per second, so the
- * database contains at most 259,200 rows. The in-memory list held by [NetworkViewModel] is pruned
+ * database contains at most 259,200 rows. The in-memory list held by [org.primftpd.ui.viewmodel.NetworkViewModel] is pruned
  * with the same cutoff; the database is pruned periodically.
  */
 class TrafficChartStore private constructor(context: Context) {

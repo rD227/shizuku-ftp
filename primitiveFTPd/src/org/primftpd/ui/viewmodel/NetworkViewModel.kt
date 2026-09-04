@@ -1,4 +1,4 @@
-package org.primftpd.ui
+package org.primftpd.ui.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -14,15 +14,16 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.events.DataTransferredEvent
-import org.primftpd.ui.data.TrafficChartSample
+import org.primftpd.ui.TrafficChartClearEvent
 import org.primftpd.ui.TrafficChartStore
+import org.primftpd.ui.data.TrafficChartSample
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Owns the traffic chart data shown on the main screen.
  *
- * Data is accumulated in per-second buckets and kept for [TrafficChartStore.MAX_AGE_SECONDS]
+ * Data is accumulated in per-second buckets and kept for [org.primftpd.ui.TrafficChartStore.Companion.MAX_AGE_SECONDS]
  * (about three days). The x-axis is not scrolled or animated: the whole history is always fitted
  * into the available chart width, so it becomes progressively more compressed as time passes.
  * The renderer downsamples to [MAX_RENDER_POINTS] points only for drawing; the persisted history
@@ -32,7 +33,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     val modelProducer = CartesianChartModelProducer()
 
-    private val trafficChartStore = TrafficChartStore.getInstance(application)
+    private val trafficChartStore = TrafficChartStore.Companion.getInstance(application)
 
     private val ftpBytesInLastSecond = AtomicLong(0L)
     private val sftpBytesInLastSecond = AtomicLong(0L)
@@ -57,7 +58,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val historyVersionAtLoadStart = historyVersion
             val stored = withContext(Dispatchers.IO) {
-                trafficChartStore.load(TrafficChartStore.MAX_AGE_SECONDS)
+                trafficChartStore.load(TrafficChartStore.Companion.MAX_AGE_SECONDS)
             }
             if (historyVersion == historyVersionAtLoadStart) {
                 samples.addAll(stored)
@@ -65,7 +66,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
                 lastStorePruneTimestampSeconds = nowSeconds
                 if (stored.isNotEmpty()) {
                     withContext(Dispatchers.IO) {
-                        trafficChartStore.prune(nowSeconds - TrafficChartStore.MAX_AGE_SECONDS)
+                        trafficChartStore.prune(nowSeconds - TrafficChartStore.Companion.MAX_AGE_SECONDS)
                     }
                 }
             }
@@ -154,14 +155,14 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun pruneOldSamples(nowSeconds: Long) {
-        val cutoff = nowSeconds - TrafficChartStore.MAX_AGE_SECONDS
+        val cutoff = nowSeconds - TrafficChartStore.Companion.MAX_AGE_SECONDS
         while (samples.isNotEmpty() && samples.first().timestampSeconds < cutoff) {
             samples.removeAt(0)
         }
     }
 
     private suspend fun persistSample(sample: TrafficChartSample) {
-        val cutoff = sample.timestampSeconds - TrafficChartStore.MAX_AGE_SECONDS
+        val cutoff = sample.timestampSeconds - TrafficChartStore.Companion.MAX_AGE_SECONDS
         val shouldPruneStore =
             sample.timestampSeconds - lastStorePruneTimestampSeconds >= STORE_PRUNE_INTERVAL_SECONDS
         withContext(Dispatchers.IO) {
