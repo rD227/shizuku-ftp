@@ -67,6 +67,7 @@ object UiPreferences {
     fun getChartMeasuringRule(prefs: SharedPreferences): ChartTriStateEnum {
         val storedName = prefs.getString(PREF_CHART_MEASURING_RULE, null)
         return when (storedName) {
+            ChartTriStateEnum.MINUTE.name -> ChartTriStateEnum.MINUTE
             ChartTriStateEnum.DAY.name -> ChartTriStateEnum.DAY
             ChartTriStateEnum.WEEK.name -> ChartTriStateEnum.WEEK
             else -> ChartTriStateEnum.HOUR

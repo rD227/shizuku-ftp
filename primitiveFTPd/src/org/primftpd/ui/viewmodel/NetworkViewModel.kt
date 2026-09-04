@@ -25,8 +25,9 @@ import java.util.concurrent.atomic.AtomicLong
  * Owns the traffic chart data shown on the main screen.
  *
  * Data is accumulated in per-second buckets and kept for [org.primftpd.ui.TrafficChartStore.Companion.MAX_AGE_SECONDS]
- * (about three days). The x-axis follows the selected measuring rule (HOUR/DAY/WEEK); if the stored
- * history is shorter than the selected span, it is pinned to the left edge.
+ * (about three days). The x-axis follows the selected measuring rule (MINUTE/HOUR/DAY/WEEK); if the stored
+ * history is shorter than the selected span, it is pinned to the left edge and the unmeasured
+ * right-hand side is drawn as y = 0.
  * The renderer downsamples to [MAX_RENDER_POINTS] points only for drawing; the persisted history
  * keeps the original per-second resolution.
  */
@@ -175,17 +176,43 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun samplesForChartWindow(nowSeconds: Long): List<TrafficChartSample> {
-        if (samples.isEmpty()) return samples
+    private fun samplesForChartWindow(nowSeconds: Long): ChartWindowSamples {
+        if (samples.isEmpty()) {
+            // 空数据时也给一个完整刻度，左右两点都是 0。
+            val rulerStart = nowSeconds - chartMeasuringRule.windowSeconds
+            return ChartWindowSamples(
+                samples = listOf(
+                    TrafficChartSample(rulerStart, 0L, 0L),
+                    TrafficChartSample(rulerStart + chartMeasuringRule.windowSeconds, 0L, 0L),
+                ),
+            )
+        }
 
+        val rulerSpanSeconds = chartMeasuringRule.windowSeconds
+        val earliestTimestamp = samples.first().timestampSeconds
         val newestTimestamp = samples.last().timestampSeconds.coerceAtLeast(nowSeconds)
-        val lowerBound = (newestTimestamp - chartMeasuringRule.windowSeconds)
-            .coerceAtLeast(samples.first().timestampSeconds)
 
-        val firstVisibleIndex = samples.indexOfFirst { it.timestampSeconds >= lowerBound }
-            .takeIf { it >= 0 } ?: 0
+        return if (newestTimestamp - earliestTimestamp < rulerSpanSeconds) {
+            // 数据还不够铺满当前刻度：刻度从左边界开始，仍然保持完整长度；
+            // 已经量到的最新时刻之后补 y=0，让右侧未度量区域落在 0 值上。
+            val rulerEnd = earliestTimestamp + rulerSpanSeconds
+            val zeroStart = newestTimestamp + 1
 
-        return samples.subList(firstVisibleIndex, samples.size)
+            ChartWindowSamples(
+                samples = samples,
+                zeroTailStart = zeroStart.takeIf { it <= rulerEnd },
+                zeroTailEnd = rulerEnd.takeIf { it > zeroStart },
+            )
+        } else {
+            // 数据已经超过当前刻度：显示最近的一个完整刻度，不额外补零。
+            val lowerBound = newestTimestamp - rulerSpanSeconds
+            val firstVisibleIndex = samples.indexOfFirst { it.timestampSeconds >= lowerBound }
+                .takeIf { it >= 0 } ?: 0
+
+            ChartWindowSamples(
+                samples = samples.subList(firstVisibleIndex, samples.size),
+            )
+        }
     }
 
 
@@ -206,18 +233,42 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun publishChart() {
         val fallbackTimestampSeconds = currentTimestampSeconds()
-        val visibleSamples = samplesForChartWindow(fallbackTimestampSeconds)
-        val ftpSeries = buildRenderSeries(visibleSamples, fallbackTimestampSeconds) {
+        val windowSamples = samplesForChartWindow(fallbackTimestampSeconds)
+        val snapshot = windowSamples.samples.toList()
+        val (ftpSeries, sftpSeries) = withContext(Dispatchers.Default) {
+            val ftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds) {
             it.ftpBytesPerSecond / 1024L
         }
-        val sftpSeries = buildRenderSeries(visibleSamples, fallbackTimestampSeconds) {
+            val sftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds) {
             it.sftpBytesPerSecond / 1024L
         }
+            ftpSeries to sftpSeries
+        }
 
-        val ftpX = ftpSeries.xValues
-        val ftpY = ftpSeries.yValues
-        val sftpX = sftpSeries.xValues
-        val sftpY = sftpSeries.yValues
+        val ftpX = ftpSeries.xValues.toMutableList()
+        val ftpY = ftpSeries.yValues.toMutableList()
+        val sftpX = sftpSeries.xValues.toMutableList()
+        val sftpY = sftpSeries.yValues.toMutableList()
+
+        // 数据还没铺满当前刻度时，把右侧未度量区域画成 y=0。
+        windowSamples.zeroTailStart?.let { zeroStart ->
+            val zeroEnd = windowSamples.zeroTailEnd ?: zeroStart
+            if (ftpX.isEmpty() || ftpX.last() < zeroStart) {
+                ftpX.add(zeroStart)
+                ftpY.add(0L)
+            }
+            if (sftpX.isEmpty() || sftpX.last() < zeroStart) {
+                sftpX.add(zeroStart)
+                sftpY.add(0L)
+            }
+            if (zeroEnd > zeroStart) {
+                ftpX.add(zeroEnd)
+                ftpY.add(0L)
+                sftpX.add(zeroEnd)
+                sftpY.add(0L)
+            }
+        }
+
 
         modelProducer.runTransaction {
             lineSeries {
@@ -285,7 +336,16 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         val yValues: List<Long>,
     )
 
+    private data class ChartWindowSamples(
+        val samples: List<TrafficChartSample>,
+        val zeroTailStart: Long? = null,
+        val zeroTailEnd: Long? = null,
+    )
+
+
     companion object {
+
+
         /**
          * Maximum number of points passed to Vico for one series. A screen is at most a few
          * thousand pixels wide, so drawing more points would not add visible detail.

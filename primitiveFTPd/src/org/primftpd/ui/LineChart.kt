@@ -1,6 +1,5 @@
 package org.primftpd.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -12,12 +11,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerDimensions
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -59,6 +60,24 @@ private fun formatAxisSpeed(kilobytesPerSecond: Double): String {
             String.format(Locale.US, "%.0f KB/s", kilobytesPerSecond)
     }
 }
+
+private val noMarginBottomAxisItemPlacer = object :
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned() {
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+}
+
 
 @Composable
 fun NetworkTrafficChart(
@@ -109,19 +128,20 @@ fun NetworkTrafficChart(
             ),
             bottomAxis = HorizontalAxis.rememberBottom(
                 guideline = null,
+                itemPlacer = noMarginBottomAxisItemPlacer,
                 valueFormatter = horizontalAxisValueFormatter,
             ),
         ),
         modelProducer = modelProducer,
         modifier = modifier,
-        // 禁止缩放及滑动。切换 H/D/W 时由 MainScreen 短暂开启 animateModelChanges，
-        // 这里用短 tween 让 Vico 对两次窗口之间的变化做平滑过渡；常规每秒更新不启用。
+        // 禁止缩放及滑动。这里不使用 Vico 的模型差值动画，避免切换刻度时
+        // 在数据窗口变化/补零过程中触发崩溃；FourStateSwitch 的滑块仍有自身动画。
         zoomState = rememberVicoZoomState(
             zoomEnabled = false,
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
-        animationSpec = if (animateModelChanges) tween<Float>(durationMillis = 450) else null,
+        animationSpec = null,
         animateIn = false
     )
 }

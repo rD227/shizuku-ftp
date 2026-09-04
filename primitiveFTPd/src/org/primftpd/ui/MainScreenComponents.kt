@@ -399,17 +399,18 @@ fun FourStateSwitch(
     modifier: Modifier = Modifier,
     colorBag: ColorBag
 ) {
-    val trackWidth = 84.dp
+    val trackWidth = 112.dp
     val trackHeight = 22.dp
     val padding = 2.dp
 
     val contentWidth = trackWidth - (padding * 2)
-    val slotWidth = contentWidth / 3
+    val slotWidth = contentWidth / 4
 
     val targetOffset = when (state) {
-        ChartTriStateEnum.HOUR -> 0.dp
-        ChartTriStateEnum.DAY -> slotWidth
-        ChartTriStateEnum.WEEK -> slotWidth * 2
+        ChartTriStateEnum.MINUTE -> 0.dp
+        ChartTriStateEnum.HOUR -> slotWidth
+        ChartTriStateEnum.DAY -> slotWidth * 2
+        ChartTriStateEnum.WEEK -> slotWidth * 3
     }
 
     val animatedOffset by animateDpAsState(
@@ -423,7 +424,7 @@ fun FourStateSwitch(
 
     val contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
     val trackColor = when (state) {
-        ChartTriStateEnum.HOUR,ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
+        ChartTriStateEnum.MINUTE, ChartTriStateEnum.HOUR, ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
     }
 
     val textStyle = TextStyle(
@@ -449,7 +450,7 @@ fun FourStateSwitch(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf("H", "D", "W").forEach { label ->
+            listOf("M", "H", "D", "W").forEach { label ->
                 Box(
                     modifier = Modifier
                         .width(slotWidth)
@@ -474,7 +475,8 @@ fun FourStateSwitch(
             contentAlignment = Alignment.Center
         ) {
             val thumbText = when (state) {
-                ChartTriStateEnum.HOUR -> "H" // 修正了原本 HOUR 对应 "O" 的误写
+                ChartTriStateEnum.MINUTE -> "M"
+                ChartTriStateEnum.HOUR -> "H"
                 ChartTriStateEnum.DAY -> "D"
                 ChartTriStateEnum.WEEK -> "W"
             }
