@@ -1,5 +1,6 @@
 package org.primftpd.ui
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -63,6 +64,7 @@ private fun formatAxisSpeed(kilobytesPerSecond: Double): String {
 fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
+    animateModelChanges: Boolean = false,
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
     val sftpLineColor = Color(0xFF81C784)
@@ -112,14 +114,14 @@ fun NetworkTrafficChart(
         ),
         modelProducer = modelProducer,
         modifier = modifier,
-        // 禁止缩放及滑动，同时关闭 Vico 的差值动画：所有历史点始终压缩进当前宽度。
-        // 这样图表不会“流动”，x 轴会随着数据累积逐渐被压扁，最多保留约三天。
+        // 禁止缩放及滑动。切换 H/D/W 时由 MainScreen 短暂开启 animateModelChanges，
+        // 这里用短 tween 让 Vico 对两次窗口之间的变化做平滑过渡；常规每秒更新不启用。
         zoomState = rememberVicoZoomState(
             zoomEnabled = false,
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
-        animationSpec = null,
+        animationSpec = if (animateModelChanges) tween<Float>(durationMillis = 450) else null,
         animateIn = false
     )
 }

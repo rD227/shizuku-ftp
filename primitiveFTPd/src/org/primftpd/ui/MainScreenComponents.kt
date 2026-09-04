@@ -1,14 +1,11 @@
 package org.primftpd.ui
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -16,7 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -57,12 +53,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -80,8 +74,6 @@ import dev.chrisbanes.haze.hazeEffect
 import org.primftpd.R
 import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.ColorBag
-import org.primftpd.ui.util.WallpaperPalette
-import org.primftpd.ui.util.rememberWallpaperAccentColor
 
 // --- Shared UI components ---
 
@@ -401,7 +393,7 @@ internal fun GlassSidebarBox(
 }
 
 @Composable
-fun TriStateSwitch(
+fun FourStateSwitch(
     state: ChartTriStateEnum,
     onStateChange: (ChartTriStateEnum) -> Unit,
     modifier: Modifier = Modifier,
@@ -431,8 +423,7 @@ fun TriStateSwitch(
 
     val contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
     val trackColor = when (state) {
-        ChartTriStateEnum.HOUR -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
-        ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> contentColor
+        ChartTriStateEnum.HOUR,ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
     }
 
     val textStyle = TextStyle(
@@ -449,12 +440,7 @@ fun TriStateSwitch(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                val nextState = when (state) {
-                    ChartTriStateEnum.HOUR -> ChartTriStateEnum.DAY
-                    ChartTriStateEnum.DAY -> ChartTriStateEnum.WEEK
-                    ChartTriStateEnum.WEEK -> ChartTriStateEnum.HOUR
-                }
-                onStateChange(nextState)
+                onStateChange(state.next())
             }
             .padding(padding),
         contentAlignment = Alignment.CenterStart
@@ -472,7 +458,7 @@ fun TriStateSwitch(
                 ) {
                     Text(
                         text = label,
-                        color = contentColor.copy(alpha = 0.7f),
+                        color = Color.DarkGray.copy(alpha = 0.7f),
                         style = textStyle
                     )
                 }
@@ -503,7 +489,7 @@ fun TriStateSwitch(
 
 @Preview
 @Composable
-fun TriStateSwitchPreview() {
+fun FourStateSwitchPreview() {
     ShizukuFtpTheme() {
         val colorBag = ColorBag(
             vibrant = Color(0xFF81C784),
@@ -512,7 +498,7 @@ fun TriStateSwitchPreview() {
             lightMuted = Color(0xFFF48FB1),
             muted = Color(0xFF64B5F6)
         )
-        TriStateSwitch(
+        FourStateSwitch(
             state = ChartTriStateEnum.HOUR,
             onStateChange = {},
             colorBag = colorBag

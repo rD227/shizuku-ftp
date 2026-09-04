@@ -59,4 +59,22 @@ object UiPreferences {
     fun setSideMenuSpringAnimation(prefs: SharedPreferences, value: Boolean) {
         prefs.edit { putBoolean(PREF_KEY_SIDE_MENU_SPRING_ANIMATION, value) }
     }
+
+//______
+    const val PREF_CHART_MEASURING_RULE = "chartMeasuringRulePref"
+    val DEFAULT_CHART_MEASURING_RULE = ChartTriStateEnum.HOUR
+
+    fun getChartMeasuringRule(prefs: SharedPreferences): ChartTriStateEnum {
+        val storedName = prefs.getString(PREF_CHART_MEASURING_RULE, null)
+        return when (storedName) {
+            ChartTriStateEnum.DAY.name -> ChartTriStateEnum.DAY
+            ChartTriStateEnum.WEEK.name -> ChartTriStateEnum.WEEK
+            else -> ChartTriStateEnum.HOUR
+        }
+    }
+
+    fun setChartMeasuringRule(prefs: SharedPreferences, value: ChartTriStateEnum) {
+        prefs.edit { putString(PREF_CHART_MEASURING_RULE, value.name) }
+    }
+
 }

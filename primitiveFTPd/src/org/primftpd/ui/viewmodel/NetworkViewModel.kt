@@ -16,6 +16,7 @@ import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.events.DataTransferredEvent
 import org.primftpd.ui.TrafficChartClearEvent
 import org.primftpd.ui.TrafficChartStore
+import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.TrafficChartSample
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
@@ -24,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong
  * Owns the traffic chart data shown on the main screen.
  *
  * Data is accumulated in per-second buckets and kept for [org.primftpd.ui.TrafficChartStore.Companion.MAX_AGE_SECONDS]
- * (about three days). The x-axis is not scrolled or animated: the whole history is always fitted
- * into the available chart width, so it becomes progressively more compressed as time passes.
+ * (about three days). The x-axis follows the selected measuring rule (HOUR/DAY/WEEK); if the stored
+ * history is shorter than the selected span, it is pinned to the left edge.
  * The renderer downsamples to [MAX_RENDER_POINTS] points only for drawing; the persisted history
  * keeps the original per-second resolution.
  */
@@ -39,6 +40,9 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private val sftpBytesInLastSecond = AtomicLong(0L)
 
     private val samples = mutableListOf<TrafficChartSample>()
+
+    private var chartMeasuringRule = ChartTriStateEnum.HOUR
+
 
     private var lastFtpEventBytes = 0L
     private var lastSftpEventBytes = 0L
@@ -114,6 +118,16 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun setChartMeasuringRule(rule: ChartTriStateEnum) {
+        if (chartMeasuringRule == rule) return
+        chartMeasuringRule = rule
+        logger.debug(">>> Chart measuring rule changed to {}", rule)
+        viewModelScope.launch {
+            publishChart()
+        }
+    }
+
+
     private suspend fun updateChart() {
         val versionAtStart = historyVersion
         val nowSeconds = currentTimestampSeconds()
@@ -161,6 +175,20 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    private fun samplesForChartWindow(nowSeconds: Long): List<TrafficChartSample> {
+        if (samples.isEmpty()) return samples
+
+        val newestTimestamp = samples.last().timestampSeconds.coerceAtLeast(nowSeconds)
+        val lowerBound = (newestTimestamp - chartMeasuringRule.windowSeconds)
+            .coerceAtLeast(samples.first().timestampSeconds)
+
+        val firstVisibleIndex = samples.indexOfFirst { it.timestampSeconds >= lowerBound }
+            .takeIf { it >= 0 } ?: 0
+
+        return samples.subList(firstVisibleIndex, samples.size)
+    }
+
+
     private suspend fun persistSample(sample: TrafficChartSample) {
         val cutoff = sample.timestampSeconds - TrafficChartStore.Companion.MAX_AGE_SECONDS
         val shouldPruneStore =
@@ -178,10 +206,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun publishChart() {
         val fallbackTimestampSeconds = currentTimestampSeconds()
-        val ftpSeries = buildRenderSeries(samples, fallbackTimestampSeconds) {
+        val visibleSamples = samplesForChartWindow(fallbackTimestampSeconds)
+        val ftpSeries = buildRenderSeries(visibleSamples, fallbackTimestampSeconds) {
             it.ftpBytesPerSecond / 1024L
         }
-        val sftpSeries = buildRenderSeries(samples, fallbackTimestampSeconds) {
+        val sftpSeries = buildRenderSeries(visibleSamples, fallbackTimestampSeconds) {
             it.sftpBytesPerSecond / 1024L
         }
 

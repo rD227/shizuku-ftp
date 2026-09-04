@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.UiPreferences
 
 class UiPreferencesViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,6 +24,21 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
 
     fun getTopComponentPressedDown(): Boolean {
         return UiPreferences.getTopComponentPressedDown(barDownPrefs)
+    }
+
+    //______
+    private val _chartMeasuringRule = MutableStateFlow(
+        UiPreferences.getChartMeasuringRule(barDownPrefs)
+    )
+    val chartMeasuringRule = _chartMeasuringRule.asStateFlow()
+
+    fun setChartMeasuringRule(value: ChartTriStateEnum) {
+        UiPreferences.setChartMeasuringRule(barDownPrefs, value)
+        _chartMeasuringRule.value = value
+    }
+
+    fun getChartMeasuringRule(): ChartTriStateEnum {
+        return UiPreferences.getChartMeasuringRule(barDownPrefs)
     }
 
     //————————

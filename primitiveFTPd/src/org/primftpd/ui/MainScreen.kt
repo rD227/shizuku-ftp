@@ -236,6 +236,16 @@ fun MainScreen(
         showWallpaper =  uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true
     )
 
+    val chartMeasuringRule by (uiPreferencesViewModel?.chartMeasuringRule ?: flowOf(ChartTriStateEnum.HOUR))
+        .collectAsState(ChartTriStateEnum.HOUR)
+
+    var animateChartModelChanges by remember { mutableStateOf(false) }
+    var chartAnimationResetJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    LaunchedEffect(chartMeasuringRule) {
+        networkViewModel?.setChartMeasuringRule(chartMeasuringRule)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
         // 同时作为侧栏独立 HazeState 的 source，让侧栏滑动时不再和全屏 haze 共用同一状态
@@ -367,10 +377,16 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(8.dp))
                 Row {
                     Spacer(modifier = Modifier.weight(0.9f))
-                    TriStateSwitch(
-                        state = ChartTriStateEnum.HOUR,
-                        onStateChange = {
-
+                    FourStateSwitch(
+                        state = chartMeasuringRule,
+                        onStateChange = { newState ->
+                            animateChartModelChanges = true
+                            chartAnimationResetJob?.cancel()
+                            uiPreferencesViewModel?.setChartMeasuringRule(newState)
+                            chartAnimationResetJob = scope.launch {
+                                delay(550)
+                                animateChartModelChanges = false
+                            }
                         },
                         colorBag = colorBag,
                     )
@@ -385,7 +401,8 @@ fun MainScreen(
                             .fillMaxWidth()
                             .height(200.dp)
                             .padding(bottom = 0.dp)
-                            .padding(top = 2.dp)
+                            .padding(top = 2.dp),
+                        animateModelChanges = animateChartModelChanges,
                     )
                 }
             }
