@@ -51,7 +51,7 @@ private fun formatAxisTime(value: Double, xLengthSeconds: Double): String {
         ZoneId.systemDefault(),
     )
     val formatter = when {
-        xLengthSeconds < 60.0 -> AXIS_TIME_WITH_SECONDS_FORMATTER
+        xLengthSeconds <= 60.0 -> AXIS_TIME_WITH_SECONDS_FORMATTER
         xLengthSeconds <= 24.0 * 60.0 * 60.0 -> AXIS_TIME_WITH_MINUTES_FORMATTER
         else -> AXIS_DATE_TIME_FORMATTER
     }
@@ -153,6 +153,34 @@ private val noMarginBottomAxisItemPlacerForHour = object :
     ): Double? = null
 }
 
+private val noMarginBottomAxisItemPlacerForMinute = object :
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 1 }) {
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getFirstLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+
+    override fun getLastLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+}
+
+
 
 @Composable
 fun NetworkTrafficChart(
@@ -217,6 +245,9 @@ fun NetworkTrafficChart(
                     }
                     ChartTriStateEnum.HOUR -> {
                         noMarginBottomAxisItemPlacerForHour
+                    }
+                    ChartTriStateEnum.MINUTE -> {
+                        noMarginBottomAxisItemPlacerForMinute
                     }
                     else -> {
                         noMarginBottomAxisItemPlacer

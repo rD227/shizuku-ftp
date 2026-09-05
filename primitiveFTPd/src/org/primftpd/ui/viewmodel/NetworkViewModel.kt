@@ -169,7 +169,14 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     ) {
         chartAnimationInProgress = true
         val durationMs = 420L
-        val stepMs = 16L
+
+        // 跨度很大的切换（例如 HOUR -> DAY）如果每 16ms 重绘一次，会因每帧数据量
+        // 太大而显得卡顿。这里对大跨度适当拉大帧间隔，减少中间重绘次数。
+        val startDelta = if (toStart > fromStart) toStart - fromStart else fromStart - toStart
+        val endDelta = if (toEnd > fromEnd) toEnd - fromEnd else fromEnd - toEnd
+        val maxDelta = maxOf(startDelta, endDelta)
+        val stepMs = if (maxDelta > 2L * 60L * 60L) 48L else 16L
+
         var elapsedMs = 0L
 
         while (elapsedMs < durationMs) {
