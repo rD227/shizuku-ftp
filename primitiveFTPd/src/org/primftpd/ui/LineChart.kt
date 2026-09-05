@@ -101,7 +101,33 @@ private val noMarginBottomAxisItemPlacer = object :
 }
 
 private val noMarginBottomAxisItemPlacerForDay = object :
-    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 6 * 60 * 60 }) {
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 4 * 30 * 60 }) {
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getFirstLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+
+    override fun getLastLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+}
+private val noMarginBottomAxisItemPlacerForHour = object :
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 4 * 60 }) {
     override fun getStartLayerMargin(
         context: CartesianMeasuringContext,
         layerDimensions: CartesianLayerDimensions,
@@ -185,8 +211,17 @@ fun NetworkTrafficChart(
                         style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
                     ),
                 guideline = null,
-                itemPlacer =
-                    noMarginBottomAxisItemPlacer,
+                itemPlacer = when (measuringRule) {
+                    ChartTriStateEnum.DAY -> {
+                        noMarginBottomAxisItemPlacerForDay
+                    }
+                    ChartTriStateEnum.HOUR -> {
+                        noMarginBottomAxisItemPlacerForHour
+                    }
+                    else -> {
+                        noMarginBottomAxisItemPlacer
+                    }
+                },
                 valueFormatter = horizontalAxisValueFormatter,
             ),
             layerPadding = { CartesianLayerPadding() },
