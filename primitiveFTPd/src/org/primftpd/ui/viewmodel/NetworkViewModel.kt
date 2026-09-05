@@ -7,6 +7,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,6 +44,10 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private val samples = mutableListOf<TrafficChartSample>()
 
     private var chartMeasuringRule = ChartTriStateEnum.HOUR
+
+    private var chartAnimationJob: Job? = null
+    private var chartAnimationInProgress = false
+
 
 
     private var lastFtpEventBytes = 0L
@@ -121,12 +126,69 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     fun setChartMeasuringRule(rule: ChartTriStateEnum) {
         if (chartMeasuringRule == rule) return
+
+        val nowSeconds = currentTimestampSeconds()
+        val (fromStart, fromEnd) = targetDomain(chartMeasuringRule, nowSeconds)
         chartMeasuringRule = rule
+        val (toStart, toEnd) = targetDomain(rule, nowSeconds)
+
         logger.debug(">>> Chart measuring rule changed to {}", rule)
-        viewModelScope.launch {
-            publishChart()
+
+        chartAnimationJob?.cancel()
+        chartAnimationInProgress = false
+        chartAnimationJob = viewModelScope.launch {
+            animateChartWindow(fromStart, fromEnd, toStart, toEnd)
         }
     }
+
+    private fun targetDomain(
+        rule: ChartTriStateEnum,
+        nowSeconds: Long,
+    ): Pair<Long, Long> {
+        val span = rule.windowSeconds
+        if (samples.isEmpty()) {
+            val end = nowSeconds
+            return (end - span) to end
+        }
+
+        val earliest = samples.first().timestampSeconds
+        val newest = samples.last().timestampSeconds.coerceAtLeast(nowSeconds)
+
+        return if (newest - earliest < span) {
+            earliest to (earliest + span)
+        } else {
+            (newest - span) to newest
+        }
+    }
+
+    private suspend fun animateChartWindow(
+        fromStart: Long,
+        fromEnd: Long,
+        toStart: Long,
+        toEnd: Long,
+    ) {
+        chartAnimationInProgress = true
+        val durationMs = 420L
+        val stepMs = 16L
+        var elapsedMs = 0L
+
+        while (elapsedMs < durationMs) {
+            elapsedMs = (elapsedMs + stepMs).coerceAtMost(durationMs)
+            val progress = elapsedMs.toFloat() / durationMs.toFloat()
+            // easeOutCubic：开始快、结束慢，压缩/展开会更自然。
+            val eased = 1f - (1f - progress) * (1f - progress) * (1f - progress)
+
+            val animatedStart = fromStart + ((toStart - fromStart) * eased).toLong()
+            val animatedEnd = fromEnd + ((toEnd - fromEnd) * eased).toLong()
+
+            publishChart(startOverride = animatedStart, endOverride = animatedEnd)
+            delay(stepMs)
+        }
+
+        publishChart()
+        chartAnimationInProgress = false
+    }
+
 
 
     private suspend fun updateChart() {
@@ -176,11 +238,16 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun samplesForChartWindow(nowSeconds: Long): ChartWindowSamples {
+    private fun samplesForChartWindow(
+        nowSeconds: Long,
+        startOverride: Long? = null,
+        endOverride: Long? = null,
+    ): ChartWindowSamples {
         if (samples.isEmpty()) {
             // 空数据时也给一个完整刻度，左右两点都是 0。
-            val rulerStart = nowSeconds - chartMeasuringRule.windowSeconds
-            val rulerEnd = rulerStart + chartMeasuringRule.windowSeconds
+            val span = chartMeasuringRule.windowSeconds
+            val rulerStart = if (startOverride != null) startOverride else nowSeconds - span
+            val rulerEnd = if (endOverride != null) endOverride else rulerStart + span
             return ChartWindowSamples(
                 samples = listOf(
                     TrafficChartSample(rulerStart, 0L, 0L),
@@ -191,35 +258,43 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             )
         }
 
-        val rulerSpanSeconds = chartMeasuringRule.windowSeconds
-        val earliestTimestamp = samples.first().timestampSeconds
-        val newestTimestamp = samples.last().timestampSeconds.coerceAtLeast(nowSeconds)
+        val (targetStart, targetEnd) = targetDomain(chartMeasuringRule, nowSeconds)
+        val domainStart = startOverride ?: targetStart
+        val domainEnd = endOverride ?: targetEnd
 
-        return if (newestTimestamp - earliestTimestamp < rulerSpanSeconds) {
-            // 数据还不够铺满当前刻度：刻度从左边界开始，仍然保持完整长度；
-            // 已经量到的最新时刻之后补 y=0，让右侧未度量区域落在 0 值上。
-            val rulerEnd = earliestTimestamp + rulerSpanSeconds
-            val zeroStart = newestTimestamp + 1
+        // 用二分找到 [domainStart, domainEnd] 内的采样区间。
+        val startSearch = samples.binarySearchBy(domainStart) { it.timestampSeconds }
+        val startIndex = if (startSearch < 0) -startSearch - 1 else startSearch
 
-            ChartWindowSamples(
-                samples = samples,
-                domainStart = earliestTimestamp,
-                domainEnd = rulerEnd,
-                zeroTailStart = zeroStart.takeIf { it <= rulerEnd },
-                zeroTailEnd = rulerEnd.takeIf { it > zeroStart },
-            )
+        val endSearch = samples.binarySearchBy(domainEnd) { it.timestampSeconds }
+        val endIndex = if (endSearch < 0) -endSearch - 1 else endSearch + 1
+
+        val visibleSamples = if (startIndex < endIndex) {
+            samples.subList(startIndex, endIndex.coerceAtMost(samples.size))
         } else {
-            // 数据已经超过当前刻度：显示最近的一个完整刻度，不额外补零。
-            val lowerBound = newestTimestamp - rulerSpanSeconds
-            val firstVisibleIndex = samples.indexOfFirst { it.timestampSeconds >= lowerBound }
-                .takeIf { it >= 0 } ?: 0
+            emptyList()
+        }
 
-            ChartWindowSamples(
-                samples = samples.subList(firstVisibleIndex, samples.size),
-                domainStart = lowerBound,
-                domainEnd = newestTimestamp,
+        if (visibleSamples.isEmpty()) {
+            // 当前动画窗口内没有真实数据，给一个纯零的完整刻度。
+            return ChartWindowSamples(
+                samples = listOf(
+                    TrafficChartSample(domainStart, 0L, 0L),
+                    TrafficChartSample(domainEnd, 0L, 0L),
+                ),
+                domainStart = domainStart,
+                domainEnd = domainEnd,
             )
         }
+
+        val zeroStart = visibleSamples.last().timestampSeconds + 1
+        return ChartWindowSamples(
+            samples = visibleSamples,
+            domainStart = domainStart,
+            domainEnd = domainEnd,
+            zeroTailStart = zeroStart.takeIf { it <= domainEnd },
+            zeroTailEnd = domainEnd.takeIf { it > zeroStart },
+        )
     }
 
 
@@ -238,9 +313,16 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private suspend fun publishChart() {
+    private suspend fun publishChart(
+        startOverride: Long? = null,
+        endOverride: Long? = null,
+    ) {
         val fallbackTimestampSeconds = currentTimestampSeconds()
-        val windowSamples = samplesForChartWindow(fallbackTimestampSeconds)
+        val windowSamples = samplesForChartWindow(
+            fallbackTimestampSeconds,
+            startOverride = startOverride,
+            endOverride = endOverride,
+        )
         val snapshot = windowSamples.samples.toList()
         val (ftpSeries, sftpSeries) = withContext(Dispatchers.Default) {
             val ftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds) {
