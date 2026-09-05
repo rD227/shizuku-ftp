@@ -403,6 +403,7 @@ fun MainScreen(
                             .padding(bottom = 0.dp)
                             .padding(top = 2.dp),
                         animateModelChanges = animateChartModelChanges,
+                        measuringRule = chartMeasuringRule,
                     )
                 }
             }

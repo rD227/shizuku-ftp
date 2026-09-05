@@ -8,13 +8,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import org.primftpd.ui.data.ChartTriStateEnum
+import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
@@ -32,6 +39,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.ranges.ClosedFloatingPointRange
 
 private val AXIS_TIME_WITH_SECONDS_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US)
 private val AXIS_TIME_WITH_MINUTES_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
@@ -62,6 +70,8 @@ private fun formatAxisSpeed(kilobytesPerSecond: Double): String {
     }
 }
 
+
+
 private val noMarginBottomAxisItemPlacer = object :
     HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned() {
     override fun getStartLayerMargin(
@@ -90,12 +100,40 @@ private val noMarginBottomAxisItemPlacer = object :
     ): Double? = null
 }
 
+private val noMarginBottomAxisItemPlacerForDay = object :
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 6 * 60 * 60 }) {
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getFirstLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+
+    override fun getLastLabelValue(
+        context: CartesianMeasuringContext,
+        maxLabelWidth: Float,
+    ): Double? = null
+}
+
 
 @Composable
 fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
     animateModelChanges: Boolean = false,
+    measuringRule: ChartTriStateEnum = ChartTriStateEnum.HOUR,
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
     val sftpLineColor = Color(0xFF81C784)
@@ -110,6 +148,7 @@ fun NetworkTrafficChart(
             formatAxisSpeed(value)
         }
     }
+
 
 
     CartesianChartHost(
@@ -139,9 +178,15 @@ fun NetworkTrafficChart(
                 guideline = null,
                 valueFormatter = verticalAxisValueFormatter,
             ),
+
             bottomAxis = HorizontalAxis.rememberBottom(
+                label = rememberAxisLabelComponent(
+                        overflow = TextOverflow.Visible,
+                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
+                    ),
                 guideline = null,
-                itemPlacer = noMarginBottomAxisItemPlacer,
+                itemPlacer =
+                    noMarginBottomAxisItemPlacer,
                 valueFormatter = horizontalAxisValueFormatter,
             ),
             layerPadding = { CartesianLayerPadding() },
@@ -151,12 +196,12 @@ fun NetworkTrafficChart(
         // 禁止缩放及滑动。这里不使用 Vico 的模型差值动画，避免切换刻度时
         // 在数据窗口变化/补零过程中触发崩溃；FourStateSwitch 的滑块仍有自身动画。
         zoomState = rememberVicoZoomState(
-            zoomEnabled = false,
+            zoomEnabled = true,
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
         animationSpec = null,
-        animateIn = false
+        animateIn = true
     )
 }
 
