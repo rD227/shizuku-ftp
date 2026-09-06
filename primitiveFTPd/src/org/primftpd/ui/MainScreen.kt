@@ -27,6 +27,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -72,6 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -247,7 +250,7 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 打底背景：整屏模糊壁纸（hazeSource 供全屏 blur 输出），圆角外露的就是它
+        // 打底背景
         // 同时作为侧栏独立 HazeState 的 source，让侧栏滑动时不再和全屏 haze 共用同一状态
         Box(
             modifier = Modifier
@@ -288,7 +291,7 @@ fun MainScreen(
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.CenterStart)
         ) {
-            // 透明侧栏：不传图片，直接透出根部打底模糊背景
+            // 透明侧栏
             NarrowWallpaperRail(
                 currentTime = currentTime,
                 batteryState = batteryState,
@@ -324,10 +327,6 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             val stateBarHeight = if (!LocalInspectionMode.current) getCarmaHeight() else 16.dp
-
-            //var topBarWeatherPress by remember { mutableStateOf(UiPreferences.getTopComponentPressedDown(prefs)) }
-
-            //var topBarWeatherPress by remember { mutableStateOf(uiPreferencesViewModel?.topComponentPressedDown?.collectAsState()?.value ?: false) }
 
             val topBarWeatherPress by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
 
@@ -606,13 +605,13 @@ private fun PermissionsDialog(
     mediaLocationAccess: Boolean,
     notificationPermission: Boolean,
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // 黑色遮罩，点击关闭
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 黑色遮罩，淡入淡出，点击关闭
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200)),
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -622,11 +621,35 @@ private fun PermissionsDialog(
                         indication = null
                     ) { onDismiss() }
             )
-            // 居中卡片
+        }
+        // 居中卡片，缩放 + 淡入的弹出效果
+        val cardJump by animateFloatAsState(
+            targetValue = if (visible) 0f else 25f,
+            label = "CardJump",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+        AnimatedVisibility(
+            visible = visible,
+            modifier = Modifier.align(Alignment.Center)
+                .rotate(cardJump)
+            ,
+            enter = scaleIn(
+                initialScale = 0.85f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(animationSpec = tween(200)),
+            exit = scaleOut(
+                targetScale = 0.85f,
+                animationSpec = tween(200)
+            ) + fadeOut(animationSpec = tween(200))
+        ) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = 50.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {

@@ -88,7 +88,7 @@ private val noMarginBottomAxisItemPlacer = object :
         maxLabelWidth: Float,
     ): Float = 0f
 
-    // 不要为了让首尾刻度标签完整显示而给数据层加额外内边距。
+    // 不要为了让首尾刻度标签完整显示而给数据层加额外内边距
     override fun getFirstLabelValue(
         context: CartesianMeasuringContext,
         maxLabelWidth: Float,
