@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
@@ -726,7 +727,6 @@ fun PermissionsCard(
     var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
 
-    // >>> 控制是否贴边
     var shouldStickToEdge by remember { mutableStateOf(false) }
 
 
@@ -751,6 +751,15 @@ fun PermissionsCard(
         notificationGranted = isGranted // 弹窗结束后立即更新状态
     }
 
+    // Android 8~9 (API 26~28)  运行时 READ/WRITE 权限
+    val legacyStorageLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val readGranted = result[Manifest.permission.READ_EXTERNAL_STORAGE] ?: true
+        val writeGranted = result[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: true
+        storageGranted = readGranted && writeGranted // 弹窗结束后立即更新状态
+    }
+
     val animatedPadding by animateDpAsState(
         targetValue = if (!isExpanded && shouldStickToEdge) 0.dp else 16.dp,
         label = "padding",
@@ -771,7 +780,7 @@ fun PermissionsCard(
                 end = animatedPadding.coerceAtLeast(0.dp)
             )
     ) {
-        // 主卡片 - 带动画的滑动
+        // 主卡片
         AnimatedVisibility(
             visible = isExpanded,
             enter = slideInHorizontally(
@@ -796,7 +805,6 @@ fun PermissionsCard(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
-                // >>> 顶部置顶按钮
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -836,6 +844,24 @@ fun PermissionsCard(
                                     data = Uri.fromParts("package", context.packageName, null)
                                 }
                                 context.startActivity(intent)
+                            }
+                        )
+                    } else {
+                        // Android 8~10 (API 26~29) READ/WRITE 运行时权限
+                        PermissionItem(
+                            title = "Storage Access",
+                            hasPermission = storageGranted,
+                            onClick = {
+                                val wanted = mutableListOf<String>()
+                                if (context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                                    != PackageManager.PERMISSION_GRANTED
+                                ) wanted += Manifest.permission.READ_EXTERNAL_STORAGE
+                                if (context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                    != PackageManager.PERMISSION_GRANTED
+                                ) wanted += Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                if (wanted.isNotEmpty()) {
+                                    legacyStorageLauncher.launch(wanted.toTypedArray())
+                                }
                             }
                         )
                     }

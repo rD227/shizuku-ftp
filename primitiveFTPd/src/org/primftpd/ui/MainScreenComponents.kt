@@ -424,7 +424,7 @@ fun FourStateSwitch(
 
     val contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
     val trackColor = when (state) {
-        ChartTriStateEnum.MINUTE, ChartTriStateEnum.HOUR, ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.vibrant
+        ChartTriStateEnum.MINUTE, ChartTriStateEnum.HOUR, ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.secondaryContainer else colorBag.vibrant
     }
 
     val textStyle = TextStyle(

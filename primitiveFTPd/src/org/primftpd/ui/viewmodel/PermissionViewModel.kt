@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,10 +26,15 @@ class PermissionViewModel(application: Application) : AndroidViewModel(applicati
         _permState.update {
             PermissionState(
                 fullStorage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                    Environment.isExternalStorageManager() else true,
+                    Environment.isExternalStorageManager() else {
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                },
                 mediaLocation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     ctx.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                        PackageManager.PERMISSION_GRANTED else true,
+                        PackageManager.PERMISSION_GRANTED else {
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                },
                 notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                     ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
                         PackageManager.PERMISSION_GRANTED else true
