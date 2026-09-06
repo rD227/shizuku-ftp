@@ -609,8 +609,8 @@ private fun PermissionsDialog(
         // 黑色遮罩，淡入淡出，点击关闭
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(animationSpec = tween(200)),
-            exit = fadeOut(animationSpec = tween(200)),
+            enter = fadeIn(animationSpec = tween(300)),
+            exit = fadeOut(animationSpec = tween(300)),
         ) {
             Box(
                 modifier = Modifier

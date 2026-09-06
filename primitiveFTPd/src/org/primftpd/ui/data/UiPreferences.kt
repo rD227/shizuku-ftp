@@ -62,10 +62,11 @@ object UiPreferences {
 
 //______
     const val PREF_CHART_MEASURING_RULE = "chartMeasuringRulePref"
-    val DEFAULT_CHART_MEASURING_RULE = ChartTriStateEnum.HOUR
+    val DEFAULT_CHART_MEASURING_RULE = ChartTriStateEnum.MINUTE
 
     fun getChartMeasuringRule(prefs: SharedPreferences): ChartTriStateEnum {
-        val storedName = prefs.getString(PREF_CHART_MEASURING_RULE, null)
+        val storedName = prefs.getString(PREF_CHART_MEASURING_RULE, DEFAULT_CHART_MEASURING_RULE.name)
+
         return when (storedName) {
             ChartTriStateEnum.MINUTE.name -> ChartTriStateEnum.MINUTE
             ChartTriStateEnum.DAY.name -> ChartTriStateEnum.DAY
