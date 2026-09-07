@@ -2,6 +2,8 @@
 ~~Upgrade~~ 
 ~~Change it to material3~~
 
+TODO：fix the color of x-axis in darkmode
+
 [简体中文](OtherLanguageREADME/README.zh-CN.md) | [Original_README](OtherLanguageREADME/Original_README.md)
 
 # Shizuku-FTP
