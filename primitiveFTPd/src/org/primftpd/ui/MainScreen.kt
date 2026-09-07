@@ -387,7 +387,7 @@ fun MainScreen(
                             .height(200.dp)
                             .padding(bottom = 0.dp)
                             .padding(top = 2.dp),
-                        animateModelChanges = animateChartModelChanges,
+                        //animateModelChanges = animateChartModelChanges,
                         measuringRule = chartMeasuringRule,
                     )
                 }

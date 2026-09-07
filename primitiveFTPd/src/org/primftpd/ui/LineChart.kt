@@ -1,7 +1,9 @@
 package org.primftpd.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -186,7 +188,6 @@ private val noMarginBottomAxisItemPlacerForMinute = object :
 fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
-    animateModelChanges: Boolean = false,
     measuringRule: ChartTriStateEnum = ChartTriStateEnum.HOUR,
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
@@ -236,7 +237,7 @@ fun NetworkTrafficChart(
             bottomAxis = HorizontalAxis.rememberBottom(
                 label = rememberAxisLabelComponent(
                         overflow = TextOverflow.Visible,
-                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
+                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = if (isSystemInDarkTheme()) Color.White else Color.Black),
                     ),
                 guideline = null,
                 itemPlacer = when (measuringRule) {
