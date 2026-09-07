@@ -7,9 +7,13 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavType
@@ -24,10 +28,18 @@ import org.primftpd.R
 import org.primftpd.events.ServerStateChangedEvent
 import org.primftpd.ui.ShizukuFtpTheme
 import org.primftpd.prefs.LoadPrefsUtil
+import org.primftpd.ui.data.ColorBag
+import org.primftpd.ui.data.WallpaperColorEnum
+import org.primftpd.ui.util.WallpaperPalette
+import org.primftpd.ui.util.rememberWallpaperAccentColor
 import org.primftpd.ui.viewmodel.TabViewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
+import org.primftpd.ui.viewmodel.WallpaperViewModel
 import org.primftpd.util.EncryptionUtil
+import org.primftpd.util.KeyFingerprintProvider
 import org.primftpd.util.ServicesStartStopUtil
+import org.primftpd.util.StringUtils
+import org.slf4j.LoggerFactory
 
 open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -42,6 +54,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
 
     private val tabViewModel: TabViewModel by viewModels()
     private val uiPreferencesViewModel: UiPreferencesViewModel by viewModels()
+    private val wallpaperViewModel: WallpaperViewModel by viewModels()
 
     private var isServerRunning by mutableStateOf(false)
     private var showPasswordDialog by mutableStateOf(false)
@@ -71,6 +84,33 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                         }
                     )
                 }
+                val wallpaperBitmap: ImageBitmap? = wallpaperViewModel.wallpaper.collectAsState().value
+                val colorBag = if (LocalInspectionMode.current) {
+                     ColorBag(
+                        vibrant = Color(0xFF6200EE),
+                        darkMuted = Color(0xFF3700B3),
+                        lightMuted = Color(0xFFBB86FC),
+                        muted = Color(0xFF03DAC5),
+                        useM3Color = false
+                    )
+                } else {
+                    ColorBag(
+                        vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
+                        darkMuted = rememberWallpaperAccentColor(
+                            WallpaperPalette(bitmap = wallpaperBitmap),
+                            type = WallpaperColorEnum.DARK_MUTED
+                        ),
+                        lightMuted = rememberWallpaperAccentColor(
+                            WallpaperPalette(bitmap = wallpaperBitmap),
+                            type = WallpaperColorEnum.LIGHT_MUTED
+                        ),
+                        muted = rememberWallpaperAccentColor(
+                            WallpaperPalette(bitmap = wallpaperBitmap),
+                            type = WallpaperColorEnum.MUTED
+                        ),
+                        useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
+                    )
+                }
 
                 NavHost(
                     navController = navController,
@@ -82,12 +122,16 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             onStartServer = { handleStart() },
                             onStopServer = { handleStop() },
                             onNavigate = { route -> navController.navigate(route) },
-                            uiPreferencesViewModel = uiPreferencesViewModel
+                            uiPreferencesViewModel = uiPreferencesViewModel,
+                            wallpaperViewModel = wallpaperViewModel,
+                            providedColorBag = colorBag,
+                            previewColorBag = null
                         )
                     }
                     composable("about") {
                         AboutScreen(
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            colorBag = colorBag
                         )
                     }
                     composable("qr") {
@@ -97,6 +141,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             { navController.popBackStack() }
                         )
                     }
+                    //我突然发现这里写得有点糟糕，因为最好把colorBag分别传到这些Screen里面，而不是传入BitMap之后在分别解析colorBag
                     composable(
                         route = "settings/{section}",
                         arguments = listOf(navArgument("section") { type = NavType.StringType })
@@ -112,7 +157,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             section = settingsSection,
                             onBack = { navController.popBackStack() },
                             uiPreferencesViewModel = uiPreferencesViewModel,
-                            //wallpaperViewModel = uiPreferencesViewModel.wallpaperViewModel
+                            providedColorBag = colorBag
                         )
                     }
                     composable("netWorkStatus") {
@@ -166,17 +211,17 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
     private fun handleStart() {
         val context = this
         val prefs = LoadPrefsUtil.getPrefs(context)
-        val prefsBean = LoadPrefsUtil.loadPrefs(org.slf4j.LoggerFactory.getLogger(javaClass), prefs)
+        val prefsBean = LoadPrefsUtil.loadPrefs(LoggerFactory.getLogger(javaClass), prefs)
 
         if (prefsBean.serverToStart.isPasswordMandatory(prefsBean) &&
-            org.primftpd.util.StringUtils.isBlank(prefsBean.password)
+            StringUtils.isBlank(prefsBean.password)
         ) {
             showPasswordDialog = true
             return
         }
 
         if (prefsBean.serverToStart.startSftp()) {
-            val keyProvider = org.primftpd.util.KeyFingerprintProvider()
+            val keyProvider = KeyFingerprintProvider()
 
             if (!keyProvider.areFingerprintsGenerated()) {
                 keyProvider.calcPubkeyFingerprints(context)

@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -220,7 +221,14 @@ fun UiPrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.UI
+            section = SettingsSection.UI,
+            previewColorBag = ColorBag(
+                vibrant = Color(0xFF6200EE),
+                darkMuted = Color(0xFF3700B3),
+                lightMuted = Color(0xFFBB86FC),
+                muted = Color(0xFF03DAC5),
+                useM3Color = false
+            )
         )
     }
 }

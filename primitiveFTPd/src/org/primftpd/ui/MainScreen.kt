@@ -49,7 +49,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -99,6 +98,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -135,7 +135,8 @@ fun MainScreen(
     networkViewModel: NetworkViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     onRailVisibleChange: ((Boolean) -> Unit)? = null,
-    previewColorBag: ColorBag ? = null
+    previewColorBag: ColorBag? = null,
+    providedColorBag: ColorBag? = null
 ) {
 
     var rightMenuVisible by remember { mutableStateOf(false) }
@@ -156,26 +157,8 @@ fun MainScreen(
     val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
     val wallpaperPicker = rememberWallpaperPicker { wallpaperViewModel?.update(it) }
 
-    val colorBag = if (LocalInspectionMode.current && previewColorBag != null) {
-        previewColorBag
-    } else {
-        ColorBag(
-            vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
-            darkMuted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.DARK_MUTED
-            ),
-            lightMuted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.LIGHT_MUTED
-            ),
-            muted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.MUTED
-            ),
-            useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
-        )
-    }
+    val colorBag = previewColorBag ?: providedColorBag
+        ?: error("colorBag must be provided (preview or runtime)")
     //val accentColor =PreviewAccentColor ?: rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap))
     //val accentColorDarkMuted =rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap), type = "dark_muted")
 
@@ -244,7 +227,7 @@ fun MainScreen(
         .collectAsState(ChartTriStateEnum.HOUR)
 
     var animateChartModelChanges by remember { mutableStateOf(false) }
-    var chartAnimationResetJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var chartAnimationResetJob by remember { mutableStateOf<Job?>(null) }
 
     LaunchedEffect(chartMeasuringRule) {
         networkViewModel?.setChartMeasuringRule(chartMeasuringRule)
@@ -333,7 +316,7 @@ fun MainScreen(
 
             if (topBarWeatherPress) Spacer(modifier = Modifier.height(stateBarHeight - 8.dp))
 
-            MainHeroImage(
+            MainImage(
                 wallpaperBitmap = wallpaperBitmap,
                 modifier = Modifier
                     .weight(0.7f)
@@ -501,7 +484,7 @@ private fun WallpaperBase(
 }
 
 @Composable
-private fun MainHeroImage(
+private fun MainImage(
     wallpaperBitmap: ImageBitmap?,
     modifier: Modifier = Modifier
 ) {
@@ -1042,6 +1025,7 @@ fun MainScreenPreview() {
             onStopServer = {},
             onNavigate = {},
             previewColorBag = previewColorBag,
+            providedColorBag = null,
         )
     }
 }

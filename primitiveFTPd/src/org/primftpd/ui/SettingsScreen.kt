@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
@@ -58,10 +57,6 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import org.primftpd.ui.data.ColorBag
-import org.primftpd.ui.data.WallpaperColorEnum
-import org.primftpd.ui.util.WallpaperPalette
-import org.primftpd.ui.util.rememberWallpaperAccentColor
-import org.primftpd.ui.viewmodel.WallpaperViewModel
 
 enum class SettingsSection(val route: String) {
     AUTH("auth"),
@@ -78,8 +73,8 @@ fun SettingsScreen(
     section: SettingsSection = SettingsSection.AUTH,
     onBack: () -> Unit,
     previewColorBag: ColorBag? = null,
-    wallpaperViewModel: WallpaperViewModel? = if(LocalInspectionMode.current) null else viewModel(),
-    uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel()
+    providedColorBag: ColorBag? = null,
+    uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
 ) {
     var hasNavigatedBack by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -91,27 +86,8 @@ fun SettingsScreen(
             ?.let { scrollState.animateScrollTo(it) }
     }
 
-    val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
-    val colorBag = if (LocalInspectionMode.current && previewColorBag != null) {
-        previewColorBag
-    } else {
-        ColorBag(
-            vibrant = rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap)),
-            darkMuted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.DARK_MUTED
-            ),
-            lightMuted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.LIGHT_MUTED
-            ),
-            muted = rememberWallpaperAccentColor(
-                WallpaperPalette(bitmap = wallpaperBitmap),
-                type = WallpaperColorEnum.MUTED
-            ),
-            useM3Color = (uiPreferencesViewModel?.usrM3ToPickColors?.collectAsState()?.value ?: false)
-        )
-    }
+    val colorBag = previewColorBag ?: providedColorBag
+        ?: error("colorBag must be provided (preview or runtime)")
     Scaffold(
         topBar = {
             TopAppBar(
@@ -776,7 +752,14 @@ fun PrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.AUTH
+            section = SettingsSection.AUTH,
+            previewColorBag = ColorBag(
+                vibrant = Color(0xFF6200EE),
+                darkMuted = Color(0xFF3700B3),
+                lightMuted = Color(0xFFBB86FC),
+                muted = Color(0xFF03DAC5),
+                useM3Color = false
+            )
         )
     }
 }

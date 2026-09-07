@@ -3,9 +3,11 @@ package org.primftpd.ui
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,19 +31,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import org.primftpd.R
 import org.primftpd.ui.ShizukuFtpTheme
+import org.primftpd.ui.data.ColorBag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(
+    onBack: () -> Unit,
+    colorBag: ColorBag
+) {
     val context = LocalContext.current
     var hasNavigatedBack by remember { mutableStateOf(false) }
     
@@ -75,12 +85,24 @@ fun AboutScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
-            
-            Text(
-                text = getVersionInfo(context),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+            Row {
+                Text(
+                    text = getVersionInfo(context),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text("check updates",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable {
+                            if( getVersionInfo(context) != "v1.0.0" )
+                                openUrl(context, "https://github.com/rD227/shizuku-ftp/releases")
+                        }
+                )
+            }
             
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             
@@ -184,10 +206,19 @@ private fun getVersionInfo(context: Context): String {
     }
 }
 
-@Preview(showBackground = true, name = "About Screen", locale = "zh", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Preview(showBackground = true, name = "About Screen", locale = "zh", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun AboutScreenPreview() {
     ShizukuFtpTheme {
-        AboutScreen(onBack = {})
+        AboutScreen(
+            onBack = {},
+            colorBag = ColorBag(
+                vibrant = Color(0xFF6200EE),
+                darkMuted = Color(0xFF3700B3),
+                lightMuted = Color(0xFFBB86FC),
+                muted = Color(0xFF03DAC5),
+                useM3Color = false
+            )
+        )
     }
 }
