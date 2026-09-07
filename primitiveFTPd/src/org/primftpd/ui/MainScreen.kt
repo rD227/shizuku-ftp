@@ -157,6 +157,8 @@ fun MainScreen(
     val wallpaperBitmap: ImageBitmap? = wallpaperViewModel?.wallpaper?.collectAsState()?.value
     val wallpaperPicker = rememberWallpaperPicker { wallpaperViewModel?.update(it) }
 
+    //使用ProvidedColor的地方都是因为懒得改Preview里面的具体内容所以这样干的
+    //MainScreen和Setting两个写得最早的是这样的
     val colorBag = previewColorBag ?: providedColorBag
         ?: error("colorBag must be provided (preview or runtime)")
     //val accentColor =PreviewAccentColor ?: rememberWallpaperAccentColor(WallpaperPalette(bitmap = wallpaperBitmap))

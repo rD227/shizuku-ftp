@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -53,12 +54,13 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
     var hasNavigatedBack by remember { mutableStateOf(false) }
-    
+
+    val colorBag = colorBag
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("关于")
+                    Text("About", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -111,7 +113,8 @@ fun AboutScreen(
             ClickableLink(
                 label = "General Public License v3.0",
                 url = "https://www.gnu.org/licenses/gpl-3.0.html",
-                context = context
+                context = context,
+                colorBag = colorBag
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -119,20 +122,21 @@ fun AboutScreen(
             // Project links
             SectionTitle("   \uD83D\uDCC2")
 
-            LinkItem("GitHub", "https://github.com/rD227/shizuku-ftp", context)
+            LinkItem("GitHub", "https://github.com/rD227/shizuku-ftp", context, colorBag)
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Dependencies
             SectionTitle("Libraries")
-            LinkItem("Upstream GitHub Project", "https://github.com/wolpi/prim-ftpd", context)
-            LinkItem("AndroidX", "https://developer.android.com/jetpack", context)
-            LinkItem("Apache MINA", "https://mina.apache.org", context)
-            LinkItem("Bouncy Castle", "https://bouncycastle.org/", context)
-            LinkItem("SLF4J", "https://www.slf4j.org/", context)
-            LinkItem("NoNonsense-FilePicker", "https://github.com/spacecowboy/NoNonsense-FilePicker", context)
-            LinkItem("libsuperuser", "https://su.chainfire.eu/", context)
-            LinkItem("EventBus", "https://github.com/greenrobot/EventBus", context)
+            LinkItem("Compose-Material3", "https://developer.android.com/jetpack/androidx/releases/compose-material3", context,colorBag)
+            LinkItem("Upstream GitHub Project", "https://github.com/wolpi/prim-ftpd", context,colorBag)
+            LinkItem("AndroidX", "https://developer.android.com/jetpack", context,colorBag)
+            LinkItem("Apache MINA", "https://mina.apache.org", context,colorBag)
+            LinkItem("Bouncy Castle", "https://bouncycastle.org/", context,colorBag)
+            LinkItem("SLF4J", "https://www.slf4j.org/", context,colorBag)
+            LinkItem("NoNonsense-FilePicker", "https://github.com/spacecowboy/NoNonsense-FilePicker", context,colorBag)
+            LinkItem("libsuperuser", "https://su.chainfire.eu/", context,colorBag)
+            LinkItem("EventBus", "https://github.com/greenrobot/EventBus", context,colorBag)
         }
     }
 }
@@ -143,12 +147,17 @@ private fun SectionTitle(title: String) {
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(bottom = 8.dp),
     )
 }
 
 @Composable
-private fun LinkItem(label: String, url: String, context: Context) {
+private fun LinkItem(
+        label: String,
+        url: String,
+        context: Context,
+        colorBag: ColorBag
+    ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,22 +166,28 @@ private fun LinkItem(label: String, url: String, context: Context) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
         ClickableLink(
             label = url,
             url = url,
-            context = context
+            context = context,
+            colorBag = colorBag
         )
     }
 }
 
 @Composable
-private fun ClickableLink(label: String, url: String, context: Context) {
+private fun ClickableLink(
+    label: String,
+    url: String,
+    context: Context,
+    colorBag: ColorBag
+) {
     Text(
         text = label,
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = if (colorBag.useM3Color) MaterialTheme.colorScheme.primary else if (isSystemInDarkTheme()) colorBag.lightMuted else colorBag.darkMuted,
         textDecoration = TextDecoration.Underline,
         modifier = Modifier
             .clickable {
