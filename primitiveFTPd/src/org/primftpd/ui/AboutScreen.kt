@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +47,12 @@ import androidx.core.net.toUri
 import org.primftpd.R
 import org.primftpd.ui.ShizukuFtpTheme
 import org.primftpd.ui.data.ColorBag
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +62,8 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
     var hasNavigatedBack by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var checkingUpdate by remember { mutableStateOf(false) }
 
     val colorBag = colorBag
     Scaffold(
@@ -95,13 +105,37 @@ fun AboutScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text("check updates",
+                Text(if (checkingUpdate) "checking..." else "check updates",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .clickable {
-                            if( getVersionInfo(context) != "v1.0.0" )
-                                openUrl(context, "https://github.com/rD227/shizuku-ftp/releases")
+                        .clickable(enabled = !checkingUpdate) {
+                            checkingUpdate = true
+                            scope.launch {
+                                val latestVersion = withContext(Dispatchers.IO) {
+                                    fetchLatestVersionFromGithub()
+                                }
+                                checkingUpdate = false
+                                when {
+                                    // failed to reach GitHub -> tell the user
+                                    latestVersion == null ->
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to check for updates. Please try again later.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    // an update is available
+                                    compareVersions(getVersionName(context), latestVersion) < 0 ->
+                                        openUrl(context, "https://github.com/rD227/shizuku-ftp/releases/latest/download/shizuku-ftp-release.apk")
+                                    // already on the latest release
+                                    else ->
+                                        Toast.makeText(
+                                            context,
+                                            "You are already up to date.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                }
+                            }
                         }
                 )
             }
@@ -219,6 +253,66 @@ private fun getVersionInfo(context: Context): String {
     } catch (e: PackageManager.NameNotFoundException) {
         "unknown"
     }
+}
+
+/** Returns only the versionName, e.g. "v1.2.2", or "" when it cannot be read. */
+private fun getVersionName(context: Context): String {
+    return try {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.versionName ?: ""
+    } catch (e: PackageManager.NameNotFoundException) {
+        ""
+    }
+}
+
+private const val LATEST_RELEASE_API =
+    "https://api.github.com/repos/rD227/shizuku-ftp/releases/latest"
+
+/** Fetches the newest GitHub release tag, e.g. "v1.2.1". Returns null when the request fails. */
+private fun fetchLatestVersionFromGithub(): String? {
+    return try {
+        val connection = URL(LATEST_RELEASE_API).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "GET"
+            connection.setRequestProperty("Accept", "application/vnd.github+json")
+            connection.setRequestProperty("User-Agent", "shizuku-ftp/update-check")
+            connection.connectTimeout = 10_000
+            connection.readTimeout = 10_000
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                JSONObject(body).optString("tag_name").takeIf { it.isNotBlank() }
+            } else {
+                null
+            }
+        } finally {
+            connection.disconnect()
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
+ * Compares two dot-separated version strings such as "v1.2.3" or "1.2.3-SNAPSHOT".
+ * Returns < 0 when [a] is older than [b], 0 when equal, > 0 when [a] is newer.
+ */
+private fun compareVersions(a: String, b: String): Int {
+    fun numericParts(version: String): List<Int> = version
+        .trim()
+        .removePrefix("v")
+        .removePrefix("V")
+        .substringBefore('-')
+        .split('.')
+        .map { it.toIntOrNull() ?: 0 }
+    val aParts = numericParts(a)
+    val bParts = numericParts(b)
+    for (i in 0 until maxOf(aParts.size, bParts.size)) {
+        val aPart = aParts.getOrElse(i) { 0 }
+        val bPart = bParts.getOrElse(i) { 0 }
+        if (aPart != bPart) return aPart.compareTo(bPart)
+    }
+    return 0
 }
 
 @Preview(showBackground = true, name = "About Screen", locale = "zh", uiMode = Configuration.UI_MODE_NIGHT_YES)

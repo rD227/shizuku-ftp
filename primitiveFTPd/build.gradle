@@ -95,6 +95,12 @@ android {
     kotlinOptions {
         jvmTarget = "21"
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "shizuku-ftp-${variant.buildType.name}.apk"
+        }
+    }
 }
 
 dependencies {
@@ -168,7 +174,7 @@ publishing {
             groupId = 'org.primftpd.shizuku'
             artifactId = 'app'
             version = 'latest-SNAPSHOT'
-            artifact file('build/outputs/apk/debug/primitiveFTPd-debug.apk')
+            artifact file('build/outputs/apk/debug/shizuku-ftp-debug.apk')
         }
     }
     repositories {

@@ -8,8 +8,9 @@ import sys
 import json
 
 
-buildApkPath = "primitiveFTPd/build/outputs/apk/release/primitiveFTPd-release.apk"
-buildBundlePath = "primitiveFTPd/build/outputs/bundle/release/primitiveFTPd-release.aab"
+
+buildApkPath = "primitiveFTPd/build/outputs/apk/release/shizuku-ftp-release.apk"
+buildBundlePath = "primitiveFTPd/build/outputs/bundle/release/shizuku-ftp-release.aab"
 
 
 def doGithubUpload(githubToken, uploadUrl, apkPath, name):
