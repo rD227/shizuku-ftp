@@ -1,6 +1,7 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias libs.plugins.android.application
-    alias libs.plugins.kotlin.android
     alias libs.plugins.maven.publish
     alias libs.plugins.kotlin.compose
 
@@ -10,6 +11,12 @@ plugins {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(libs.versions.java.toolchain.get())
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -91,14 +98,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
         coreLibraryDesugaringEnabled = true
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-
-    applicationVariants.all { variant ->
-        variant.outputs.all { output ->
-            outputFileName = "shizuku-ftp-${variant.buildType.name}.apk"
+// AGP 9
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("shizuku-ftp-${variant.buildType}.apk")
         }
     }
 }
