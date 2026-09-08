@@ -10,7 +10,7 @@ compileSdk = "36"
 # JDK used by Gradle
 java-toolchain = "21"
 
-androidGradlePlugin = "8.13.2" #change it to adapt my arch arm
+androidGradlePlugin = "9.0.1" #change it to adapt my arch arm
 kotlin = "2.3.20"
 
 androidxActivity = "1.13.0"

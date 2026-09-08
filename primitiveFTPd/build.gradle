@@ -20,8 +20,8 @@ android {
 
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
-        versionCode = 72
-        versionName = "v1.2.3"
+        versionCode = 73
+        versionName = "v1.2.4"
 
         minSdk = libs.versions.minSdk.get().toInteger()
         targetSdk = libs.versions.targetSdk.get().toInteger()
