@@ -65,6 +65,7 @@ internal fun LinkSideMenu(
             GlassSidebarBox(
                 hazeState = hazeState,
                 blurIntensity = blurIntensity,
+                experimentalHaze = sideMenuPref.experimentalHaze,
                 showWallpaper = sideMenuPref.showWallpaper,
                 //modifier = Modifier.width(270.dp),
                 content = {
@@ -170,6 +171,7 @@ internal fun GearSideMenu(
                 hazeState = hazeState,
                 //modifier = Modifier.width(280.dp),
                 blurIntensity = blurIntensity,
+                experimentalHaze = sideMenuPref.experimentalHaze,
                 showWallpaper = sideMenuPref.showWallpaper,
                 content = {
 

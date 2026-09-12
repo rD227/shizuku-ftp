@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -221,8 +222,9 @@ fun MainScreen(
     val blurIntensity = if (!LocalInspectionMode.current) uiPreferencesViewModel?.blurIntensity?.collectAsState()?.value else 5f
 
     val sideMenuPref = SideMenuPref(
-        springAnimation =  uiPreferencesViewModel?.sideMenuSpringAnimation?.collectAsState()?.value ?: true ,
-        showWallpaper =  uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true
+        springAnimation =  uiPreferencesViewModel?.sideMenuSpringAnimation?.collectAsState()?.value ?: true,
+        showWallpaper =  uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true,
+        experimentalHaze =  uiPreferencesViewModel?.experimentalHaze?.collectAsState()?.value ?: false
     )
 
     val chartMeasuringRule by (uiPreferencesViewModel?.chartMeasuringRule ?: flowOf(ChartTriStateEnum.HOUR))
@@ -385,7 +387,8 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .padding(bottom = 0.dp)
+                            //.padding(bottom = 0.dp)
+                            .navigationBarsPadding()
                             .padding(top = 2.dp),
                         //animateModelChanges = animateChartModelChanges,
                         measuringRule = chartMeasuringRule,

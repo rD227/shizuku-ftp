@@ -78,5 +78,15 @@ object UiPreferences {
     fun setChartMeasuringRule(prefs: SharedPreferences, value: ChartTriStateEnum) {
         prefs.edit { putString(PREF_CHART_MEASURING_RULE, value.name) }
     }
+    //______
+    const val PREF_KEY_EXPERIMENTAL_HAZE = "experimentalHazePref"
+    const val DEFAULT_EXPERIMENTAL_HAZE = false
+
+    fun getExperimentalHaze(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(PREF_KEY_EXPERIMENTAL_HAZE, DEFAULT_EXPERIMENTAL_HAZE)
+
+    fun setExperimentalHaze(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit { putBoolean(PREF_KEY_EXPERIMENTAL_HAZE, value) }
+    }
 
 }

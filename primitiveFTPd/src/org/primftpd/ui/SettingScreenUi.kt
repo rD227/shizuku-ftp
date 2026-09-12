@@ -63,6 +63,7 @@ internal fun UiCategory(
     val changeInTimeStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
         UiPreferences.getTopComponentPressedDown(prefs)
     )).collectAsState(UiPreferences.getTopComponentPressedDown(prefs))
+    var experimentalHaze by remember { mutableStateOf(uiPreferencesViewModel?.getExperimentalHaze() ?: UiPreferences.getExperimentalHaze(prefs)) }
 
     var blurIntensity by remember { mutableFloatStateOf(uiPreferencesViewModel?.getBlurIntensity() ?: UiPreferences.getBlurIntensity(prefs)) }
 
@@ -201,6 +202,17 @@ internal fun UiCategory(
                 NotificationUtil.removeStartStopNotification(context)
             }
         }
+    )
+
+    SwitchPrefRow(
+            title = "Weather use experimental haze",
+            description = "Weather use experimental haze lower than android 11 (including android 11)",
+            checked = experimentalHaze,
+            colorBag = colorBag,
+            onCheckedChange = {
+                experimentalHaze = it
+                uiPreferencesViewModel?.setExperimentalHaze(it)
+            }
     )
 
     SwitchPrefRow(

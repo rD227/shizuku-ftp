@@ -42,10 +42,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -350,6 +353,7 @@ internal fun ShowCardButton(
 internal fun Modifier.glassHaze(
     hazeState: HazeState,
     blurIntensity: Float?,
+    weatherEnableExperimentalHazeOnLowVer: Boolean = false,
     darkTint: Color = Color.Black.copy(alpha = 0.22f),
     lightTint: Color = Color.White.copy(alpha = 0.22f),
     darkFallback: Color = Color.Black.copy(alpha = 0.62f),
@@ -357,9 +361,11 @@ internal fun Modifier.glassHaze(
 ): Modifier {
     //if (blurIntensity == null || blurIntensity == 0f) return this
     val isDark = isSystemInDarkTheme()
+    var contentReady by remember { mutableStateOf(false) }
     return this.hazeEffect(state = hazeState) {
         inputScale = HazeInputScale.Fixed(0.5f)
         blurEffect {
+            blurEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || weatherEnableExperimentalHazeOnLowVer
             blurIntensity?.let { blurRadius = it.dp }
             noiseFactor = 0.06f
             colorEffects = listOf(HazeColorEffect.tint(if (isDark) darkTint else lightTint))
@@ -374,14 +380,21 @@ internal fun GlassSidebarBox(
     //modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
     blurIntensity: Float?,
-    showWallpaper: Boolean = true
+    showWallpaper: Boolean = true,
+    experimentalHaze: Boolean
 ) {
+    var contentReady by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxHeight()
             .then(
                 if (showWallpaper) {
-                    Modifier.glassHaze(hazeState, blurIntensity)
+                    Modifier.glassHaze(hazeState, blurIntensity, weatherEnableExperimentalHazeOnLowVer = experimentalHaze)
+                        //.drawWithContent {
+                        //if (contentReady) {
+                            //drawContent()
+                        //}
+                    //}
                 } else {
                     Modifier.background(MaterialTheme.colorScheme.surface)
                 }

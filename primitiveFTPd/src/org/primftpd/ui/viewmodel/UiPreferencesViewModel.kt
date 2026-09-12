@@ -94,6 +94,18 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
         return UiPreferences.getSideMenuSpringAnimation(sideMenuSpringAnimationPrefs)
     }
     ///_______
+    private val experimentalHazePrefs = application.getSharedPreferences("experimental_haze", Context.MODE_PRIVATE)
+    private val _experimentalHaze = MutableStateFlow(
+        UiPreferences.getExperimentalHaze(experimentalHazePrefs)
+    )
+    val experimentalHaze = _experimentalHaze.asStateFlow()
+    fun setExperimentalHaze(value: Boolean) {
+        UiPreferences.setExperimentalHaze(experimentalHazePrefs, value)
+        _experimentalHaze.value = value
+    }
+    fun getExperimentalHaze(): Boolean {
+        return UiPreferences.getExperimentalHaze(experimentalHazePrefs)
+    }
     /**
     private val colorBagPrefs = application.getSharedPreferences("color_bag", Context.MODE_PRIVATE)
     private val _colorBag = MutableStateFlow<org.primftpd.ui.data.ColorBag?>(null)
