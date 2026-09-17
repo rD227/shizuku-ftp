@@ -28,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
@@ -275,7 +276,7 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
         ) ?: "0"
     }
     var whichServerIndex by remember {
-        mutableStateOf(
+        mutableIntStateOf(
             serverToStartValues.indexOf(whichServerStr).coerceAtLeast(0)
         )
     }
@@ -541,218 +542,13 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
 }
 
 
-// ─── Category: System ────────────────────────────────────────────
-
-@Composable
-private fun SystemCategory(colorBag: ColorBag) {
-    val context = LocalContext.current
-    val prefs = rememberPrefs()
-
-    var wakelock by remember { mutableStateOf(LoadPrefsUtil.wakelock(prefs)) }
-    var announce by remember { mutableStateOf(LoadPrefsUtil.announce(prefs)) }
-    var announceName by remember { mutableStateOf(LoadPrefsUtil.announceName(prefs)) }
-    var startOnBoot by remember { mutableStateOf(LoadPrefsUtil.startOnBoot(prefs)) }
-    var rootCopyFiles by remember { mutableStateOf(LoadPrefsUtil.rootCopyFiles(prefs)) }
-
-    val loggingValues = LocalResources.current.getStringArray(R.array.prefLoggingValues).toList()
-    val loggingNames = LocalResources.current.getStringArray(R.array.prefLoggingNames).toList()
-    
-    val loggingStr = remember {
-        prefs.getString(LoadPrefsUtil.PREF_KEY_LOGGING, Logging.NONE.xmlValue()) ?: "0"
-    }
-    // this val's mutableStateOf is removed by AI
-    //
-
-    var loggingIndex by remember {
-        mutableStateOf(loggingValues.indexOf(loggingStr).coerceAtLeast(0))
-    }
-
-    val hostkeyNames = LocalResources.current.getStringArray(R.array.prefHostkeyAlgosNames).toList()
-    val hostkeyValues = LocalResources.current.getStringArray(R.array.prefHostkeyAlgosValues).toList()
-    val hostkeyDefaults = setOf("ed25519")
-    var savedHostkeys by remember {
-        mutableStateOf(
-            prefs.getStringSet(LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS, hostkeyDefaults) ?: hostkeyDefaults
-        )
-    }
-
-    var startDirPath by remember {
-        mutableStateOf(LoadPrefsUtil.startDir(prefs).absolutePath)
-    }
-
-    val logPath = remember {
-        val base = Defaults.homeDirScoped(context).absolutePath
-        "$base/${LogController.LOGFILE_BASENAME}*".replace("//", "/")
-    }
-    val loggingSummary = stringResource(R.string.prefSummaryLoggingV2, logPath)
-
-    var showAnnounceNameDialog by remember { mutableStateOf(false) }
-    var showLoggingDialog by remember { mutableStateOf(false) }
-    var showHostkeyDialog by remember { mutableStateOf(false) }
-
-    val startDirLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        startDirPath = LoadPrefsUtil.startDir(prefs).absolutePath
-    }
-
-    Text(
-        text = stringResource(R.string.prefsCategoryTitleSystem),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = if ( colorBag.useM3Color ) MaterialTheme.colorScheme.primary
-        else if (isSystemInDarkTheme()) colorBag.vibrant
-        else colorBag.muted,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
-    )
-
-    ClickPrefRow(
-        title = stringResource(R.string.prefTitleStartDir),
-        description = startDirPath,
-        onClick = {
-            val intent = Defaults.createPrefDirPicker(
-                context,
-                LoadPrefsUtil.startDir(prefs),
-                LoadPrefsUtil.PREF_KEY_START_DIR
-            )
-            startDirLauncher.launch(intent)
-        }
-    )
-
-    SwitchPrefRow(
-        title = stringResource(R.string.prefTitleWakelock),
-        description = stringResource(R.string.prefSummaryWakelock),
-        checked = wakelock,
-        colorBag = colorBag,
-        onCheckedChange = {
-            wakelock = it
-            prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_WAKELOCK, it) }
-        }
-    )
-
-    SwitchPrefRow(
-        title = stringResource(R.string.prefTitleAnnounce),
-        description = stringResource(R.string.prefSummaryAnnounce),
-        checked = announce,
-        colorBag = colorBag,
-        onCheckedChange = {
-            announce = it
-            prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_ANNOUNCE, it) }
-        }
-    )
-
-    EditPrefRow(
-        title = stringResource(R.string.prefTitleAnnounceName),
-        description = stringResource(R.string.prefSummaryAnnounceName),
-        currentValue = announceName,
-        onClick = { showAnnounceNameDialog = true }
-    )
-
-    SwitchPrefRow(
-        title = stringResource(R.string.prefTitleStartOnBoot),
-        description = stringResource(R.string.prefSummaryStartOnBoot),
-        checked = startOnBoot,
-        colorBag = colorBag,
-        onCheckedChange = {
-            startOnBoot = it
-            prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_START_ON_BOOT, it) }
-        }
-    )
-
-    ListPrefRow(
-        title = stringResource(R.string.prefTitleLogging),
-        description = loggingSummary,
-        selectedLabel = loggingNames[loggingIndex],
-        onClick = { showLoggingDialog = true }
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showHostkeyDialog = true }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.prefHostkeyAlgos),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                text = stringResource(R.string.prefSummaryHostkeyAlgos),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Text(
-            text = savedHostkeys.joinToString(", "),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-
-    SwitchPrefRow(
-        title = stringResource(R.string.prefRootCopyFiles),
-        description = stringResource(R.string.prefSummaryRootCopyFiles),
-        checked = rootCopyFiles,
-        colorBag = colorBag,
-        onCheckedChange = {
-            rootCopyFiles = it
-            prefs.edit { putBoolean(LoadPrefsUtil.PREF_ROOT_COPY_FILES, it) }
-        }
-    )
-
-    // ── Dialogs ──
-
-    if (showAnnounceNameDialog) {
-        EditTextDialog(
-            title = stringResource(R.string.prefTitleAnnounceName),
-            currentValue = announceName,
-            validate = { null },
-            onDismiss = { showAnnounceNameDialog = false },
-            onConfirm = {
-                announceName = it
-                prefs.edit { putString(LoadPrefsUtil.PREF_KEY_ANNOUNCE_NAME, it) }
-            }
-        )
-    }
-
-    if (showLoggingDialog) {
-        ListSelectionDialog(
-            title = stringResource(R.string.prefTitleLogging),
-            entries = loggingNames,
-            entryValues = loggingValues,
-            selectedIndex = loggingIndex,
-            onDismiss = { showLoggingDialog = false },
-            onSelected = { idx, value ->
-                loggingIndex = idx
-                prefs.edit { putString(LoadPrefsUtil.PREF_KEY_LOGGING, value) }
-            }
-        )
-    }
-
-    if (showHostkeyDialog) {
-        MultiSelectDialog(
-            title = stringResource(R.string.prefHostkeyAlgos),
-            entries = hostkeyNames,
-            entryValues = hostkeyValues,
-            initialSelected = savedHostkeys,
-            onDismiss = { showHostkeyDialog = false },
-            onConfirm = { selected ->
-                savedHostkeys = selected
-                prefs.edit { putStringSet(LoadPrefsUtil.PREF_KEY_HOSTKEY_ALGOS, selected) }
-            }
-        )
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun PrefsPreview() {
     MaterialTheme {
         SettingsScreen(
             onBack = {},
-            section = SettingsSection.AUTH,
+            section = SettingsSection.CONNECTIVITY,
             previewColorBag = ColorBag(
                 vibrant = Color(0xFF6200EE),
                 darkMuted = Color(0xFF3700B3),

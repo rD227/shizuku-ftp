@@ -3,7 +3,9 @@ package org.primftpd.util;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 
 
 import org.primftpd.crypto.HostKeyAlgorithm;
@@ -107,6 +109,22 @@ public final class Defaults {
 	public static Intent createPrefDirPicker(Context ctxt, File initialVal, String prefKey) {
 		Intent dirPickerIntent = createDefaultDirPicker(ctxt, initialVal);
 		dirPickerIntent.putExtra(AbstractFilePickerActivity.MODE_SAFE_PREFERENCE, prefKey);
+		return dirPickerIntent;
+	}
+
+	public static Intent exportDirPicker(Context ctxt, File initialVal) {
+		Intent dirPickerIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+		// 添加读写权限标志，以便返回的 URI 可以持久化访问
+		dirPickerIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+				| Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+				| Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+		// 如果提供了初始目录，将其转换为 URI 并作为初始位置传入
+		if (initialVal != null) {
+			Uri initialUri = Uri.fromFile(initialVal);
+			dirPickerIntent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
+		}
 		return dirPickerIntent;
 	}
 
