@@ -43,7 +43,9 @@ fun rememberWallpaperPicker(
 internal suspend fun saveWallpaperToLocal(context: Context, sourceUri: Uri): String? =
     withContext(Dispatchers.IO) {
         runCatching {
-            val dir = File(context.filesDir, "wallpaper").apply { mkdirs() }
+            val baseDir = context.getExternalFilesDir(null)
+                ?: context.filesDir   // 外部存储不可用时的兜底
+            val dir = File(baseDir, "wallpaper").apply { mkdirs() }
             val target = File(dir, "main_wallpaper")
             val tmp = File(dir, "main_wallpaper.tmp")
             context.contentResolver.openInputStream(sourceUri).use { input ->
