@@ -117,10 +117,11 @@ object SettingsBackup {
 
         val root = settingsJson ?: error("settings.json not found in backup")
 
-        // 默认 SharedPreferences
+        // SharedPreferences
         applyPrefs(prefs, root.getJSONObject("prefs"))
 
-        // 独立的 UI SharedPreferences。旧版本备份没有 customPrefs，这里会直接跳过。
+
+        //uiPreferences
         root.optJSONObject("customPrefs")?.let { customPrefs ->
             CUSTOM_PREF_FILES.forEach { name ->
                 val fileJson = customPrefs.optJSONObject(name) ?: return@forEach
@@ -157,11 +158,13 @@ object SettingsBackup {
     }
 
     private fun applyPrefs(prefs: SharedPreferences, json: JSONObject) {
-        // 先把所有类型都解析出来，避免文件一半不合法时污染现有设置。
+        // 先把所有类型都解析出来，避免文件一半不合法时污染现有设置
         val entries = json.keys().asSequence()
             .map { key -> key to json.getJSONObject(key) }
             .toList()
 
+        //这里没有写RememberUIPref这种东西，也没有写LoadUIPrefs，所以这里是一条一条匹配的（（（不过看起来还好，只不过是按类型匹配而已
+        //这种大的when还是很有意思的
         val editor = prefs.edit().clear()
         entries.forEach { (key, entry) ->
             when (entry.getString("type")) {
@@ -200,6 +203,7 @@ object SettingsBackup {
         }
     }
 
+    //这里的name形参是不必要的，因为名字是固定的，但是也在考虑要不要接受多个配置文件自动修改名字防止重名这种东西
     private fun writeEntry(zip: ZipOutputStream, name: String, bytes: ByteArray) {
         zip.putNextEntry(ZipEntry(name))
         zip.write(bytes)

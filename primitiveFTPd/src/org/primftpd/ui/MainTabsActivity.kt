@@ -157,6 +157,7 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             section = settingsSection,
                             onBack = { navController.popBackStack() },
                             uiPreferencesViewModel = uiPreferencesViewModel,
+                            wallpaperViewModel = wallpaperViewModel,
                             providedColorBag = colorBag
                         )
                     }

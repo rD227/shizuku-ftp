@@ -35,12 +35,16 @@ import org.primftpd.prefs.LoadPrefsUtil
 import org.primftpd.prefs.Logging
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.SettingsBackup
+import org.primftpd.ui.viewmodel.WallpaperViewModel
 import org.primftpd.util.Defaults
 
 
 @Composable
 @Suppress("WrongConstant")
-internal fun SystemCategory(colorBag: ColorBag) {
+internal fun SystemCategory(
+    colorBag: ColorBag,
+    wallpaperViewModel: WallpaperViewModel? = null,
+) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
 
@@ -150,6 +154,7 @@ internal fun SystemCategory(colorBag: ColorBag) {
                 SettingsBackup.import(context, prefs, uri).fold(
                     onSuccess = {
                         Toast.makeText(context, "Import succeeded", Toast.LENGTH_SHORT).show()
+                        wallpaperViewModel?.load()
                         if (context is Activity) {
                             context.recreate()
                         }

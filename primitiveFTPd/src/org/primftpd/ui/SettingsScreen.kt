@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.primftpd.ui.viewmodel.UiPreferencesViewModel
+import org.primftpd.ui.viewmodel.WallpaperViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -76,6 +77,7 @@ fun SettingsScreen(
     previewColorBag: ColorBag? = null,
     providedColorBag: ColorBag? = null,
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
+    wallpaperViewModel: WallpaperViewModel? = null,
 ) {
     var hasNavigatedBack by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -148,7 +150,10 @@ fun SettingsScreen(
                         sectionOffsets[SettingsSection.SYSTEM] = it.positionInParent().y.toInt()
                     }
             ) {
-                SystemCategory(colorBag = colorBag)
+                SystemCategory(
+                    colorBag = colorBag,
+                    wallpaperViewModel = wallpaperViewModel,
+                )
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
