@@ -8,6 +8,16 @@ TODO：fix the color of x-axis in darkmode
 
 # Shizuku-FTP
 
+## What's this?
+
+This is a modified version of [Primitive FTPd](https://github.com/wolpi/prim-ftpd)
+
+It extends the original project to support Shizuku, which allows the app to run with elevated privileges without requiring root access.
+
+It's as modern as possible.
+
+It also extend other functions.
+
 Now the Shizuku function works
 ~~This kind of server-side lack of beautification is actually nothing~~
 
