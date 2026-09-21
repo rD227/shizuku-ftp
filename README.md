@@ -26,7 +26,7 @@ Now the Shizuku function works
 ~~I will work hard~~
 
 # Exterior
-<img width="48%" alt="Screenshot_2026-08-24-20-07-34-63_b788f64c42a51c2" src="https://github.com/user-attachments/assets/15829623-9856-4293-a7dd-fb89418600a9" /><img width="48%" alt="Screenshot_2026-08-24-20-09-53-30_b788f64c42a51c2" src="https://github.com/user-attachments/assets/8b4b7024-05bf-4c7a-9ddc-4950c9bc8ac6" />
+<img width="33%" height="1920" alt="026b8afc30f6702552d7eb56cefb73da" src="https://github.com/user-attachments/assets/6b8920c1-f9be-4178-b1d8-a4d5b6b6a9a6" /><img width="33%" height="2772" alt="58bb814cf41f2edb115ab2e7148d1c57" src="https://github.com/user-attachments/assets/84cb5134-2176-451a-8739-d08ef17a8e01" /><img width="33%" height="1920" alt="75e940a139e455e6bc116be39be4fd9d" src="https://github.com/user-attachments/assets/77201146-77e6-4e6f-b0b8-69078fe8fee5" />
 
 # I need to do learn more about it recently,don't worry, I won't forget it,
 

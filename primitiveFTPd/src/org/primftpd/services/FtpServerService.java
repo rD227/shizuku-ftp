@@ -9,6 +9,8 @@ import org.apache.ftpserver.ConnectionConfigFactory;
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.command.CommandFactory;
+import org.apache.ftpserver.command.CommandFactoryFactory;
 import org.apache.ftpserver.listener.Listener;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.primftpd.events.ClientActionEvent;
@@ -86,7 +88,7 @@ public class FtpServerService extends AbstractServerService
 	@Override
 	protected boolean launchServer(final Shell.Interactive shell) {
 		logger.info(
-				"=== FTP auto zip transmission setting: {} (MODE Z not implemented yet, this only records the setting) ===",
+				"=== FTP auto zip transmission setting: {} (Apache FtpServer supports MODE Z; client must send MODE Z) ===",
 				prefsBean.getTransmissionStruct().getAutoZipTransmission());
 		// Initialize Shizuku service manager if needed
 		if (prefsBean.getStorageType() == org.primftpd.prefs.StorageType.SHIZUKU ||
@@ -126,6 +128,16 @@ public class FtpServerService extends AbstractServerService
 
 		FtpServerFactory serverFactory = new FtpServerFactory();
 		serverFactory.addListener("default", createListener(listenerFactory));
+
+		CommandFactory defaultCommandFactory = serverFactory.getCommandFactory();
+		if (defaultCommandFactory == null) {
+			defaultCommandFactory = new CommandFactoryFactory().createCommandFactory();
+		}
+		final CommandFactory delegateCommandFactory = defaultCommandFactory;
+		serverFactory.setCommandFactory(command ->
+				"MODE".equalsIgnoreCase(command)
+						? new LoggingModeCommand(logger)
+						: delegateCommandFactory.getCommand(command));
 
 		serverFactory.setUserManager(new AndroidPrefsUserManager(prefsBean));
 		serverFactory.setFileSystem(user -> {
