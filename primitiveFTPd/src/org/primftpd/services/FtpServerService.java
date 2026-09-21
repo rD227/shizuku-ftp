@@ -85,6 +85,9 @@ public class FtpServerService extends AbstractServerService
 
 	@Override
 	protected boolean launchServer(final Shell.Interactive shell) {
+		logger.info(
+				"=== FTP auto zip transmission setting: {} (MODE Z not implemented yet, this only records the setting) ===",
+				prefsBean.getTransmissionStruct().getAutoZipTransmission());
 		// Initialize Shizuku service manager if needed
 		if (prefsBean.getStorageType() == org.primftpd.prefs.StorageType.SHIZUKU ||
 			prefsBean.getStorageType() == org.primftpd.prefs.StorageType.VIRTUAL) {

@@ -1,5 +1,7 @@
 package org.primftpd.prefs;
 
+import org.primftpd.data.TransmissionStruct;
+
 import java.io.File;
 import java.io.Serializable;
 
@@ -28,6 +30,7 @@ public class PrefsBean implements Serializable
 	private final String safUrl;
 	private final String allowedIpsPattern;
 	private final boolean rootCopyFiles;
+	private final boolean autoZipTransmission;
 	private final boolean flushRightAway;
 
 	public PrefsBean(
@@ -50,6 +53,7 @@ public class PrefsBean implements Serializable
 		String safUrl,
 		String allowedIpsPattern,
 		boolean rootCopyFiles,
+		boolean autoZipTransmission,
 		boolean flushRightAway)
 	{
 		super();
@@ -74,6 +78,7 @@ public class PrefsBean implements Serializable
 		this.safUrl = safUrl;
 		this.allowedIpsPattern = allowedIpsPattern;
 		this.rootCopyFiles = rootCopyFiles;
+		this.autoZipTransmission = autoZipTransmission;
 		this.flushRightAway = flushRightAway;
 	}
 
@@ -164,5 +169,16 @@ public class PrefsBean implements Serializable
 
 	public boolean isFlushRightAway() {
 		return flushRightAway;
+	}
+
+	public boolean isAutoZipTransmission() {
+		return autoZipTransmission;
+	}
+
+	public TransmissionStruct getTransmissionStruct() {
+		return new TransmissionStruct(
+				flushRightAway,
+				autoZipTransmission
+		);
 	}
 }

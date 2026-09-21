@@ -306,7 +306,7 @@ public abstract class SafFile<TMina, TFileSystemView extends SafFileSystemView> 
         return new TracingBufferedOutputStream(
             getPftpdService().getContext().getContentResolver().openOutputStream(uri),
             logger,
-            getPftpdService().getPrefsBean().isFlushRightAway());
+            getPftpdService().getPrefsBean().getTransmissionStruct());
     }
 
     public InputStream createInputStream(long offset) throws IOException {

@@ -308,7 +308,7 @@ public abstract class RoSafFile<TMina, TFileSystemView extends RoSafFileSystemVi
         return new TracingBufferedOutputStream(
             getPftpdService().getContext().getContentResolver().openOutputStream(uri),
             logger,
-            getPftpdService().getPrefsBean().isFlushRightAway());
+            getPftpdService().getPrefsBean().getTransmissionStruct());
         // TODO no null, throw IOException
     }
 

@@ -10,8 +10,12 @@ import org.apache.ftpserver.usermanager.AnonymousAuthentication;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.util.IoUtils;
 import org.apache.sshd.SshServer;
+import org.apache.sshd.common.Compression;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.Signature;
+import org.apache.sshd.common.compression.CompressionDelayedZlib;
+import org.apache.sshd.common.compression.CompressionNone;
+import org.apache.sshd.common.compression.CompressionZlib;
 import org.apache.sshd.common.io.IoSession;
 import org.apache.sshd.common.io.mina.MinaServiceFactoryFactory;
 import org.apache.sshd.common.keyprovider.AbstractKeyPairProvider;
@@ -145,6 +149,18 @@ public class SshServerService extends AbstractServerService
 		}
 
 		sshServer = SshServer.setUpDefaultServer();
+		boolean autoZipTransmission = prefsBean.getTransmissionStruct().getAutoZipTransmission();
+		logger.info("=== SSH auto zip transmission setting: {} ===", autoZipTransmission);
+		if (autoZipTransmission) {
+			List<NamedFactory<Compression>> compressionFactories = new ArrayList<>(3);
+			compressionFactories.add(new CompressionNone.Factory());
+			compressionFactories.add(new CompressionZlib.Factory());
+			compressionFactories.add(new CompressionDelayedZlib.Factory());
+			sshServer.setCompressionFactories(compressionFactories);
+			logger.info("=== SSH compression factories enabled: none, zlib, zlib@openssh.com ===");
+		} else {
+			logger.info("=== SSH compression factories: none only ===");
+		}
 		sshServer.setPort(prefsBean.getSecurePort());
 		String bindIp = getBindIp();
 		if (bindIp != null) {

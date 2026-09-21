@@ -1,6 +1,7 @@
 package org.primftpd.filesystem;
 
 import org.apache.ftpserver.util.IoUtils;
+import org.primftpd.data.TransmissionStruct;
 import org.primftpd.events.ClientActionEvent;
 import org.primftpd.pojo.LsOutputBean;
 import org.primftpd.pojo.LsOutputParser;
@@ -198,18 +199,18 @@ public abstract class RootFile<TMina, TFileSystemView extends RootFileSystemView
         } else {
             os = createOutputStreamDd(offset);
         }
-        final boolean flushRightAway = getPftpdService().getPrefsBean().isFlushRightAway();
+        final TransmissionStruct transmissionStruct = getPftpdService().getPrefsBean().getTransmissionStruct();
         return new BufferedOutputStream(os) {
             @Override
             public void write(int b) throws IOException {
                 super.write(b);
-                if (flushRightAway) super.flush();
+                if (transmissionStruct.getFlushRightAway()) super.flush();
             }
 
             @Override
             public void write(byte[] b, int off, int len) throws IOException {
                 super.write(b, off, len);
-                if (flushRightAway) super.flush();
+                if (transmissionStruct.getFlushRightAway()) super.flush();
             }
 
             @Override
@@ -252,7 +253,8 @@ public abstract class RootFile<TMina, TFileSystemView extends RootFileSystemView
         return new TracingBufferedOutputStream(
             ddProcess.getOutputStream(),
             logger,
-            getPftpdService().getPrefsBean().isFlushRightAway());
+            getPftpdService().getPrefsBean().getTransmissionStruct()
+        );
     }
 
     public InputStream createInputStreamDd(long offset) throws IOException {

@@ -5,7 +5,9 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import org.apache.ftpserver.impl.PassivePorts;
+import org.jetbrains.annotations.NotNull;
 import org.primftpd.crypto.HostKeyAlgorithm;
+import org.primftpd.data.TransmissionStruct;
 import org.primftpd.util.Defaults;
 import org.primftpd.util.StringUtils;
 import org.slf4j.Logger;
@@ -70,6 +72,8 @@ public class LoadPrefsUtil
 	public static final String PREF_KEY_HOSTKEY_ALGOS = "hostkeyAlgosPref";
 
 	public static final String PREF_KEY_FLUSH_RIGHT_AWAY = "flushRightAwayPref";
+
+	public static final String PREF_KEY_AUTO_ZIP_TRANSMISSION = "autoZipTransmissionPref";
 
 	public static final int PORT_DEFAULT_VAL = 12345;
 	static final String PORT_DEFAULT_VAL_STR = String.valueOf(PORT_DEFAULT_VAL);
@@ -258,6 +262,12 @@ public class LoadPrefsUtil
 				Boolean.TRUE);
 	}
 
+	public static Boolean autoZipTransmission(SharedPreferences prefs) {
+		return prefs.getBoolean(
+				LoadPrefsUtil.PREF_KEY_AUTO_ZIP_TRANSMISSION,
+				Boolean.TRUE);
+	}
+
 	public static int loadPortInsecure(
 		Logger logger,
 		SharedPreferences prefs)
@@ -384,6 +394,9 @@ public class LoadPrefsUtil
 		boolean rootCopyFiles = rootCopyFiles(prefs);
 		logger.debug("got rootCopyFiles: {}", rootCopyFiles);
 
+		boolean autoZipTransmission = autoZipTransmission(prefs);
+		logger.debug("got autoZipTransmission: {}", autoZipTransmission);
+
 		boolean flushRightAway = flushRightAway(prefs);
 		logger.debug("got flushRightAway: {}", flushRightAway);
 
@@ -408,6 +421,8 @@ public class LoadPrefsUtil
 				safUrl,
 				allowedIpsPattern,
 				rootCopyFiles,
+				autoZipTransmission,
 				flushRightAway);
 	}
+
 }

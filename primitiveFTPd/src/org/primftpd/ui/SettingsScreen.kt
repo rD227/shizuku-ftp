@@ -316,6 +316,9 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
     var flushRightAway by remember {
         mutableStateOf(prefs.getBoolean(LoadPrefsUtil.PREF_KEY_FLUSH_RIGHT_AWAY, true))
     }
+    var autoZipTransmission by remember {
+        mutableStateOf(prefs.getBoolean(LoadPrefsUtil.PREF_KEY_AUTO_ZIP_TRANSMISSION, true))
+    }
 
     var showWhichServerDialog by remember { mutableStateOf(false) }
     var showPortDialog by remember { mutableStateOf(false) }
@@ -431,6 +434,16 @@ private fun ConnectivityCategory(colorBag: ColorBag) {
         onCheckedChange = {
             flushRightAway = it
             prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_FLUSH_RIGHT_AWAY, it) }
+        },
+    )
+    SwitchPrefRow(
+        title = "auto zip text transmission",
+        description = "Try to compress plain text files on the fly",
+        checked = autoZipTransmission,
+        colorBag = colorBag,
+        onCheckedChange = {
+            autoZipTransmission = it
+            prefs.edit { putBoolean(LoadPrefsUtil.PREF_KEY_AUTO_ZIP_TRANSMISSION, it) }
         },
     )
 

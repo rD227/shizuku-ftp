@@ -1,5 +1,6 @@
 package org.primftpd.filesystem;
 
+import org.primftpd.data.TransmissionStruct;
 import org.primftpd.events.ClientActionEvent;
 
 import java.io.BufferedInputStream;
@@ -264,7 +265,14 @@ public abstract class FsFile<TMina, TFileSystemView extends FsFileSystemView>
 			}
 		}
 
-		final boolean flushRightAway = getPftpdService().getPrefsBean().isFlushRightAway();
+		final TransmissionStruct transmissionStruct = getPftpdService().getPrefsBean().getTransmissionStruct();
+		final boolean flushRightAway = transmissionStruct.getFlushRightAway();
+		logger.info(
+				"[{}] createOutputStream: path={}, flushRightAway={}, autoZipTransmission={}",
+				name,
+				file.getAbsolutePath(),
+				flushRightAway,
+				transmissionStruct.getAutoZipTransmission());
 		return new BufferedOutputStream(os) {
 			@Override
 			public void write(int b) throws IOException {
@@ -294,6 +302,14 @@ public abstract class FsFile<TMina, TFileSystemView extends FsFileSystemView>
 						file.getAbsolutePath()
 		});
 		postClientAction(ClientActionEvent.ClientAction.DOWNLOAD);
+
+		TransmissionStruct transmissionStruct = getPftpdService().getPrefsBean().getTransmissionStruct();
+		logger.info(
+				"[{}] createInputStream: path={}, flushRightAway={}, autoZipTransmission={}",
+				name,
+				file.getAbsolutePath(),
+				transmissionStruct.getFlushRightAway(),
+				transmissionStruct.getAutoZipTransmission());
 
 		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file), TracingBufferedOutputStream.BUFFER_SIZE);
 		bis.skip(offset);
