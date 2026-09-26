@@ -1,10 +1,13 @@
 package org.primftpd.ui.viewmodel
 
 import android.Manifest
+import android.app.ActivityManager
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
+import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +26,9 @@ class PermissionViewModel(application: Application) : AndroidViewModel(applicati
 
     fun refresh() {
         val ctx = getApplication<Application>()
+        val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val activityManager = ctx.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+
         _permState.update {
             PermissionState(
                 fullStorage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
@@ -37,7 +43,13 @@ class PermissionViewModel(application: Application) : AndroidViewModel(applicati
                 },
                 notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                     ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-                        PackageManager.PERMISSION_GRANTED else true
+                        PackageManager.PERMISSION_GRANTED else true,
+                batteryOptimizationIgnored = powerManager?.isIgnoringBatteryOptimizations(ctx.packageName) == true,
+                backgroundRestricted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    activityManager?.isBackgroundRestricted == true
+                } else {
+                    false
+                },
             )
         }
     }

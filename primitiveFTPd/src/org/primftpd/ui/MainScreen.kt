@@ -469,7 +469,9 @@ fun MainScreen(
             onDismiss = { showPermissionsDialog = false },
             fullStorageAccess = permState.fullStorage,
             mediaLocationAccess = permState.mediaLocation,
-            notificationPermission = permState.notification
+            notificationPermission = permState.notification,
+            batteryOptimizationIgnored = permState.batteryOptimizationIgnored,
+            backgroundRestricted = permState.backgroundRestricted,
         )
     }
 }
@@ -608,6 +610,8 @@ private fun PermissionsDialog(
     fullStorageAccess: Boolean,
     mediaLocationAccess: Boolean,
     notificationPermission: Boolean,
+    batteryOptimizationIgnored: Boolean,
+    backgroundRestricted: Boolean,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // 黑色遮罩，淡入淡出，点击关闭
@@ -661,6 +665,8 @@ private fun PermissionsDialog(
                     fullStorageAccess = fullStorageAccess,
                     mediaLocationAccess = mediaLocationAccess,
                     notificationPermission = notificationPermission,
+                    batteryOptimizationIgnored = batteryOptimizationIgnored,
+                    backgroundRestricted = backgroundRestricted,
                     isExpanded = true,
                     onExpandedChange = { onDismiss() }
                 )
@@ -720,6 +726,8 @@ fun PermissionsCard(
     fullStorageAccess: Boolean,
     mediaLocationAccess: Boolean,
     notificationPermission: Boolean,
+    batteryOptimizationIgnored: Boolean,
+    backgroundRestricted: Boolean,
     isExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit
 ) {
@@ -729,6 +737,8 @@ fun PermissionsCard(
     var storageGranted by remember(fullStorageAccess) { mutableStateOf(fullStorageAccess) }
     var mediaGranted by remember(mediaLocationAccess) { mutableStateOf(mediaLocationAccess) }
     var notificationGranted by remember(notificationPermission) { mutableStateOf(notificationPermission) }
+    var batteryOptimizationGranted by remember(batteryOptimizationIgnored) { mutableStateOf(batteryOptimizationIgnored) }
+    var backgroundUnrestricted by remember(backgroundRestricted) { mutableStateOf(!backgroundRestricted) }
 
     var shouldStickToEdge by remember { mutableStateOf(false) }
 
@@ -887,6 +897,42 @@ fun PermissionsCard(
                             hasPermission = notificationGranted,
                             onClick = {
                                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        )
+                    }
+
+                    // Android 23+ 省电优化白名单
+                    PermissionItem(
+                        title = "Ignore Battery Optimizations",
+                        hasPermission = batteryOptimizationGranted,
+                        onClick = {
+                            if (!batteryOptimizationGranted) {
+                                val directRequest = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                                    .setData(Uri.fromParts("package", context.packageName, null))
+                                runCatching {
+                                    context.startActivity(directRequest)
+                                }.onFailure {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    // Android 28+ 后台限制状态；部分厂商 ROM 不会暴露此状态，此时按未限制处理。
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        PermissionItem(
+                            title = "Unrestricted Background Usage",
+                            hasPermission = backgroundUnrestricted,
+                            onClick = {
+                                if (!backgroundUnrestricted) {
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        .setData(Uri.fromParts("package", context.packageName, null))
+                                    context.startActivity(intent)
+                                }
                             }
                         )
                     }

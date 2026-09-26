@@ -12,4 +12,6 @@ data class PermissionState(
     val fullStorage: Boolean = true,
     val mediaLocation: Boolean = true,
     val notification: Boolean = true,
+    val batteryOptimizationIgnored: Boolean = false,
+    val backgroundRestricted: Boolean = false,
 )
