@@ -57,6 +57,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private var chartAnimationJob: Job? = null
     private var chartAnimationInProgress = false
 
+    /** 手指拖动后手动锚定的窗口右端；为 null 时跟随最新数据。 */
+    private var windowEndOverride: Long? = null
+    private var chartPanJob: Job? = null
+    private var pendingPanSeconds = 0.0
+
 
 
     private var lastFtpEventBytes = 0L
@@ -127,6 +132,9 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     fun onTrafficChartClear(event: TrafficChartClearEvent) {
         logger.debug(">>> Traffic-chart history cleared")
         samples.clear()
+        windowEndOverride = null
+        chartPanJob?.cancel()
+        pendingPanSeconds = 0.0
         historyVersion++
         viewModelScope.launch {
             publishChart()
@@ -138,8 +146,12 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
         val nowSeconds = currentTimestampSeconds()
         val (fromStart, fromEnd) = targetDomain(chartMeasuringRule, nowSeconds)
+
+        chartPanJob?.cancel()
+        pendingPanSeconds = 0.0
+        windowEndOverride = null
         chartMeasuringRule = rule
-        val (toStart, toEnd) = targetDomain(rule, nowSeconds)
+        val (toStart, toEnd) = latestTargetDomain(rule, nowSeconds)
 
         logger.debug(">>> Chart measuring rule changed to {}", rule)
 
@@ -150,7 +162,62 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /**
+     * 手动平移当前窗口。[deltaSeconds] 为正表示查看更新的时间，为负表示查看更早的历史。
+     */
+    fun panChartWindow(deltaSeconds: Double) {
+        if (chartMeasuringRule == ChartTriStateEnum.WEEK) return
+        if (!deltaSeconds.isFinite() || deltaSeconds == 0.0) return
+
+        pendingPanSeconds += deltaSeconds
+        if (chartPanJob?.isActive == true) return
+
+        chartPanJob = viewModelScope.launch {
+            while (pendingPanSeconds != 0.0) {
+                val step = when {
+                    pendingPanSeconds >= 1.0 -> pendingPanSeconds.toLong()
+                    pendingPanSeconds <= -1.0 -> pendingPanSeconds.toLong()
+                    else -> break
+                }
+                pendingPanSeconds -= step
+                if (applyChartPan(step)) {
+                    publishChart()
+                }
+                delay(16)
+            }
+        }
+    }
+
+    private fun applyChartPan(deltaSeconds: Long): Boolean {
+        val span = chartMeasuringRule.windowSeconds
+        val nowSeconds = currentTimestampSeconds()
+        val (_, latestEnd) = latestTargetDomain(chartMeasuringRule, nowSeconds)
+        val earliest = samples.firstOrNull()?.timestampSeconds ?: return false
+        val newest = samples.lastOrNull()?.timestampSeconds?.coerceAtLeast(nowSeconds) ?: return false
+
+        val minEnd = earliest + span
+        val maxEnd = maxOf(newest, minEnd)
+        val currentEnd = windowEndOverride ?: latestEnd
+        val requestedEnd = currentEnd + deltaSeconds
+        val clampedEnd = requestedEnd.coerceIn(minEnd, maxEnd)
+
+        val nextOverride = if (clampedEnd >= latestEnd) null else clampedEnd
+        if (nextOverride == windowEndOverride) return false
+
+        windowEndOverride = nextOverride
+        return true
+    }
+
     private fun targetDomain(
+        rule: ChartTriStateEnum,
+        nowSeconds: Long,
+    ): Pair<Long, Long> {
+        val (latestStart, latestEnd) = latestTargetDomain(rule, nowSeconds)
+        val manualEnd = windowEndOverride ?: return latestStart to latestEnd
+        return (manualEnd - rule.windowSeconds) to manualEnd
+    }
+
+    private fun latestTargetDomain(
         rule: ChartTriStateEnum,
         nowSeconds: Long,
     ): Pair<Long, Long> {

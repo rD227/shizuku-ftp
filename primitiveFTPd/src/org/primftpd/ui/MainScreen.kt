@@ -38,6 +38,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -393,7 +394,16 @@ fun MainScreen(
                             .height(200.dp)
                             //.padding(bottom = 0.dp)
                             .navigationBarsPadding()
-                            .padding(top = 2.dp),
+                            .padding(top = 2.dp)
+                            .pointerInput(chartMeasuringRule) {
+                                detectHorizontalDragGestures { change, dragAmount ->
+                                    change.consume()
+                                    val chartWidth = size.width.coerceAtLeast(1)
+                                    val secondsPerPixel =
+                                        chartMeasuringRule.windowSeconds.toDouble() / chartWidth.toDouble()
+                                    networkViewModel.panChartWindow(-dragAmount.toDouble() * secondsPerPixel)
+                                }
+                            },
                         //animateModelChanges = animateChartModelChanges,
                         peakPoints = chartPeaks,
                         measuringRule = chartMeasuringRule,
