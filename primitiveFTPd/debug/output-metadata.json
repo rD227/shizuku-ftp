@@ -4,16 +4,16 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "org.primftpd.shizuku",
+  "applicationId": "org.primftpd.shizuku.debug",
   "variantName": "debug",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 70,
-      "versionName": "v1.0.0",
-      "outputFile": "primitiveFTPd-debug.apk"
+      "versionCode": 73,
+      "versionName": "v1.2.4",
+      "outputFile": "shizuku-ftp-debug.apk"
     }
   ],
   "elementType": "File",

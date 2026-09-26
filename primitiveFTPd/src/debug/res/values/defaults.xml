@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Logging.Android (Log to Android) for new debug installs only. -->
+    <string name="prefDefaultLogging" translatable="false">2</string>
+</resources>

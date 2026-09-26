@@ -239,7 +239,7 @@
 			android:key="loggingPref"
 			android:title="@string/prefTitleLogging"
 			android:summary="@string/prefSummaryLoggingV2"
-			android:defaultValue="0"
+			android:defaultValue="@string/prefDefaultLogging"
 			android:entries="@array/prefLoggingNames"
 			android:entryValues="@array/prefLoggingValues"
 			app:iconSpaceReserved="false"

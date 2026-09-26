@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 
+import org.primftpd.R;
 import org.primftpd.prefs.LoadPrefsUtil;
 import org.primftpd.prefs.Logging;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public final class LogController {
         SharedPreferences prefs = LoadPrefsUtil.getPrefs(context);
         String loggingStr = prefs.getString(
                 LoadPrefsUtil.PREF_KEY_LOGGING,
-                Logging.NONE.xmlValue());
+                context.getString(R.string.prefDefaultLogging));
         return Logging.byXmlVal(loggingStr);
     }
 

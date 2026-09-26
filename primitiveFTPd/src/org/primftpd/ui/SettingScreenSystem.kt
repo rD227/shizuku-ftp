@@ -32,7 +32,6 @@ import androidx.core.content.edit
 import org.primftpd.R
 import org.primftpd.log.LogController
 import org.primftpd.prefs.LoadPrefsUtil
-import org.primftpd.prefs.Logging
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.SettingsBackup
 import org.primftpd.ui.viewmodel.WallpaperViewModel
@@ -58,7 +57,10 @@ internal fun SystemCategory(
     val loggingNames = LocalResources.current.getStringArray(R.array.prefLoggingNames).toList()
 
     val loggingStr = remember {
-        prefs.getString(LoadPrefsUtil.PREF_KEY_LOGGING, Logging.NONE.xmlValue()) ?: "0"
+        prefs.getString(
+            LoadPrefsUtil.PREF_KEY_LOGGING,
+            context.getString(R.string.prefDefaultLogging),
+        ) ?: context.getString(R.string.prefDefaultLogging)
     }
     // this val's mutableStateOf is removed by AI
     //
@@ -365,4 +367,3 @@ fun SystemPrefsPreview() {
         )
     }
 }
-

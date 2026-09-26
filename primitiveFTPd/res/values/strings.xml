@@ -197,5 +197,7 @@
         <item>ed25519</item>
     </string-array>
 
+    <!-- Build types can override this without changing an existing user selection. -->
+    <string name="prefDefaultLogging" translatable="false">0</string>
     <string name="passwordDialogMessage">Please set a password to start the server</string>
 </resources>
