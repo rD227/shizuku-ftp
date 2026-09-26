@@ -99,7 +99,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -234,9 +233,6 @@ fun MainScreen(
     val chartPeaks by (networkViewModel?.chartPeaks ?: flowOf(emptyList<ChartPeak>()))
         .collectAsState(emptyList())
 
-    var animateChartModelChanges by remember { mutableStateOf(false) }
-    var chartAnimationResetJob by remember { mutableStateOf<Job?>(null) }
-
     LaunchedEffect(chartMeasuringRule) {
         networkViewModel?.setChartMeasuringRule(chartMeasuringRule)
     }
@@ -368,16 +364,10 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(8.dp))
                 Row {
                     Spacer(modifier = Modifier.weight(0.9f))
-                    FourStateSwitch(
+                    ThreeStateSwitch(
                         state = chartMeasuringRule,
                         onStateChange = { newState ->
-                            animateChartModelChanges = true
-                            chartAnimationResetJob?.cancel()
                             uiPreferencesViewModel?.setChartMeasuringRule(newState)
-                            chartAnimationResetJob = scope.launch {
-                                delay(550)
-                                animateChartModelChanges = false
-                            }
                         },
                         colorBag = colorBag,
                     )
@@ -397,7 +387,6 @@ fun MainScreen(
                             .lineChartSlide(chartMeasuringRule) { deltaSeconds ->
                                 networkViewModel.panChartWindow(deltaSeconds)
                             },
-                        //animateModelChanges = animateChartModelChanges,
                         peakPoints = chartPeaks,
                         measuringRule = chartMeasuringRule,
                     )

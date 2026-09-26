@@ -7,7 +7,6 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong
  * Owns the traffic chart data shown on the main screen.
  *
  * Data is accumulated in per-second buckets and kept for [org.primftpd.ui.TrafficChartStore.Companion.MAX_AGE_SECONDS]
- * (about three days). The x-axis follows the selected measuring rule (MINUTE/HOUR/DAY/WEEK); if the stored
+ * (about three days). The x-axis follows the selected measuring rule (MINUTE/HOUR/DAY); if the stored
  * history is shorter than the selected span, it is pinned to the left edge and the unmeasured
  * right-hand side is drawn as y = 0.
  * The renderer downsamples to [MAX_RENDER_POINTS] points only for drawing; the persisted history
@@ -54,9 +53,6 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private val samples = mutableListOf<TrafficChartSample>()
 
     private var chartMeasuringRule = ChartTriStateEnum.HOUR
-
-    private var chartAnimationJob: Job? = null
-    private var chartAnimationInProgress = false
 
     private val lineChartSlide = LineChartSlide()
 
@@ -140,27 +136,19 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     fun setChartMeasuringRule(rule: ChartTriStateEnum) {
         if (chartMeasuringRule == rule) return
 
-        val nowSeconds = currentTimestampSeconds()
-        val (fromStart, fromEnd) = targetDomain(chartMeasuringRule, nowSeconds)
-
         lineChartSlide.reset()
         chartMeasuringRule = rule
-        val (toStart, toEnd) = latestTargetDomain(rule, nowSeconds)
 
         logger.debug(">>> Chart measuring rule changed to {}", rule)
 
-        chartAnimationJob?.cancel()
-        chartAnimationInProgress = false
-        chartAnimationJob = viewModelScope.launch {
-            animateChartWindow(fromStart, fromEnd, toStart, toEnd)
-        }
+        // Publish only the final range. Vico performs the single visual interpolation; publishing
+        // intermediate models here would queue many overlapping animations.
+        viewModelScope.launch { publishChart() }
     }
 
     fun panChartWindow(deltaSeconds: Double) {
         val rule = chartMeasuringRule
         if (rule != ChartTriStateEnum.MINUTE) return
-        chartAnimationJob?.cancel()
-        chartAnimationInProgress = false
         lineChartSlide.pan(
             scope = viewModelScope,
             deltaSeconds = deltaSeconds,
@@ -214,53 +202,6 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             (newest - span) to newest
         }
     }
-
-    private suspend fun animateChartWindow(
-        fromStart: Long,
-        fromEnd: Long,
-        toStart: Long,
-        toEnd: Long,
-    ) {
-        chartAnimationInProgress = true
-        val durationMs = 360L
-
-        // 跨度很大的切换（例如 HOUR -> DAY）如果每帧都画满 4000 个点，会拖慢
-        // 中间帧。这里保持约 60fps，同时在大跨度动画中限制每帧绘制点数，
-        // 动画结束后再补一帧全分辨率数据。
-        val startDelta = if (toStart > fromStart) toStart - fromStart else fromStart - toStart
-        val endDelta = if (toEnd > fromEnd) toEnd - fromEnd else fromEnd - toEnd
-        val maxDelta = maxOf(startDelta, endDelta)
-        val animationRenderPoints = if (maxDelta > 2L * 60L * 60L) {
-            ANIMATION_RENDER_POINTS
-        } else {
-            MAX_RENDER_POINTS
-        }
-        val stepMs = 16L
-
-        var elapsedMs = 0L
-
-        while (elapsedMs < durationMs) {
-            elapsedMs = (elapsedMs + stepMs).coerceAtMost(durationMs)
-            val progress = elapsedMs.toFloat() / durationMs.toFloat()
-            // easeOutCubic：开始快、结束慢，压缩/展开会更自然。
-            val eased = 1f - (1f - progress) * (1f - progress) * (1f - progress)
-
-            val animatedStart = fromStart + ((toStart - fromStart) * eased).toLong()
-            val animatedEnd = fromEnd + ((toEnd - fromEnd) * eased).toLong()
-
-            publishChart(
-                startOverride = animatedStart,
-                endOverride = animatedEnd,
-                maxRenderPoints = animationRenderPoints,
-            )
-            delay(stepMs)
-        }
-
-        publishChart()
-        chartAnimationInProgress = false
-    }
-
-
 
     private suspend fun updateChart() {
         val versionAtStart = historyVersion
@@ -584,9 +525,6 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
          * thousand pixels wide, so drawing more points would not add visible detail.
          */
         private const val MAX_RENDER_POINTS = 4_000
-
-        /** 大跨度切换动画中每帧使用的点数，降低重绘开销。 */
-        private const val ANIMATION_RENDER_POINTS = 1_200
 
         /** Prune the SQLite table about once an hour. */
         private const val STORE_PRUNE_INTERVAL_SECONDS = 60L * 60L

@@ -195,6 +195,53 @@ private val noMarginBottomAxisItemPlacerForMinute = object :
     ): Double? = null
 }
 
+/**
+ * Keeps the plot flush with both horizontal edges while placing a stable set of labels slightly
+ * inside those edges. The label positions no longer depend on the width of the changing time text
+ * or on Vico's current x step, so the plot does not breathe once per second and sparse windows can
+ * never lose every label.
+ */
+private class StableTimeAxisItemPlacer(
+    private val labelCount: Int,
+    private val edgeInsetFraction: Double,
+) : HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(
+    addExtremeLabelPadding = false,
+) {
+    override fun getLabelValues(
+        context: CartesianDrawingContext,
+        visibleXRange: ClosedFloatingPointRange<Double>,
+        fullXRange: ClosedFloatingPointRange<Double>,
+        maxLabelWidth: Float,
+    ): List<Double> {
+        val start = visibleXRange.start.coerceAtLeast(fullXRange.start)
+        val end = visibleXRange.endInclusive.coerceAtMost(fullXRange.endInclusive)
+        val length = end - start
+        if (!start.isFinite() || !end.isFinite() || length <= 0.0) return emptyList()
+
+        val count = labelCount.coerceAtLeast(2)
+        val inset = edgeInsetFraction.coerceIn(0.0, 0.45)
+        val usableFraction = 1.0 - inset * 2.0
+        return List(count) { index ->
+            val progress = index.toDouble() / (count - 1).toDouble()
+            start + length * (inset + usableFraction * progress)
+        }
+    }
+
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ): Float = 0f
+}
+
 
 
 private class PeakDotMarker(
@@ -265,16 +312,11 @@ fun NetworkTrafficChart(
         color = axisLabelColor,
     )
     val bottomAxisItemPlacer = remember(measuringRule) {
-        val spacing = when (measuringRule) {
-            ChartTriStateEnum.MINUTE -> 1
-            ChartTriStateEnum.HOUR -> 4 * 60
-            ChartTriStateEnum.DAY -> 2 * 60 * 60
-            ChartTriStateEnum.WEEK -> 12 * 60 * 60
+        when (measuringRule) {
+            ChartTriStateEnum.MINUTE -> StableTimeAxisItemPlacer(labelCount = 5, edgeInsetFraction = 0.13)
+            ChartTriStateEnum.HOUR -> StableTimeAxisItemPlacer(labelCount = 6, edgeInsetFraction = 0.08)
+            ChartTriStateEnum.DAY -> StableTimeAxisItemPlacer(labelCount = 4, edgeInsetFraction = 0.16)
         }
-        HorizontalAxis.ItemPlacer.aligned(
-            spacing = { spacing },
-            addExtremeLabelPadding = true,
-        )
     }
     val ftpPeakPoint = peakPoints.firstOrNull { it.isFtp }
     val sftpPeakPoint = peakPoints.firstOrNull { !it.isFtp }
@@ -371,6 +413,7 @@ fun NetworkTrafficChart(
             ),
 
             bottomAxis = HorizontalAxis.rememberBottom(
+                line = null,
                 label = rememberAxisLabelComponent(
                     overflow = TextOverflow.Visible,
                     style = xAxisLabelStyle,

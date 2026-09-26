@@ -408,25 +408,25 @@ internal fun GlassSidebarBox(
 }
 
 @Composable
-fun FourStateSwitch(
+fun ThreeStateSwitch(
     state: ChartTriStateEnum,
     onStateChange: (ChartTriStateEnum) -> Unit,
     modifier: Modifier = Modifier,
     colorBag: ColorBag
 ) {
-    val trackWidth = 112.dp
+    val trackWidth = 85.dp
     val trackHeight = 22.dp
     val padding = 2.dp
 
     val contentWidth = trackWidth - (padding * 2)
-    val slotWidth = contentWidth / 4
-
-    val targetOffset = when (state) {
-        ChartTriStateEnum.MINUTE -> 0.dp
-        ChartTriStateEnum.HOUR -> slotWidth
-        ChartTriStateEnum.DAY -> slotWidth * 2
-        ChartTriStateEnum.WEEK -> slotWidth * 3
-    }
+    val options = listOf(
+        ChartTriStateEnum.MINUTE to "M",
+        ChartTriStateEnum.HOUR to "H",
+        ChartTriStateEnum.DAY to "D",
+    )
+    val slotWidth = contentWidth / options.size
+    val selectedIndex = options.indexOfFirst { it.first == state }.coerceAtLeast(0)
+    val targetOffset = slotWidth * selectedIndex
 
     val animatedOffset by animateDpAsState(
         targetValue = targetOffset,
@@ -438,8 +438,10 @@ fun FourStateSwitch(
     )
 
     val contentColor = if (colorBag.useM3Color) MaterialTheme.colorScheme.onSurface else colorBag.darkMuted
-    val trackColor = when (state) {
-        ChartTriStateEnum.MINUTE, ChartTriStateEnum.HOUR, ChartTriStateEnum.DAY, ChartTriStateEnum.WEEK -> if (colorBag.useM3Color) MaterialTheme.colorScheme.secondaryContainer else colorBag.vibrant
+    val trackColor = if (colorBag.useM3Color) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        colorBag.vibrant
     }
 
     val textStyle = TextStyle(
@@ -452,12 +454,6 @@ fun FourStateSwitch(
         modifier = modifier
             .size(width = trackWidth, height = trackHeight)
             .background(color = trackColor, shape = CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) {
-                onStateChange(state.next())
-            }
             .padding(padding),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -465,11 +461,17 @@ fun FourStateSwitch(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf("M", "H", "D", "W").forEach { label ->
+            options.forEach { (rule, label) ->
                 Box(
                     modifier = Modifier
                         .width(slotWidth)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {
+                            if (rule != state) onStateChange(rule)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -489,12 +491,7 @@ fun FourStateSwitch(
                 .background(color = Color.White, shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            val thumbText = when (state) {
-                ChartTriStateEnum.MINUTE -> "M"
-                ChartTriStateEnum.HOUR -> "H"
-                ChartTriStateEnum.DAY -> "D"
-                ChartTriStateEnum.WEEK -> "W"
-            }
+            val thumbText = options[selectedIndex].second
             Text(
                 text = thumbText,
                 color = Color.DarkGray,
@@ -506,7 +503,7 @@ fun FourStateSwitch(
 
 @Preview
 @Composable
-fun FourStateSwitchPreview() {
+fun ThreeStateSwitchPreview() {
     ShizukuFtpTheme() {
         val colorBag = ColorBag(
             vibrant = Color(0xFF81C784),
@@ -515,7 +512,7 @@ fun FourStateSwitchPreview() {
             lightMuted = Color(0xFFF48FB1),
             muted = Color(0xFF64B5F6)
         )
-        FourStateSwitch(
+        ThreeStateSwitch(
             state = ChartTriStateEnum.HOUR,
             onStateChange = {},
             colorBag = colorBag

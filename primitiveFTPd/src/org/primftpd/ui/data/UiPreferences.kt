@@ -70,7 +70,8 @@ object UiPreferences {
         return when (storedName) {
             ChartTriStateEnum.MINUTE.name -> ChartTriStateEnum.MINUTE
             ChartTriStateEnum.DAY.name -> ChartTriStateEnum.DAY
-            ChartTriStateEnum.WEEK.name -> ChartTriStateEnum.WEEK
+            // Migrate the removed week option to the closest remaining long-range view.
+            "WEEK" -> ChartTriStateEnum.DAY
             else -> ChartTriStateEnum.HOUR
         }
     }
