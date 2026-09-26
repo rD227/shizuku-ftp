@@ -314,7 +314,7 @@ fun NetworkTrafficChart(
     val bottomAxisItemPlacer = remember(measuringRule) {
         when (measuringRule) {
             ChartTriStateEnum.MINUTE -> StableTimeAxisItemPlacer(labelCount = 5, edgeInsetFraction = 0.13)
-            ChartTriStateEnum.HOUR -> StableTimeAxisItemPlacer(labelCount = 6, edgeInsetFraction = 0.08)
+            ChartTriStateEnum.HOUR -> StableTimeAxisItemPlacer(labelCount = 6, edgeInsetFraction = 0.11)
             ChartTriStateEnum.DAY -> StableTimeAxisItemPlacer(labelCount = 4, edgeInsetFraction = 0.16)
         }
     }
@@ -367,16 +367,17 @@ fun NetworkTrafficChart(
                             thickness = 2.5.dp,
                             cap = StrokeCap.Round,
                         ),
-                        areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(
+                        areaFill = LineCartesianLayer.AreaFill.double(
+                            topFill = Fill(
                                 Brush.verticalGradient(
                                     0f to ftpLineColor.copy(alpha = 0.32f),
                                     0.7f to ftpLineColor.copy(alpha = 0.08f),
                                     1f to Color.Transparent,
                                 )
-                            )
+                            ),
+                            bottomFill = Fill.Transparent,
                         ),
-                        interpolator = LineCartesianLayer.Interpolator.catmullRom(alpha = 0.35f),
+                        interpolator = LineCartesianLayer.Interpolator.cubic(curvature = 0.35f),
                     ),
                     // 第二根线 (SFTP)
                     LineCartesianLayer.rememberLine(
@@ -385,16 +386,17 @@ fun NetworkTrafficChart(
                             thickness = 2.5.dp,
                             cap = StrokeCap.Round,
                         ),
-                        areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(
+                        areaFill = LineCartesianLayer.AreaFill.double(
+                            topFill = Fill(
                                 Brush.verticalGradient(
                                     0f to sftpLineColor.copy(alpha = 0.32f),
                                     0.7f to sftpLineColor.copy(alpha = 0.08f),
                                     1f to Color.Transparent,
                                 )
-                            )
+                            ),
+                            bottomFill = Fill.Transparent,
                         ),
-                        interpolator = LineCartesianLayer.Interpolator.catmullRom(alpha = 0.35f),
+                        interpolator = LineCartesianLayer.Interpolator.cubic(curvature = 0.35f),
                     ),
                 )
             ),
