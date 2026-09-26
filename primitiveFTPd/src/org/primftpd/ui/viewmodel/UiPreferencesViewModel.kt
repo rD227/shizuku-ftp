@@ -106,6 +106,19 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     fun getExperimentalHaze(): Boolean {
         return UiPreferences.getExperimentalHaze(experimentalHazePrefs)
     }
+    //____
+    private val changeThemeRulerAnimationPrefs = application.getSharedPreferences("change_theme_ruler_animation", Context.MODE_PRIVATE)
+    private val _changeThemeRulerAnimation = MutableStateFlow(
+        UiPreferences.getChangeThemeRulerAnimation(changeThemeRulerAnimationPrefs)
+    )
+    val changeThemeRulerAnimation = _changeThemeRulerAnimation.asStateFlow()
+    fun setChangeThemeRulerAnimation(value: Boolean) {
+        UiPreferences.setChangeThemeRulerAnimation(changeThemeRulerAnimationPrefs, value)
+        _changeThemeRulerAnimation.value = value
+    }
+    fun getChangeThemeRulerAnimation(): Boolean {
+        return UiPreferences.getChangeThemeRulerAnimation(changeThemeRulerAnimationPrefs)
+    }
     /**
     private val colorBagPrefs = application.getSharedPreferences("color_bag", Context.MODE_PRIVATE)
     private val _colorBag = MutableStateFlow<org.primftpd.ui.data.ColorBag?>(null)

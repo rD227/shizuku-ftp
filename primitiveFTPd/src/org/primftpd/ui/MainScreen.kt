@@ -230,11 +230,22 @@ fun MainScreen(
     val chartMeasuringRule by (uiPreferencesViewModel?.chartMeasuringRule ?: flowOf(ChartTriStateEnum.HOUR))
         .collectAsState(ChartTriStateEnum.HOUR)
 
+    val changeRulerAnimation by
+        (uiPreferencesViewModel?.changeThemeRulerAnimation ?: flowOf(true)).collectAsState(true)
+
     val chartPeaks by (networkViewModel?.chartPeaks ?: flowOf(emptyList<ChartPeak>()))
         .collectAsState(emptyList())
 
-    LaunchedEffect(chartMeasuringRule) {
-        networkViewModel?.setChartMeasuringRule(chartMeasuringRule)
+    val suppressVicoChartAnimation by
+        (networkViewModel?.suppressVicoChartAnimation ?: flowOf(false)).collectAsState(false)
+
+    var chartRuleInitialized by remember(networkViewModel) { mutableStateOf(false) }
+    LaunchedEffect(chartMeasuringRule, changeRulerAnimation, networkViewModel) {
+        networkViewModel?.setChartMeasuringRule(
+            rule = chartMeasuringRule,
+            animate = chartRuleInitialized && changeRulerAnimation,
+        )
+        chartRuleInitialized = true
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -389,6 +400,7 @@ fun MainScreen(
                             },
                         peakPoints = chartPeaks,
                         measuringRule = chartMeasuringRule,
+                        animateModelChanges = !suppressVicoChartAnimation,
                     )
                 }
             }

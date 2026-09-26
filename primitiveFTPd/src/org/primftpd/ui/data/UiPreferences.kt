@@ -89,5 +89,14 @@ object UiPreferences {
     fun setExperimentalHaze(prefs: SharedPreferences, value: Boolean) {
         prefs.edit { putBoolean(PREF_KEY_EXPERIMENTAL_HAZE, value) }
     }
+    //______
+    const val PREF_KEY_CHANGE_THEME_RULER_ANIMATION = "newFeaturePref"
 
+    const val DEFAULT_CHANGE_THEME_RULER_ANIMATION = true
+    fun getChangeThemeRulerAnimation(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(PREF_KEY_CHANGE_THEME_RULER_ANIMATION, DEFAULT_CHANGE_THEME_RULER_ANIMATION)
+
+    fun setChangeThemeRulerAnimation(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit { putBoolean(PREF_KEY_CHANGE_THEME_RULER_ANIMATION, value) }
+    }
 }

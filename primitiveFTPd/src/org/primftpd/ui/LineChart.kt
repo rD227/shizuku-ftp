@@ -286,6 +286,7 @@ fun NetworkTrafficChart(
     modifier: Modifier = Modifier,
     peakPoints: List<ChartPeak> = emptyList(),
     measuringRule: ChartTriStateEnum = ChartTriStateEnum.HOUR,
+    animateModelChanges: Boolean = true,
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
     val sftpLineColor = Color(0xFF81C784)
@@ -442,10 +443,14 @@ fun NetworkTrafficChart(
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
-        animationSpec = tween(
-            durationMillis = 420,
-            easing = FastOutSlowInEasing,
-        ),
+        animationSpec = if (animateModelChanges) {
+            tween(
+                durationMillis = 420,
+                easing = FastOutSlowInEasing,
+            )
+        } else {
+            null
+        },
         animateIn = true
     )
 }

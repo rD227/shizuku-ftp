@@ -64,6 +64,7 @@ internal fun UiCategory(
         UiPreferences.getTopComponentPressedDown(prefs)
     )).collectAsState(UiPreferences.getTopComponentPressedDown(prefs))
     var experimentalHaze by remember { mutableStateOf(uiPreferencesViewModel?.getExperimentalHaze() ?: UiPreferences.getExperimentalHaze(prefs)) }
+    var changeRulerAnimation by remember { mutableStateOf(uiPreferencesViewModel?.getChangeThemeRulerAnimation() ?: UiPreferences.getChangeThemeRulerAnimation(prefs)) }
 
     var blurIntensity by remember { mutableFloatStateOf(uiPreferencesViewModel?.getBlurIntensity() ?: UiPreferences.getBlurIntensity(prefs)) }
 
@@ -212,6 +213,16 @@ internal fun UiCategory(
             onCheckedChange = {
                 experimentalHaze = it
                 uiPreferencesViewModel?.setExperimentalHaze(it)
+            }
+    )
+    SwitchPrefRow(
+            title = "Weather use animation when change ruler",
+            description = "It may cause lower change speed but look better",
+            checked = changeRulerAnimation,
+            colorBag = colorBag,
+            onCheckedChange = {
+                changeRulerAnimation = it
+                uiPreferencesViewModel?.setChangeThemeRulerAnimation(it)
             }
     )
 

@@ -7,6 +7,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,6 +54,12 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private val samples = mutableListOf<TrafficChartSample>()
 
     private var chartMeasuringRule = ChartTriStateEnum.HOUR
+
+    private val _suppressVicoChartAnimation = MutableStateFlow(false)
+    val suppressVicoChartAnimation: StateFlow<Boolean> =
+        _suppressVicoChartAnimation.asStateFlow()
+
+    private var chartRangeAnimationJob: Job? = null
 
     private val lineChartSlide = LineChartSlide()
 
@@ -133,22 +140,43 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun setChartMeasuringRule(rule: ChartTriStateEnum) {
+    fun setChartMeasuringRule(rule: ChartTriStateEnum, animate: Boolean) {
         if (chartMeasuringRule == rule) return
+
+        val nowSeconds = currentTimestampSeconds()
+        val (fromStart, fromEnd) = targetDomain(chartMeasuringRule, nowSeconds)
 
         lineChartSlide.reset()
         chartMeasuringRule = rule
+        val (toStart, toEnd) = latestTargetDomain(rule, nowSeconds)
 
         logger.debug(">>> Chart measuring rule changed to {}", rule)
 
-        // Publish only the final range. Vico performs the single visual interpolation; publishing
-        // intermediate models here would queue many overlapping animations.
-        viewModelScope.launch { publishChart() }
+        chartRangeAnimationJob?.cancel()
+        chartRangeAnimationJob = viewModelScope.launch {
+            // The range animation publishes its own frames. Temporarily disable Vico's model-diff
+            // animation so those frames are rendered directly instead of being queued again.
+            _suppressVicoChartAnimation.value = true
+            try {
+                delay(16)
+                if (animate) {
+                    animateChartWindow(fromStart, fromEnd, toStart, toEnd)
+                } else {
+                    publishChart()
+                }
+                // Give Compose one frame to consume the final direct model before restoring the
+                // regular per-second Vico animation.
+                delay(16)
+            } finally {
+                _suppressVicoChartAnimation.value = false
+            }
+        }
     }
 
     fun panChartWindow(deltaSeconds: Double) {
         val rule = chartMeasuringRule
         if (rule != ChartTriStateEnum.MINUTE) return
+        chartRangeAnimationJob?.cancel()
         lineChartSlide.pan(
             scope = viewModelScope,
             deltaSeconds = deltaSeconds,
@@ -201,6 +229,40 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         } else {
             (newest - span) to newest
         }
+    }
+
+    private suspend fun animateChartWindow(
+        fromStart: Long,
+        fromEnd: Long,
+        toStart: Long,
+        toEnd: Long,
+    ) {
+        val durationMs = 360L
+        val startDelta = kotlin.math.abs(toStart - fromStart)
+        val endDelta = kotlin.math.abs(toEnd - fromEnd)
+        val maxDelta = maxOf(startDelta, endDelta)
+        val animationRenderPoints = if (maxDelta > 2L * 60L * 60L) {
+            ANIMATION_RENDER_POINTS
+        } else {
+            MAX_RENDER_POINTS
+        }
+        val frameMs = 16L
+        var elapsedMs = 0L
+
+        while (elapsedMs < durationMs) {
+            elapsedMs = (elapsedMs + frameMs).coerceAtMost(durationMs)
+            val progress = elapsedMs.toFloat() / durationMs.toFloat()
+            val eased = 1f - (1f - progress) * (1f - progress) * (1f - progress)
+
+            publishChart(
+                startOverride = fromStart + ((toStart - fromStart) * eased).toLong(),
+                endOverride = fromEnd + ((toEnd - fromEnd) * eased).toLong(),
+                maxRenderPoints = animationRenderPoints,
+            )
+            delay(frameMs)
+        }
+
+        publishChart()
     }
 
     private suspend fun updateChart() {
@@ -525,6 +587,9 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
          * thousand pixels wide, so drawing more points would not add visible detail.
          */
         private const val MAX_RENDER_POINTS = 4_000
+
+        /** Point cap used only for intermediate frames of large ruler transitions. */
+        private const val ANIMATION_RENDER_POINTS = 1_200
 
         /** Prune the SQLite table about once an hour. */
         private const val STORE_PRUNE_INTERVAL_SECONDS = 60L * 60L
