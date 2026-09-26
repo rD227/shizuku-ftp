@@ -164,7 +164,7 @@ private val noMarginBottomAxisItemPlacerForHour = object :
 }
 
 private val noMarginBottomAxisItemPlacerForMinute = object :
-    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 10 }) {
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 1 }) {
     override fun getStartLayerMargin(
         context: CartesianMeasuringContext,
         layerDimensions: CartesianLayerDimensions,
@@ -324,7 +324,7 @@ fun NetworkTrafficChart(
                 // Vico 默认会根据当前 Y 轴标签文字宽度自动调整绘图区左边距。
                 // 流量数值变化时标签宽度会变（例如 "9 KB/s" -> "1024 KB/s"），
                 // 整个绘图区就会左右抖动。这里按最长标签预留固定宽度。
-                size = BaseAxis.Size.Text("9999.9 MB/s"),
+                size = BaseAxis.Size.Fixed(80.dp),
                 valueFormatter = verticalAxisValueFormatter,
             ),
 
