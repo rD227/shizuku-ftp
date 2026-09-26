@@ -48,6 +48,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.ranges.ClosedFloatingPointRange
 
 private val AXIS_TIME_WITH_SECONDS_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US)
 private val AXIS_TIME_WITH_MINUTES_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
@@ -161,8 +164,40 @@ private val noMarginBottomAxisItemPlacerForHour = object :
     ): Double? = null
 }
 
-private val noMarginBottomAxisItemPlacerForMinute = object :
-    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 1 }) {
+/**
+ * 分钟视图使用固定的 10 秒时间刻度，不再依赖 Vico 根据当前数据 xStep 推导
+ * 的 aligned 刻度。这样窗口滑动时 X 轴不会因为数据间隔变化而突然消失。
+ */
+private class TimeAxisItemPlacer(
+    private val stepSeconds: Long,
+) : HorizontalAxis.ItemPlacer {
+    override fun getLabelValues(
+        context: CartesianDrawingContext,
+        visibleXRange: ClosedFloatingPointRange<Double>,
+        fullXRange: ClosedFloatingPointRange<Double>,
+        maxLabelWidth: Float,
+    ): List<Double> {
+        val step = stepSeconds.toDouble()
+        val start = ceil(visibleXRange.start / step) * step
+        val end = floor(visibleXRange.endInclusive / step) * step
+        if (end < start) return emptyList()
+        val count = ((end - start) / step).toInt() + 1
+        return List(count) { index -> start + index * step }
+    }
+
+    override fun getWidthMeasurementLabelValues(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        fullXRange: ClosedFloatingPointRange<Double>,
+    ): List<Double> = emptyList()
+
+    override fun getHeightMeasurementLabelValues(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        fullXRange: ClosedFloatingPointRange<Double>,
+        maxLabelWidth: Float,
+    ): List<Double> = emptyList()
+
     override fun getStartLayerMargin(
         context: CartesianMeasuringContext,
         layerDimensions: CartesianLayerDimensions,
@@ -176,17 +211,9 @@ private val noMarginBottomAxisItemPlacerForMinute = object :
         tickThickness: Float,
         maxLabelWidth: Float,
     ): Float = 0f
-
-    override fun getFirstLabelValue(
-        context: CartesianMeasuringContext,
-        maxLabelWidth: Float,
-    ): Double? = null
-
-    override fun getLastLabelValue(
-        context: CartesianMeasuringContext,
-        maxLabelWidth: Float,
-    ): Double? = null
 }
+
+private val noMarginBottomAxisItemPlacerForMinute = TimeAxisItemPlacer(stepSeconds = 10L)
 
 
 
