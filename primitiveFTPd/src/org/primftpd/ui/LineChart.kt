@@ -3,6 +3,7 @@ package org.primftpd.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,9 +15,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.marker.LineCartesianLayerMarkerTarget
+import org.primftpd.ui.data.ChartPeak
 import org.primftpd.ui.data.ChartTriStateEnum
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
@@ -36,6 +41,8 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.common.component.Component
+import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -184,10 +191,47 @@ private val noMarginBottomAxisItemPlacerForMinute = object :
 
 
 
+private class PeakDotMarker(
+    private val halo: Component,
+    private val dot: Component,
+    private val dotSize: Dp,
+    private val haloSize: Dp,
+    private val expectedY: Double,
+) : CartesianMarker {
+    override fun drawOverLayers(
+        context: CartesianDrawingContext,
+        targets: List<CartesianMarker.Target>,
+    ) {
+        val dotHalf = with(context.density) { dotSize.toPx() } / 2f
+        val haloHalf = with(context.density) { haloSize.toPx() } / 2f
+        targets.forEach { target ->
+            val lineTarget = target as? LineCartesianLayerMarkerTarget ?: return@forEach
+            val point = lineTarget.points.firstOrNull {
+                abs(it.entry.y - expectedY) < 0.5
+            } ?: return@forEach
+            halo.draw(
+                context,
+                target.canvasX - haloHalf,
+                point.canvasY - haloHalf,
+                target.canvasX + haloHalf,
+                point.canvasY + haloHalf,
+            )
+            dot.draw(
+                context,
+                target.canvasX - dotHalf,
+                point.canvasY - dotHalf,
+                target.canvasX + dotHalf,
+                point.canvasY + dotHalf,
+            )
+        }
+    }
+}
+
 @Composable
 fun NetworkTrafficChart(
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
+    peakPoints: List<ChartPeak> = emptyList(),
     measuringRule: ChartTriStateEnum = ChartTriStateEnum.HOUR,
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
@@ -204,7 +248,43 @@ fun NetworkTrafficChart(
         }
     }
 
+    val ftpPeakPoint = peakPoints.firstOrNull { it.isFtp }
+    val sftpPeakPoint = peakPoints.firstOrNull { !it.isFtp }
 
+    val ftpPeakHalo = rememberShapeComponent(
+        fill = Fill(ftpLineColor.copy(alpha = 0.18f)),
+        shape = CircleShape,
+    )
+    val ftpPeakDot = rememberShapeComponent(
+        fill = Fill(ftpLineColor),
+        shape = CircleShape,
+    )
+    val sftpPeakHalo = rememberShapeComponent(
+        fill = Fill(sftpLineColor.copy(alpha = 0.18f)),
+        shape = CircleShape,
+    )
+    val sftpPeakDot = rememberShapeComponent(
+        fill = Fill(sftpLineColor),
+        shape = CircleShape,
+    )
+    val ftpPeakMarker = remember(ftpPeakHalo, ftpPeakDot, ftpPeakPoint?.valueKbPerSecond) {
+        PeakDotMarker(
+            halo = ftpPeakHalo,
+            dot = ftpPeakDot,
+            dotSize = 7.dp,
+            haloSize = 18.dp,
+            expectedY = ftpPeakPoint?.valueKbPerSecond?.toDouble() ?: Double.NaN,
+        )
+    }
+    val sftpPeakMarker = remember(sftpPeakHalo, sftpPeakDot, sftpPeakPoint?.valueKbPerSecond) {
+        PeakDotMarker(
+            halo = sftpPeakHalo,
+            dot = sftpPeakDot,
+            dotSize = 7.dp,
+            haloSize = 18.dp,
+            expectedY = sftpPeakPoint?.valueKbPerSecond?.toDouble() ?: Double.NaN,
+        )
+    }
 
     CartesianChartHost(
         chart = rememberCartesianChart(
@@ -257,6 +337,12 @@ fun NetworkTrafficChart(
                 valueFormatter = horizontalAxisValueFormatter,
             ),
             layerPadding = { CartesianLayerPadding() },
+            persistentMarkers = {
+                peakPoints.forEach { peak ->
+                    val marker = if (peak.isFtp) ftpPeakMarker else sftpPeakMarker
+                    marker.at(peak.x)
+                }
+            },
         ),
         modelProducer = modelProducer,
         modifier = modifier,

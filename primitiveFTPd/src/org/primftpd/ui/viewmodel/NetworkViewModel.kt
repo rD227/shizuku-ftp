@@ -11,12 +11,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.events.DataTransferredEvent
 import org.primftpd.ui.TrafficChartClearEvent
 import org.primftpd.ui.TrafficChartStore
+import org.primftpd.ui.data.ChartPeak
 import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.TrafficChartSample
 import org.slf4j.LoggerFactory
@@ -35,6 +39,11 @@ import java.util.concurrent.atomic.AtomicLong
 class NetworkViewModel(application: Application) : AndroidViewModel(application) {
 
     val modelProducer = CartesianChartModelProducer()
+
+    private val _chartPeaks = MutableStateFlow<List<ChartPeak>>(emptyList())
+
+    /** 当前可见窗口内 FTP / SFTP 的峰值点，供图表画标记点。 */
+    val chartPeaks: StateFlow<List<ChartPeak>> = _chartPeaks.asStateFlow()
 
     private val trafficChartStore = TrafficChartStore.Companion.getInstance(application)
 
@@ -386,7 +395,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             sftpY.add(0L)
         }
 
-
+        updateChartPeaks(ftpX, ftpY, sftpX, sftpY)
 
         modelProducer.runTransaction {
             lineSeries {
@@ -394,6 +403,39 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
                 series(sftpX, sftpY)
             }
         }
+    }
+
+    private fun updateChartPeaks(
+        ftpX: List<Long>,
+        ftpY: List<Long>,
+        sftpX: List<Long>,
+        sftpY: List<Long>,
+    ) {
+        val peaks = buildList {
+            peakOf(ftpX, ftpY)?.let { (x, y) ->
+                add(ChartPeak(x = x.toDouble(), valueKbPerSecond = y, isFtp = true))
+            }
+            peakOf(sftpX, sftpY)?.let { (x, y) ->
+                add(ChartPeak(x = x.toDouble(), valueKbPerSecond = y, isFtp = false))
+            }
+        }
+        if (_chartPeaks.value != peaks) {
+            _chartPeaks.value = peaks
+        }
+    }
+
+    private fun peakOf(xValues: List<Long>, yValues: List<Long>): Pair<Long, Long>? {
+        if (xValues.isEmpty() || xValues.size != yValues.size) return null
+        var peakIndex = -1
+        var peakY = 0L
+        for (index in yValues.indices) {
+            val value = yValues[index]
+            if (value > peakY) {
+                peakY = value
+                peakIndex = index
+            }
+        }
+        return if (peakIndex >= 0) xValues[peakIndex] to peakY else null
     }
 
     /**

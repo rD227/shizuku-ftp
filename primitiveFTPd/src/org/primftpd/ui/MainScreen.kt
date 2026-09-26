@@ -105,6 +105,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
+import org.primftpd.ui.data.ChartPeak
 import org.primftpd.ui.data.ChartTriStateEnum
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.PermissionState
@@ -229,6 +230,9 @@ fun MainScreen(
 
     val chartMeasuringRule by (uiPreferencesViewModel?.chartMeasuringRule ?: flowOf(ChartTriStateEnum.HOUR))
         .collectAsState(ChartTriStateEnum.HOUR)
+
+    val chartPeaks by (networkViewModel?.chartPeaks ?: flowOf(emptyList<ChartPeak>()))
+        .collectAsState(emptyList())
 
     var animateChartModelChanges by remember { mutableStateOf(false) }
     var chartAnimationResetJob by remember { mutableStateOf<Job?>(null) }
@@ -391,6 +395,7 @@ fun MainScreen(
                             .navigationBarsPadding()
                             .padding(top = 2.dp),
                         //animateModelChanges = animateChartModelChanges,
+                        peakPoints = chartPeaks,
                         measuringRule = chartMeasuringRule,
                     )
                 }
