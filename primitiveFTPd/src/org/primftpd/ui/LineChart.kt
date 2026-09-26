@@ -1,15 +1,18 @@
 package org.primftpd.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -73,6 +76,10 @@ private fun formatAxisSpeed(kilobytesPerSecond: Double): String {
             String.format(Locale.US, "%.1f GB/s", kilobytesPerSecond / 1024.0 / 1024.0)
         absValue >= 1024.0 ->
             String.format(Locale.US, "%.1f MB/s", kilobytesPerSecond / 1024.0)
+        absValue == 0.0 ->
+            "0 KB/s"
+        absValue < 10.0 ->
+            String.format(Locale.US, "%.1f KB/s", kilobytesPerSecond)
         else ->
             String.format(Locale.US, "%.0f KB/s", kilobytesPerSecond)
     }
@@ -235,6 +242,7 @@ fun NetworkTrafficChart(
 ) {
     val ftpLineColor = Color(0xFFB39DDB)
     val sftpLineColor = Color(0xFF81C784)
+    val axisLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
 
     val horizontalAxisValueFormatter = remember {
         CartesianValueFormatter { context, value, _ ->
@@ -248,14 +256,26 @@ fun NetworkTrafficChart(
     }
     val xAxisLabelStyle = TextStyle(
         fontSize = 10.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+        fontWeight = FontWeight.Medium,
+        color = axisLabelColor,
     )
     val yAxisLabelStyle = TextStyle(
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Light,
-        color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Normal,
+        color = axisLabelColor,
     )
+    val bottomAxisItemPlacer = remember(measuringRule) {
+        val spacing = when (measuringRule) {
+            ChartTriStateEnum.MINUTE -> 1
+            ChartTriStateEnum.HOUR -> 4 * 60
+            ChartTriStateEnum.DAY -> 2 * 60 * 60
+            ChartTriStateEnum.WEEK -> 12 * 60 * 60
+        }
+        HorizontalAxis.ItemPlacer.aligned(
+            spacing = { spacing },
+            addExtremeLabelPadding = true,
+        )
+    }
     val ftpPeakPoint = peakPoints.firstOrNull { it.isFtp }
     val sftpPeakPoint = peakPoints.firstOrNull { !it.isFtp }
 
@@ -301,18 +321,38 @@ fun NetworkTrafficChart(
                     // 第一根线 (FTP)
                     LineCartesianLayer.rememberLine(
                         fill = LineCartesianLayer.LineFill.single(Fill(ftpLineColor)),
-                        areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(Brush.verticalGradient(listOf(ftpLineColor.copy(alpha = 0.4f), Color.Transparent)))
+                        stroke = LineCartesianLayer.LineStroke.Continuous(
+                            thickness = 2.5.dp,
+                            cap = StrokeCap.Round,
                         ),
-                        interpolator = LineCartesianLayer.Interpolator.Sharp
+                        areaFill = LineCartesianLayer.AreaFill.single(
+                            Fill(
+                                Brush.verticalGradient(
+                                    0f to ftpLineColor.copy(alpha = 0.32f),
+                                    0.7f to ftpLineColor.copy(alpha = 0.08f),
+                                    1f to Color.Transparent,
+                                )
+                            )
+                        ),
+                        interpolator = LineCartesianLayer.Interpolator.catmullRom(alpha = 0.35f),
                     ),
                     // 第二根线 (SFTP)
                     LineCartesianLayer.rememberLine(
                         fill = LineCartesianLayer.LineFill.single(Fill(sftpLineColor)),
-                        areaFill = LineCartesianLayer.AreaFill.single(
-                            Fill(Brush.verticalGradient(listOf(sftpLineColor.copy(alpha = 0.4f), Color.Transparent)))
+                        stroke = LineCartesianLayer.LineStroke.Continuous(
+                            thickness = 2.5.dp,
+                            cap = StrokeCap.Round,
                         ),
-                        interpolator = LineCartesianLayer.Interpolator.Sharp
+                        areaFill = LineCartesianLayer.AreaFill.single(
+                            Fill(
+                                Brush.verticalGradient(
+                                    0f to sftpLineColor.copy(alpha = 0.32f),
+                                    0.7f to sftpLineColor.copy(alpha = 0.08f),
+                                    1f to Color.Transparent,
+                                )
+                            )
+                        ),
+                        interpolator = LineCartesianLayer.Interpolator.catmullRom(alpha = 0.35f),
                     ),
                 )
             ),
@@ -336,20 +376,7 @@ fun NetworkTrafficChart(
                     style = xAxisLabelStyle,
                 ),
                 guideline = null,
-                itemPlacer = when (measuringRule) {
-                    ChartTriStateEnum.DAY -> {
-                        noMarginBottomAxisItemPlacerForDay
-                    }
-                    ChartTriStateEnum.HOUR -> {
-                        noMarginBottomAxisItemPlacerForHour
-                    }
-                    ChartTriStateEnum.MINUTE -> {
-                        noMarginBottomAxisItemPlacerForMinute
-                    }
-                    else -> {
-                        noMarginBottomAxisItemPlacer
-                    }
-                },
+                itemPlacer = bottomAxisItemPlacer,
                 valueFormatter = horizontalAxisValueFormatter,
             ),
             layerPadding = { CartesianLayerPadding() },
@@ -370,7 +397,10 @@ fun NetworkTrafficChart(
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
-        animationSpec = null,
+        animationSpec = tween(
+            durationMillis = 420,
+            easing = FastOutSlowInEasing,
+        ),
         animateIn = true
     )
 }
