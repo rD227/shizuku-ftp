@@ -196,7 +196,7 @@ private class TimeAxisItemPlacer(
         layerDimensions: CartesianLayerDimensions,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
-    ): List<Double> = emptyList()
+    ): List<Double> = listOf(fullXRange.start)
 
     override fun getStartLayerMargin(
         context: CartesianMeasuringContext,
