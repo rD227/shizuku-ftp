@@ -244,14 +244,20 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         toEnd: Long,
     ) {
         chartAnimationInProgress = true
-        val durationMs = 420L
+        val durationMs = 360L
 
-        // 跨度很大的切换（例如 HOUR -> DAY）如果每 16ms 重绘一次，会因每帧数据量
-        // 太大而显得卡顿。这里对大跨度适当拉大帧间隔，减少中间重绘次数。
+        // 跨度很大的切换（例如 HOUR -> DAY）如果每帧都画满 4000 个点，会拖慢
+        // 中间帧。这里保持约 60fps，同时在大跨度动画中限制每帧绘制点数，
+        // 动画结束后再补一帧全分辨率数据。
         val startDelta = if (toStart > fromStart) toStart - fromStart else fromStart - toStart
         val endDelta = if (toEnd > fromEnd) toEnd - fromEnd else fromEnd - toEnd
         val maxDelta = maxOf(startDelta, endDelta)
-        val stepMs = if (maxDelta > 2L * 60L * 60L) 48L else 16L
+        val animationRenderPoints = if (maxDelta > 2L * 60L * 60L) {
+            ANIMATION_RENDER_POINTS
+        } else {
+            MAX_RENDER_POINTS
+        }
+        val stepMs = 16L
 
         var elapsedMs = 0L
 
@@ -264,7 +270,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             val animatedStart = fromStart + ((toStart - fromStart) * eased).toLong()
             val animatedEnd = fromEnd + ((toEnd - fromEnd) * eased).toLong()
 
-            publishChart(startOverride = animatedStart, endOverride = animatedEnd)
+            publishChart(
+                startOverride = animatedStart,
+                endOverride = animatedEnd,
+                maxRenderPoints = animationRenderPoints,
+            )
             delay(stepMs)
         }
 
@@ -399,6 +409,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun publishChart(
         startOverride: Long? = null,
         endOverride: Long? = null,
+        maxRenderPoints: Int = MAX_RENDER_POINTS,
     ) {
         val fallbackTimestampSeconds = currentTimestampSeconds()
         val windowSamples = samplesForChartWindow(
@@ -408,10 +419,10 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         )
         val snapshot = windowSamples.samples.toList()
         val (ftpSeries, sftpSeries) = withContext(Dispatchers.Default) {
-            val ftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds) {
+            val ftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds, maxRenderPoints) {
             it.ftpBytesPerSecond / 1024L
         }
-            val sftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds) {
+            val sftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds, maxRenderPoints) {
             it.sftpBytesPerSecond / 1024L
         }
             ftpSeries to sftpSeries
@@ -506,20 +517,23 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * Builds the series sent to Vico. Raw samples are used until [MAX_RENDER_POINTS] is reached.
+     * Builds the series sent to Vico. Raw samples are used until [maxRenderPoints] is reached.
      * After that, samples are bucketed and each bucket contributes its maximum. This preserves the
      * tall thin peaks while keeping the composable model small enough to redraw every second.
      */
     private fun buildRenderSeries(
         samples: List<TrafficChartSample>,
         fallbackTimestampSeconds: Long,
+        maxRenderPoints: Int = MAX_RENDER_POINTS,
         value: (TrafficChartSample) -> Long,
     ): RenderSeries {
         if (samples.isEmpty()) {
             return RenderSeries(listOf(fallbackTimestampSeconds), listOf(0L))
         }
 
-        if (samples.size <= MAX_RENDER_POINTS) {
+        val pointLimit = maxRenderPoints.coerceAtLeast(1)
+
+        if (samples.size <= pointLimit) {
             val xValues = ArrayList<Long>(samples.size)
             val yValues = ArrayList<Long>(samples.size)
             for (sample in samples) {
@@ -530,9 +544,9 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             return RenderSeries(xValues, yValues)
         }
 
-        val samplesPerBucket = (samples.size + MAX_RENDER_POINTS - 1) / MAX_RENDER_POINTS
-        val xValues = ArrayList<Long>(MAX_RENDER_POINTS)
-        val yValues = ArrayList<Long>(MAX_RENDER_POINTS)
+        val samplesPerBucket = (samples.size + pointLimit - 1) / pointLimit
+        val xValues = ArrayList<Long>(pointLimit)
+        val yValues = ArrayList<Long>(pointLimit)
 
         var startIndex = 0
         while (startIndex < samples.size) {
@@ -592,6 +606,9 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
          * thousand pixels wide, so drawing more points would not add visible detail.
          */
         private const val MAX_RENDER_POINTS = 4_000
+
+        /** 大跨度切换动画中每帧使用的点数，降低重绘开销。 */
+        private const val ANIMATION_RENDER_POINTS = 1_200
 
         /** Prune the SQLite table about once an hour. */
         private const val STORE_PRUNE_INTERVAL_SECONDS = 60L * 60L

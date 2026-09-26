@@ -3,9 +3,11 @@ package org.primftpd.ui
 import android.app.Activity
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -428,9 +430,9 @@ fun FourStateSwitch(
 
     val animatedOffset by animateDpAsState(
         targetValue = targetOffset,
-        animationSpec = SpringSpec(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMediumLow
+        animationSpec = tween(
+            durationMillis = 220,
+            easing = FastOutSlowInEasing,
         ),
         label = "ThumbOffsetAnimation"
     )
