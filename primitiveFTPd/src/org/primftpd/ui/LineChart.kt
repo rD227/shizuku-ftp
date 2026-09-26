@@ -4,7 +4,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -49,7 +48,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.ranges.ClosedFloatingPointRange
 
 private val AXIS_TIME_WITH_SECONDS_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US)
 private val AXIS_TIME_WITH_MINUTES_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
@@ -248,12 +246,16 @@ fun NetworkTrafficChart(
             formatAxisSpeed(value)
         }
     }
-    val axisLabelStyle = TextStyle(
+    val xAxisLabelStyle = TextStyle(
         fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
         color = if (isSystemInDarkTheme()) Color.White else Color.Black,
     )
-
+    val yAxisLabelStyle = TextStyle(
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Light,
+        color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+    )
     val ftpPeakPoint = peakPoints.firstOrNull { it.isFtp }
     val sftpPeakPoint = peakPoints.firstOrNull { !it.isFtp }
 
@@ -319,7 +321,7 @@ fun NetworkTrafficChart(
                 guideline = null,
                 label = rememberAxisLabelComponent(
                     overflow = TextOverflow.Visible,
-                    style = axisLabelStyle,
+                    style = yAxisLabelStyle,
                 ),
                 // Vico 默认会根据当前 Y 轴标签文字宽度自动调整绘图区左边距。
                 // 流量数值变化时标签宽度会变（例如 "9 KB/s" -> "1024 KB/s"），
@@ -331,7 +333,7 @@ fun NetworkTrafficChart(
             bottomAxis = HorizontalAxis.rememberBottom(
                 label = rememberAxisLabelComponent(
                     overflow = TextOverflow.Visible,
-                    style = axisLabelStyle,
+                    style = xAxisLabelStyle,
                 ),
                 guideline = null,
                 itemPlacer = when (measuringRule) {
