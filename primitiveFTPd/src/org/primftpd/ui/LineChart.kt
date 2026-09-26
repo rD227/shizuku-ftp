@@ -26,6 +26,7 @@ import org.primftpd.ui.data.ChartTriStateEnum
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
+import com.patrykandpatrick.vico.compose.cartesian.axis.BaseAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
@@ -163,7 +164,7 @@ private val noMarginBottomAxisItemPlacerForHour = object :
 }
 
 private val noMarginBottomAxisItemPlacerForMinute = object :
-    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 1 }) {
+    HorizontalAxis.ItemPlacer by HorizontalAxis.ItemPlacer.aligned(spacing = { 10 }) {
     override fun getStartLayerMargin(
         context: CartesianMeasuringContext,
         layerDimensions: CartesianLayerDimensions,
@@ -247,6 +248,11 @@ fun NetworkTrafficChart(
             formatAxisSpeed(value)
         }
     }
+    val axisLabelStyle = TextStyle(
+        fontSize = 10.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+    )
 
     val ftpPeakPoint = peakPoints.firstOrNull { it.isFtp }
     val sftpPeakPoint = peakPoints.firstOrNull { !it.isFtp }
@@ -311,14 +317,22 @@ fun NetworkTrafficChart(
             // 去除网格线；纵轴显示速度单位，横轴按时间戳显示本地时间。
             startAxis = VerticalAxis.rememberStart(
                 guideline = null,
+                label = rememberAxisLabelComponent(
+                    overflow = TextOverflow.Visible,
+                    style = axisLabelStyle,
+                ),
+                // Vico 默认会根据当前 Y 轴标签文字宽度自动调整绘图区左边距。
+                // 流量数值变化时标签宽度会变（例如 "9 KB/s" -> "1024 KB/s"），
+                // 整个绘图区就会左右抖动。这里按最长标签预留固定宽度。
+                size = BaseAxis.Size.Text("9999.9 MB/s"),
                 valueFormatter = verticalAxisValueFormatter,
             ),
 
             bottomAxis = HorizontalAxis.rememberBottom(
                 label = rememberAxisLabelComponent(
-                        overflow = TextOverflow.Visible,
-                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = if (isSystemInDarkTheme()) Color.White else Color.Black),
-                    ),
+                    overflow = TextOverflow.Visible,
+                    style = axisLabelStyle,
+                ),
                 guideline = null,
                 itemPlacer = when (measuringRule) {
                     ChartTriStateEnum.DAY -> {
@@ -366,11 +380,14 @@ fun NetworkTrafficChartPreview() {
 
     LaunchedEffect(Unit) {
         val firstTimestamp = System.currentTimeMillis() / 1000L
-        val xValues = (0L..7L).map { firstTimestamp + it }
+        // 一分钟视图：每秒一个点，方便预览 X 轴的 10 秒刻度是否稳定、对齐。
+        val xValues = (0L..60L).map { firstTimestamp + it }
+        val ftpValues = xValues.mapIndexed { index, _ -> 4 + (index % 17) }
+        val sftpValues = xValues.mapIndexed { index, _ -> 2 + ((index * 3) % 11) }
         modelProducer.runTransaction {
             lineSeries {
-                series(xValues, listOf(2, 6, 4, 12, 8, 16, 10, 20))
-                series(xValues, listOf(1, 3, 2, 8, 5, 12, 6, 14))
+                series(xValues, ftpValues)
+                series(xValues, sftpValues)
             }
         }
     }
@@ -379,6 +396,7 @@ fun NetworkTrafficChartPreview() {
         modelProducer = modelProducer,
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(220.dp),
+        measuringRule = ChartTriStateEnum.MINUTE,
     )
 }

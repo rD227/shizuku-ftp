@@ -19,6 +19,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.primftpd.events.DataTransferredEvent
 import org.primftpd.ui.TrafficChartClearEvent
+import org.primftpd.ui.LineChartSlide
 import org.primftpd.ui.TrafficChartStore
 import org.primftpd.ui.data.ChartPeak
 import org.primftpd.ui.data.ChartTriStateEnum
@@ -57,10 +58,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private var chartAnimationJob: Job? = null
     private var chartAnimationInProgress = false
 
-    /** 手指拖动后手动锚定的窗口右端；为 null 时跟随最新数据。 */
-    private var windowEndOverride: Long? = null
-    private var chartPanJob: Job? = null
-    private var pendingPanSeconds = 0.0
+    private val lineChartSlide = LineChartSlide()
 
 
 
@@ -132,9 +130,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     fun onTrafficChartClear(event: TrafficChartClearEvent) {
         logger.debug(">>> Traffic-chart history cleared")
         samples.clear()
-        windowEndOverride = null
-        chartPanJob?.cancel()
-        pendingPanSeconds = 0.0
+        lineChartSlide.reset()
         historyVersion++
         viewModelScope.launch {
             publishChart()
@@ -147,9 +143,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         val nowSeconds = currentTimestampSeconds()
         val (fromStart, fromEnd) = targetDomain(chartMeasuringRule, nowSeconds)
 
-        chartPanJob?.cancel()
-        pendingPanSeconds = 0.0
-        windowEndOverride = null
+        lineChartSlide.reset()
         chartMeasuringRule = rule
         val (toStart, toEnd) = latestTargetDomain(rule, nowSeconds)
 
@@ -162,71 +156,34 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /**
-     * 手动平移当前窗口。[deltaSeconds] 为正表示查看更新的时间，为负表示查看更早的历史。
-     */
     fun panChartWindow(deltaSeconds: Double) {
         val rule = chartMeasuringRule
-        // 目前只开放 M / H 滑动：D/W 窗口很大，逐帧重建数据不划算，也容易误操作。
-        if (rule != ChartTriStateEnum.MINUTE && rule != ChartTriStateEnum.HOUR) return
-        if (!deltaSeconds.isFinite() || deltaSeconds == 0.0) return
-
-        // 如果用户是在切换刻度动画还没结束时就开始拖，取消动画，避免两套窗口
-        // 更新逻辑互相覆盖。
+        if (rule != ChartTriStateEnum.MINUTE) return
         chartAnimationJob?.cancel()
         chartAnimationInProgress = false
-        pendingPanSeconds += deltaSeconds
-
-        if (chartPanJob?.isActive == true) return
-
-        chartPanJob = viewModelScope.launch {
-            val frameDelayMs = if (rule == ChartTriStateEnum.HOUR) 33L else 16L
-            val maxStepSeconds = when (rule) {
-                ChartTriStateEnum.MINUTE -> 15L
-                ChartTriStateEnum.HOUR -> 15L * 60L
-                else -> return@launch
-            }
-
-            while (true) {
-                val pending = pendingPanSeconds
-                if (pending >= 1.0 || pending <= -1.0) {
-                    val bounded = pending.coerceIn(
-                        -maxStepSeconds.toDouble(),
-                        maxStepSeconds.toDouble(),
-                    )
-                    val step = bounded.toLong().let { value ->
-                        if (value != 0L) value else if (pending > 0.0) 1L else -1L
-                    }
-                    pendingPanSeconds -= step
-                    if (applyChartPan(step)) {
-                        publishChart()
-                    }
-                }
-
-                if (kotlin.math.abs(pendingPanSeconds) < 1.0) break
-                delay(frameDelayMs)
-            }
-        }
+        lineChartSlide.pan(
+            scope = viewModelScope,
+            deltaSeconds = deltaSeconds,
+            measuringRule = rule,
+            boundsProvider = { chartPanBounds(rule) },
+            onWindowChanged = { publishChart() },
+        )
     }
 
-    private fun applyChartPan(deltaSeconds: Long): Boolean {
-        val span = chartMeasuringRule.windowSeconds
+    private fun chartPanBounds(rule: ChartTriStateEnum): LineChartSlide.PanBounds? {
+        val span = rule.windowSeconds
         val nowSeconds = currentTimestampSeconds()
-        val (_, latestEnd) = latestTargetDomain(chartMeasuringRule, nowSeconds)
-        val earliest = samples.firstOrNull()?.timestampSeconds ?: return false
-        val newest = samples.lastOrNull()?.timestampSeconds?.coerceAtLeast(nowSeconds) ?: return false
+        val (_, latestEnd) = latestTargetDomain(rule, nowSeconds)
+        val earliest = samples.firstOrNull()?.timestampSeconds ?: return null
+        val newest = samples.lastOrNull()?.timestampSeconds?.coerceAtLeast(nowSeconds) ?: return null
 
         val minEnd = earliest + span
         val maxEnd = maxOf(newest, minEnd)
-        val currentEnd = windowEndOverride ?: latestEnd
-        val requestedEnd = currentEnd + deltaSeconds
-        val clampedEnd = requestedEnd.coerceIn(minEnd, maxEnd)
-
-        val nextOverride = if (clampedEnd >= latestEnd) null else clampedEnd
-        if (nextOverride == windowEndOverride) return false
-
-        windowEndOverride = nextOverride
-        return true
+        return LineChartSlide.PanBounds(
+            minEnd = minEnd,
+            maxEnd = maxEnd,
+            latestEnd = latestEnd,
+        )
     }
 
     private fun targetDomain(
@@ -234,7 +191,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         nowSeconds: Long,
     ): Pair<Long, Long> {
         val (latestStart, latestEnd) = latestTargetDomain(rule, nowSeconds)
-        val manualEnd = windowEndOverride ?: return latestStart to latestEnd
+        val manualEnd = lineChartSlide.windowEndOverride ?: return latestStart to latestEnd
         return (manualEnd - rule.windowSeconds) to manualEnd
     }
 
