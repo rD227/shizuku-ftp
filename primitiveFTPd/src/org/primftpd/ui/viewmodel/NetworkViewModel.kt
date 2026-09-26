@@ -166,24 +166,45 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
      * 手动平移当前窗口。[deltaSeconds] 为正表示查看更新的时间，为负表示查看更早的历史。
      */
     fun panChartWindow(deltaSeconds: Double) {
-        if (chartMeasuringRule == ChartTriStateEnum.WEEK) return
+        val rule = chartMeasuringRule
+        // 目前只开放 M / H 滑动：D/W 窗口很大，逐帧重建数据不划算，也容易误操作。
+        if (rule != ChartTriStateEnum.MINUTE && rule != ChartTriStateEnum.HOUR) return
         if (!deltaSeconds.isFinite() || deltaSeconds == 0.0) return
 
+        // 如果用户是在切换刻度动画还没结束时就开始拖，取消动画，避免两套窗口
+        // 更新逻辑互相覆盖。
+        chartAnimationJob?.cancel()
+        chartAnimationInProgress = false
         pendingPanSeconds += deltaSeconds
+
         if (chartPanJob?.isActive == true) return
 
         chartPanJob = viewModelScope.launch {
-            while (pendingPanSeconds != 0.0) {
-                val step = when {
-                    pendingPanSeconds >= 1.0 -> pendingPanSeconds.toLong()
-                    pendingPanSeconds <= -1.0 -> pendingPanSeconds.toLong()
-                    else -> break
+            val frameDelayMs = if (rule == ChartTriStateEnum.HOUR) 33L else 16L
+            val maxStepSeconds = when (rule) {
+                ChartTriStateEnum.MINUTE -> 15L
+                ChartTriStateEnum.HOUR -> 15L * 60L
+                else -> return@launch
+            }
+
+            while (true) {
+                val pending = pendingPanSeconds
+                if (pending >= 1.0 || pending <= -1.0) {
+                    val bounded = pending.coerceIn(
+                        -maxStepSeconds.toDouble(),
+                        maxStepSeconds.toDouble(),
+                    )
+                    val step = bounded.toLong().let { value ->
+                        if (value != 0L) value else if (pending > 0.0) 1L else -1L
+                    }
+                    pendingPanSeconds -= step
+                    if (applyChartPan(step)) {
+                        publishChart()
+                    }
                 }
-                pendingPanSeconds -= step
-                if (applyChartPan(step)) {
-                    publishChart()
-                }
-                delay(16)
+
+                if (kotlin.math.abs(pendingPanSeconds) < 1.0) break
+                delay(frameDelayMs)
             }
         }
     }

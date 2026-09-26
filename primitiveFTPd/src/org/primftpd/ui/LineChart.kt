@@ -346,10 +346,11 @@ fun NetworkTrafficChart(
         ),
         modelProducer = modelProducer,
         modifier = modifier,
-        // 禁止缩放及滑动。这里不使用 Vico 的模型差值动画，避免切换刻度时
-        // 在数据窗口变化/补零过程中触发崩溃；FourStateSwitch 的滑块仍有自身动画。
+        // 横向滑动完全由 MainScreen 的手势 + ViewModel 移动数据窗口实现，
+        // 关闭 Vico 自己的 scroll/zoom 手势，避免两种手势同时改窗口导致 H 等
+        // 较大窗口在拖动时被 Vico 的缩放状态覆盖。
         zoomState = rememberVicoZoomState(
-            zoomEnabled = true,
+            zoomEnabled = false,
             initialZoom = Zoom.Content,
         ),
         scrollState = rememberVicoScrollState(scrollEnabled = false),
