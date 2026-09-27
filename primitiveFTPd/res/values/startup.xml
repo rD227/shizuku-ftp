@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="guide_welcome">Welcome to shizukuFTP</string>
+    <string name="guide_wallpaper_title">Make it yours</string>
+    <string name="guide_wallpaper_body">Long-press the wallpaper in the upper-right area of the home screen to choose your own picture.</string>
+    <string name="guide_settings_title">Gear · Settings</string>
+    <string name="guide_settings_body">The gear on the left opens authentication, connection settings, appearance and system options.</string>
+    <string name="guide_connections_title">Chain · Connection tools</string>
+    <string name="guide_connections_body">The chain button opens connected devices, QR codes, client logs, keys and other connection tools.</string>
+    <string name="guide_permissions_title">Alert card · Permissions</string>
+    <string name="guide_permissions_body">The bottom button opens the permissions window. Review storage, notifications and background operation here, and grant access when needed.</string>
+    <string name="guide_skip">Skip</string>
+    <string name="guide_back">Back</string>
+    <string name="guide_next">Next</string>
+    <string name="guide_done">Get started</string>
+</resources>

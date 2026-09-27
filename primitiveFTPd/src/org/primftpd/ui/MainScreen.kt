@@ -467,6 +467,9 @@ fun MainScreen(
             batteryOptimizationIgnored = permState.batteryOptimizationIgnored,
             backgroundRestricted = permState.backgroundRestricted,
         )
+        if (!LocalInspectionMode.current) {
+            StartupExperience(state = viewModel<StartupViewModel>())
+        }
     }
 }
 

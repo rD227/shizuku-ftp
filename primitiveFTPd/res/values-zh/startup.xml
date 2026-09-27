@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="guide_welcome">欢迎使用 shizukuFTP</string>
+    <string name="guide_wallpaper_title">换上喜欢的壁纸</string>
+    <string name="guide_wallpaper_body">长按首页右上方的壁纸区域，即可选择自己的图片，让首页变成喜欢的样子。</string>
+    <string name="guide_settings_title">齿轮 · 设置选项</string>
+    <string name="guide_settings_body">左侧齿轮按钮打开设置菜单，可以调整身份验证、连接配置、界面外观和系统选项。</string>
+    <string name="guide_connections_title">链条 · 连接工具</string>
+    <string name="guide_connections_body">左侧链条按钮打开连接工具，包括接入设备、二维码、客户端日志、密钥等功能。</string>
+    <string name="guide_permissions_title">提醒卡片 · 权限授予</string>
+    <string name="guide_permissions_body">左侧最下面的按钮打开权限窗口，可以检查存储、通知和后台运行权限，并按需要前往授予。</string>
+    <string name="guide_skip">跳过</string>
+    <string name="guide_back">上一步</string>
+    <string name="guide_next">下一步</string>
+    <string name="guide_done">开始使用</string>
+</resources>
