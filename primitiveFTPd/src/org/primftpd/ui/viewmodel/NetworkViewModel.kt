@@ -1,6 +1,7 @@
 package org.primftpd.ui.viewmodel
 
 import android.app.Application
+import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
@@ -34,8 +35,8 @@ import java.util.concurrent.atomic.AtomicLong
  * (about three days). The x-axis follows the selected measuring rule (MINUTE/HOUR/DAY); if the stored
  * history is shorter than the selected span, it is pinned to the left edge and the unmeasured
  * right-hand side is drawn as y = 0.
- * The renderer downsamples to [MAX_RENDER_POINTS] points only for drawing; the persisted history
- * keeps the original per-second resolution.
+ * The renderer downsamples to roughly one point per screen dp only for drawing; the persisted
+ * history keeps the original per-second resolution.
  */
 class NetworkViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -47,6 +48,16 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     val chartPeaks: StateFlow<List<ChartPeak>> = _chartPeaks.asStateFlow()
 
     private val trafficChartStore = TrafficChartStore.Companion.getInstance(application)
+
+    /** More samples than horizontal display units add no visible detail but greatly increase Vico's
+     * path, area-fill, and diff-animation work. */
+    private val screenRenderPointLimit =
+        application.resources.configuration.screenWidthDp.coerceIn(
+            MIN_SCREEN_RENDER_POINTS,
+            MAX_SCREEN_RENDER_POINTS,
+        )
+    private val animationRenderPointLimit =
+        (screenRenderPointLimit / 2).coerceAtLeast(MIN_ANIMATION_RENDER_POINTS)
 
     private val ftpBytesInLastSecond = AtomicLong(0L)
     private val sftpBytesInLastSecond = AtomicLong(0L)
@@ -67,6 +78,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
     private var lastFtpEventBytes = 0L
     private var lastSftpEventBytes = 0L
+    private var lastMemoryPruneTimestampSeconds = 0L
     private var lastStorePruneTimestampSeconds = 0L
 
     /**
@@ -238,29 +250,26 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
         toEnd: Long,
     ) {
         val durationMs = 360L
-        val startDelta = kotlin.math.abs(toStart - fromStart)
-        val endDelta = kotlin.math.abs(toEnd - fromEnd)
-        val maxDelta = maxOf(startDelta, endDelta)
-        val animationRenderPoints = if (maxDelta > 2L * 60L * 60L) {
-            ANIMATION_RENDER_POINTS
-        } else {
-            MAX_RENDER_POINTS
-        }
         val frameMs = 16L
-        var elapsedMs = 0L
+        val startedAt = SystemClock.uptimeMillis()
+        var elapsedMs: Long
 
-        while (elapsedMs < durationMs) {
-            elapsedMs = (elapsedMs + frameMs).coerceAtMost(durationMs)
+        do {
+            val frameStartedAt = SystemClock.uptimeMillis()
+            elapsedMs = (frameStartedAt - startedAt).coerceAtMost(durationMs)
             val progress = elapsedMs.toFloat() / durationMs.toFloat()
             val eased = 1f - (1f - progress) * (1f - progress) * (1f - progress)
 
             publishChart(
                 startOverride = fromStart + ((toStart - fromStart) * eased).toLong(),
                 endOverride = fromEnd + ((toEnd - fromEnd) * eased).toLong(),
-                maxRenderPoints = animationRenderPoints,
+                maxRenderPoints = animationRenderPointLimit,
             )
-            delay(frameMs)
-        }
+            if (elapsedMs < durationMs) {
+                val frameWorkMs = SystemClock.uptimeMillis() - frameStartedAt
+                delay((frameMs - frameWorkMs).coerceAtLeast(1L))
+            }
+        } while (elapsedMs < durationMs)
 
         publishChart()
     }
@@ -285,7 +294,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
 
         upsertSample(sample)
         pruneOldSamples(nowSeconds)
-        publishChart()
+        // The ruler animation already publishes current snapshots. A competing once-per-second
+        // transaction here can finish between its frames and make the whole chart jump.
+        if (chartRangeAnimationJob?.isActive != true) {
+            publishChart()
+        }
 
         if (historyVersion == versionAtStart) {
             persistSample(sample)
@@ -306,9 +319,21 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun pruneOldSamples(nowSeconds: Long) {
+        if (
+            nowSeconds - lastMemoryPruneTimestampSeconds < MEMORY_PRUNE_INTERVAL_SECONDS
+        ) {
+            return
+        }
+        lastMemoryPruneTimestampSeconds = nowSeconds
+
         val cutoff = nowSeconds - TrafficChartStore.Companion.MAX_AGE_SECONDS
-        while (samples.isNotEmpty() && samples.first().timestampSeconds < cutoff) {
-            samples.removeAt(0)
+        val cutoffSearch = samples.binarySearchBy(cutoff) { it.timestampSeconds }
+        val firstKeptIndex = if (cutoffSearch < 0) -cutoffSearch - 1 else cutoffSearch
+        if (firstKeptIndex > 0) {
+            // ArrayList.removeAt(0) shifts the whole history once for every expired sample. Remove
+            // the expired prefix in one operation instead, and only do that work about once a
+            // minute. This matters once the in-memory history has grown to several days.
+            samples.subList(0, firstKeptIndex).clear()
         }
     }
 
@@ -390,7 +415,7 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun publishChart(
         startOverride: Long? = null,
         endOverride: Long? = null,
-        maxRenderPoints: Int = MAX_RENDER_POINTS,
+        maxRenderPoints: Int = screenRenderPointLimit,
     ) {
         val fallbackTimestampSeconds = currentTimestampSeconds()
         val windowSamples = samplesForChartWindow(
@@ -399,15 +424,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
             endOverride = endOverride,
         )
         val snapshot = windowSamples.samples.toList()
-        val (ftpSeries, sftpSeries) = withContext(Dispatchers.Default) {
-            val ftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds, maxRenderPoints) {
-            it.ftpBytesPerSecond / 1024L
+        val series = withContext(Dispatchers.Default) {
+            buildRenderSeriesPair(snapshot, fallbackTimestampSeconds, maxRenderPoints)
         }
-            val sftpSeries = buildRenderSeries(snapshot, fallbackTimestampSeconds, maxRenderPoints) {
-            it.sftpBytesPerSecond / 1024L
-        }
-            ftpSeries to sftpSeries
-        }
+        val ftpSeries = series.ftp
+        val sftpSeries = series.sftp
 
         val ftpX = ftpSeries.xValues.toMutableList()
         val ftpY = ftpSeries.yValues.toMutableList()
@@ -502,62 +523,81 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
      * After that, samples are bucketed and each bucket contributes its maximum. This preserves the
      * tall thin peaks while keeping the composable model small enough to redraw every second.
      */
-    private fun buildRenderSeries(
+    private fun buildRenderSeriesPair(
         samples: List<TrafficChartSample>,
         fallbackTimestampSeconds: Long,
-        maxRenderPoints: Int = MAX_RENDER_POINTS,
-        value: (TrafficChartSample) -> Long,
-    ): RenderSeries {
+        maxRenderPoints: Int,
+    ): RenderSeriesPair {
         if (samples.isEmpty()) {
-            return RenderSeries(listOf(fallbackTimestampSeconds), listOf(0L))
+            val empty = RenderSeries(listOf(fallbackTimestampSeconds), listOf(0L))
+            return RenderSeriesPair(empty, empty)
         }
 
         val pointLimit = maxRenderPoints.coerceAtLeast(1)
+        val ftpX = ArrayList<Long>(minOf(samples.size, pointLimit) + 2)
+        val ftpY = ArrayList<Long>(minOf(samples.size, pointLimit) + 2)
+        val sftpX = ArrayList<Long>(minOf(samples.size, pointLimit) + 2)
+        val sftpY = ArrayList<Long>(minOf(samples.size, pointLimit) + 2)
 
         if (samples.size <= pointLimit) {
-            val xValues = ArrayList<Long>(samples.size)
-            val yValues = ArrayList<Long>(samples.size)
             for (sample in samples) {
                 // Use absolute epoch seconds so the bottom axis can format them as wall-clock time.
-                xValues.add(sample.timestampSeconds)
-                yValues.add(value(sample))
+                ftpX.add(sample.timestampSeconds)
+                ftpY.add(sample.ftpBytesPerSecond / 1024L)
+                sftpX.add(sample.timestampSeconds)
+                sftpY.add(sample.sftpBytesPerSecond / 1024L)
             }
-            return RenderSeries(xValues, yValues)
+            return RenderSeriesPair(RenderSeries(ftpX, ftpY), RenderSeries(sftpX, sftpY))
         }
 
         val samplesPerBucket = (samples.size + pointLimit - 1) / pointLimit
-        val xValues = ArrayList<Long>(pointLimit)
-        val yValues = ArrayList<Long>(pointLimit)
-
         var startIndex = 0
         while (startIndex < samples.size) {
             val endIndex = (startIndex + samplesPerBucket).coerceAtMost(samples.size)
-            var bucketMaximum = Long.MIN_VALUE
-            var bucketSample = samples[startIndex]
+            var ftpMaximum = Long.MIN_VALUE
+            var sftpMaximum = Long.MIN_VALUE
+            var ftpMaximumSample = samples[startIndex]
+            var sftpMaximumSample = samples[startIndex]
             for (index in startIndex until endIndex) {
-                val sampleValue = value(samples[index])
-                if (sampleValue > bucketMaximum) {
-                    bucketMaximum = sampleValue
-                    bucketSample = samples[index]
+                val sample = samples[index]
+                if (sample.ftpBytesPerSecond > ftpMaximum) {
+                    ftpMaximum = sample.ftpBytesPerSecond
+                    ftpMaximumSample = sample
+                }
+                if (sample.sftpBytesPerSecond > sftpMaximum) {
+                    sftpMaximum = sample.sftpBytesPerSecond
+                    sftpMaximumSample = sample
                 }
             }
-            xValues.add(bucketSample.timestampSeconds)
-            yValues.add(bucketMaximum)
+            ftpX.add(ftpMaximumSample.timestampSeconds)
+            ftpY.add(ftpMaximum / 1024L)
+            sftpX.add(sftpMaximumSample.timestampSeconds)
+            sftpY.add(sftpMaximum / 1024L)
             startIndex = endIndex
         }
 
         // 降采样后也把首尾真实采样保留下来，避免 x 轴两端因为“只取桶内最大值”
         // 而丢掉边界点，造成视觉上左右有空隙。
-        if (xValues.first() != samples.first().timestampSeconds) {
-            xValues.add(0, samples.first().timestampSeconds)
-            yValues.add(0, value(samples.first()))
+        val first = samples.first()
+        val last = samples.last()
+        if (ftpX.first() != first.timestampSeconds) {
+            ftpX.add(0, first.timestampSeconds)
+            ftpY.add(0, first.ftpBytesPerSecond / 1024L)
         }
-        if (xValues.last() != samples.last().timestampSeconds) {
-            xValues.add(samples.last().timestampSeconds)
-            yValues.add(value(samples.last()))
+        if (sftpX.first() != first.timestampSeconds) {
+            sftpX.add(0, first.timestampSeconds)
+            sftpY.add(0, first.sftpBytesPerSecond / 1024L)
+        }
+        if (ftpX.last() != last.timestampSeconds) {
+            ftpX.add(last.timestampSeconds)
+            ftpY.add(last.ftpBytesPerSecond / 1024L)
+        }
+        if (sftpX.last() != last.timestampSeconds) {
+            sftpX.add(last.timestampSeconds)
+            sftpY.add(last.sftpBytesPerSecond / 1024L)
         }
 
-        return RenderSeries(xValues, yValues)
+        return RenderSeriesPair(RenderSeries(ftpX, ftpY), RenderSeries(sftpX, sftpY))
     }
 
     override fun onCleared() {
@@ -568,6 +608,11 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     private data class RenderSeries(
         val xValues: List<Long>,
         val yValues: List<Long>,
+    )
+
+    private data class RenderSeriesPair(
+        val ftp: RenderSeries,
+        val sftp: RenderSeries,
     )
 
     private data class ChartWindowSamples(
@@ -582,14 +627,12 @@ class NetworkViewModel(application: Application) : AndroidViewModel(application)
     companion object {
 
 
-        /**
-         * Maximum number of points passed to Vico for one series. A screen is at most a few
-         * thousand pixels wide, so drawing more points would not add visible detail.
-         */
-        private const val MAX_RENDER_POINTS = 4_000
+        private const val MIN_SCREEN_RENDER_POINTS = 240
+        private const val MAX_SCREEN_RENDER_POINTS = 720
+        private const val MIN_ANIMATION_RENDER_POINTS = 120
 
-        /** Point cap used only for intermediate frames of large ruler transitions. */
-        private const val ANIMATION_RENDER_POINTS = 1_200
+        /** Prune the in-memory prefix in a batch instead of shifting a large list every second. */
+        private const val MEMORY_PRUNE_INTERVAL_SECONDS = 60L
 
         /** Prune the SQLite table about once an hour. */
         private const val STORE_PRUNE_INTERVAL_SECONDS = 60L * 60L
