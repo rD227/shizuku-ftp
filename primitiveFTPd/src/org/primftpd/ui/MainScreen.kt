@@ -472,7 +472,7 @@ fun MainScreen(
         )
         if (!LocalInspectionMode.current) {
             var startupReady by remember { mutableStateOf(false) }
-            StartupExperience(state = viewModel<StartupViewModel>(), onReady = { startupReady = true })
+            StartupExperience(state = viewModel<StartupViewModel>(), colorBag = colorBag, onReady = { startupReady = true })
             StartupUpdatePrompt(ready = startupReady, state = viewModel<UpdatePromptViewModel>())
         }
     }

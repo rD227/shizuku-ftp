@@ -19,6 +19,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +49,11 @@ internal fun SystemCategory(
 ) {
     val context = LocalContext.current
     val prefs = rememberPrefs()
+    val guideState = if (LocalInspectionMode.current) null else viewModel<StartupViewModel>(key = "settingsGuide")
+    var replayGuide by rememberSaveable { mutableStateOf(false) }
+    if (replayGuide && guideState != null) {
+        StartupExperience(guideState, colorBag, onReady = { replayGuide = false })
+    }
 
     var wakelock by remember { mutableStateOf(LoadPrefsUtil.wakelock(prefs)) }
     var announce by remember { mutableStateOf(LoadPrefsUtil.announce(prefs)) }
@@ -56,11 +64,13 @@ internal fun SystemCategory(
     val loggingValues = LocalResources.current.getStringArray(R.array.prefLoggingValues).toList()
     val loggingNames = LocalResources.current.getStringArray(R.array.prefLoggingNames).toList()
 
-    val loggingStr = remember {
+    val defaultLogging = stringResource(R.string.prefDefaultLogging)
+
+    val loggingStr = remember(defaultLogging) {
         prefs.getString(
             LoadPrefsUtil.PREF_KEY_LOGGING,
-            context.getString(R.string.prefDefaultLogging),
-        ) ?: context.getString(R.string.prefDefaultLogging)
+            defaultLogging
+        )
     }
     // this val's mutableStateOf is removed by AI
     //
@@ -302,6 +312,15 @@ internal fun SystemCategory(
             )
             importLauncher.launch(intent)
         }
+    )
+
+    ClickPrefRow(
+        title = stringResource(R.string.guide_replay_title),
+        description = stringResource(R.string.guide_replay_body),
+        onClick = {
+            guideState?.replay()
+            replayGuide = true
+        },
     )
 
 

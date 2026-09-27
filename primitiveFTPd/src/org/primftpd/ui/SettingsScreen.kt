@@ -91,6 +91,7 @@ fun SettingsScreen(
 
     val colorBag = previewColorBag ?: providedColorBag
         ?: error("colorBag must be provided (preview or runtime)")
+    WallpaperControlsTheme(colorBag) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -158,6 +159,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}
 }
 // ─── Helper: get SharedPreferences once ─────────────────────────
 
@@ -577,4 +579,3 @@ fun PrefsPreview() {
         )
     }
 }
-

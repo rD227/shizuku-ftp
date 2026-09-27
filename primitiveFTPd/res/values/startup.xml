@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="guide_replay_title">Show the welcome guide again</string>
+    <string name="guide_replay_body">Review wallpaper customization, settings, connection tools, and permissions.</string>
     <string name="guide_welcome">Welcome to shizukuFTP</string>
     <string name="guide_wallpaper_title">Choose your wallpaper</string>
     <string name="guide_wallpaper_body">Touch and hold the wallpaper in the upper-right corner of the home screen to choose a picture.</string>

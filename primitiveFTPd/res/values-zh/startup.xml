@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="guide_replay_title">再次查看开屏引导</string>
+    <string name="guide_replay_body">重新了解壁纸设置、设置选项、连接工具和权限窗口。</string>
     <string name="guide_welcome">欢迎使用 shizukuFTP</string>
     <string name="guide_wallpaper_title">换上喜欢的壁纸</string>
     <string name="guide_wallpaper_body">长按首页右上方的壁纸区域，即可选择自己的图片，让首页变成喜欢的样子。</string>

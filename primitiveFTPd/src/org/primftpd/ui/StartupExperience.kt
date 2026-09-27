@@ -27,6 +27,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import org.primftpd.R
+import org.primftpd.ui.data.ColorBag
 
 private const val GUIDE_DONE = "home_guide_v1_done"
 
@@ -36,6 +37,11 @@ internal class StartupViewModel(application: Application) : AndroidViewModel(app
         private set
     var page by mutableIntStateOf(0)
 
+    fun replay() {
+        page = 0
+        guideVisible = true
+    }
+
     fun finishGuide() {
         prefs.edit { putBoolean(GUIDE_DONE, true) }
         guideVisible = false
@@ -44,7 +50,14 @@ internal class StartupViewModel(application: Application) : AndroidViewModel(app
 }
 
 @Composable
-internal fun StartupExperience(state: StartupViewModel, onReady: () -> Unit = {}) {
+internal fun StartupExperience(state: StartupViewModel, colorBag: ColorBag, onReady: () -> Unit = {}) {
+    WallpaperControlsTheme(colorBag) {
+        StartupExperienceContent(state, onReady)
+    }
+}
+
+@Composable
+private fun StartupExperienceContent(state: StartupViewModel, onReady: () -> Unit) {
     // The check starts only after the guide's exit transition has finished.
     val visibility = remember { MutableTransitionState(false) }
     visibility.targetState = state.guideVisible
