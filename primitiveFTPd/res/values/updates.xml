@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="update_available_title">Update available: %1$s</string>
-    <string name="update_available_body">A new version is available. Open the release page in your browser to read the release notes and download the update.\n\nChoose “Remind me later” to pause reminders for 24 hours, or “Cancel” to skip this version. You can still check for updates from About.</string>
+    <string name="update_available_body">A new version is available. Open the release page in your browser to read the release notes and download the update.\n\nChoose “Remind me later” to be reminded the next time you start the app, or “Cancel” to skip this version. Tapping outside this dialog also postpones the reminder until the next startup. You can still check for updates from About.</string>
     <string name="update_later">Remind me later</string>
     <string name="update_browser">Open in browser</string>
     <string name="update_no_browser">No browser is available to open the release page.</string>

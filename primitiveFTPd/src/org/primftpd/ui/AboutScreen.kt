@@ -67,7 +67,7 @@ fun AboutScreen(
     var availableUpdate by remember { mutableStateOf<String?>(null) }
 
     availableUpdate?.let { version ->
-        UpdateAvailableDialog(version = version, onDismiss = { availableUpdate = null })
+        UpdateAvailableDialog(version = version, colorBag = colorBag, onDismiss = { availableUpdate = null })
     }
 
     val colorBag = colorBag

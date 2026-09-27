@@ -17,9 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.primftpd.R
+import org.primftpd.ui.data.ColorBag
 
 private const val IGNORED_VERSION = "ignored_update_version"
-private const val REMIND_AFTER = "update_remind_after"
 
 internal class UpdatePromptViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("startup_experience", Context.MODE_PRIVATE)
@@ -30,7 +30,6 @@ internal class UpdatePromptViewModel(application: Application) : AndroidViewMode
     fun checkOnce() {
         if (checked) return
         checked = true
-        if (System.currentTimeMillis() < prefs.getLong(REMIND_AFTER, 0L)) return
         viewModelScope.launch {
             val latest = withContext(Dispatchers.IO) { fetchLatestVersionFromGithub() }
             if (latest != null && latest != prefs.getString(IGNORED_VERSION, null) &&
@@ -43,19 +42,18 @@ internal class UpdatePromptViewModel(application: Application) : AndroidViewMode
 }
 
 @Composable
-internal fun StartupUpdatePrompt(ready: Boolean, state: UpdatePromptViewModel) {
+internal fun StartupUpdatePrompt(ready: Boolean, state: UpdatePromptViewModel, colorBag: ColorBag) {
     LaunchedEffect(ready) { if (ready) state.checkOnce() }
-    if (ready) state.updateVersion?.let { UpdateAvailableDialog(it, state::dismissUpdate) }
+    if (ready) state.updateVersion?.let { UpdateAvailableDialog(it, colorBag, state::dismissUpdate) }
 }
 
 @Composable
-internal fun UpdateAvailableDialog(version: String, onDismiss: () -> Unit) {
+internal fun UpdateAvailableDialog(version: String, colorBag: ColorBag, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember(context) { context.getSharedPreferences("startup_experience", Context.MODE_PRIVATE) }
-    val later = {
-        prefs.edit { putLong(REMIND_AFTER, System.currentTimeMillis() + 24 * 60 * 60 * 1000L) }
-        onDismiss()
-    }
+    // Dismiss only this session. The next startup creates a fresh update-check ViewModel.
+    val later = onDismiss
+    WallpaperControlsTheme(colorBag) {
     CompactSettingsDialog(
         onDismissRequest = later,
         title = { Text(stringResource(R.string.update_available_title, version)) },
@@ -78,4 +76,5 @@ internal fun UpdateAvailableDialog(version: String, onDismiss: () -> Unit) {
             }) { Text(stringResource(R.string.update_browser)) }
         },
     )
+    }
 }
