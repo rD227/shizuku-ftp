@@ -168,6 +168,7 @@ fun AboutScreen(
             // Dependencies
             SectionTitle("Libraries")
             LinkItem("Compose-Material3", "https://developer.android.com/jetpack/androidx/releases/compose-material3", context,colorBag)
+            LinkItem("UI reference from YumeBox", "https://github.com/YumeYucca/YumeBox", context,colorBag)
             LinkItem("Upstream GitHub Project", "https://github.com/wolpi/prim-ftpd", context,colorBag)
             LinkItem("AndroidX", "https://developer.android.com/jetpack", context,colorBag)
             LinkItem("Apache MINA", "https://mina.apache.org", context,colorBag)
