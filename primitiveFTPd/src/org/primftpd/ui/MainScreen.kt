@@ -468,7 +468,9 @@ fun MainScreen(
             backgroundRestricted = permState.backgroundRestricted,
         )
         if (!LocalInspectionMode.current) {
-            StartupExperience(state = viewModel<StartupViewModel>())
+            var startupReady by remember { mutableStateOf(false) }
+            StartupExperience(state = viewModel<StartupViewModel>(), onReady = { startupReady = true })
+            StartupUpdatePrompt(ready = startupReady, state = viewModel<UpdatePromptViewModel>())
         }
     }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_available_title">发现新版本：%1$s</string>
+    <string name="update_available_body">可以前往浏览器查看 GitHub 发布说明并下载更新。选择“稍后”会在 24 小时后再次提醒；“取消”会忽略此版本。仍可在关于页面手动检查更新。</string>
+    <string name="update_later">稍后</string>
+    <string name="update_browser">浏览器更新</string>
+    <string name="update_no_browser">未找到可以打开发布页面的浏览器。</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_available_title">Update available: %1$s</string>
+    <string name="update_available_body">A newer release is available. Open its GitHub page in your browser to review and download it. Later reminds you after 24 hours; Cancel skips this version. You can always check again from About.</string>
+    <string name="update_later">Later</string>
+    <string name="update_browser">Open browser</string>
+    <string name="update_no_browser">No browser is available to open the release page.</string>
+</resources>

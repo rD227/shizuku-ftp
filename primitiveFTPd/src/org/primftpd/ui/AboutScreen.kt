@@ -64,6 +64,11 @@ fun AboutScreen(
     var hasNavigatedBack by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var checkingUpdate by remember { mutableStateOf(false) }
+    var availableUpdate by remember { mutableStateOf<String?>(null) }
+
+    availableUpdate?.let { version ->
+        UpdateAvailableDialog(version = version, onDismiss = { availableUpdate = null })
+    }
 
     val colorBag = colorBag
     Scaffold(
@@ -126,7 +131,7 @@ fun AboutScreen(
                                         ).show()
                                     // an update is available
                                     compareVersions(getVersionName(context), latestVersion) < 0 ->
-                                        openUrl(context, "https://github.com/rD227/shizuku-ftp/releases/latest/download/shizuku-ftp-release.apk")
+                                        availableUpdate = latestVersion
                                     // already on the latest release
                                     else ->
                                         Toast.makeText(
@@ -256,7 +261,7 @@ private fun getVersionInfo(context: Context): String {
 }
 
 /** Returns only the versionName, e.g. "v1.2.2", or "" when it cannot be read. */
-private fun getVersionName(context: Context): String {
+internal fun getVersionName(context: Context): String {
     return try {
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         packageInfo.versionName ?: ""
@@ -269,7 +274,7 @@ private const val LATEST_RELEASE_API =
     "https://api.github.com/repos/rD227/shizuku-ftp/releases/latest"
 
 /** Fetches the newest GitHub release tag, e.g. "v1.2.1". Returns null when the request fails. */
-private fun fetchLatestVersionFromGithub(): String? {
+internal fun fetchLatestVersionFromGithub(): String? {
     return try {
         val connection = URL(LATEST_RELEASE_API).openConnection() as HttpURLConnection
         try {
@@ -297,7 +302,7 @@ private fun fetchLatestVersionFromGithub(): String? {
  * Compares two dot-separated version strings such as "v1.2.3" or "1.2.3-SNAPSHOT".
  * Returns < 0 when [a] is older than [b], 0 when equal, > 0 when [a] is newer.
  */
-private fun compareVersions(a: String, b: String): Int {
+internal fun compareVersions(a: String, b: String): Int {
     fun numericParts(version: String): List<Int> = version
         .trim()
         .removePrefix("v")
