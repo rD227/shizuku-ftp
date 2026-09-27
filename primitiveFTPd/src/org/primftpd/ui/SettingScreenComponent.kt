@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -244,7 +242,7 @@ internal fun EditTextDialog(
     var text by remember { mutableStateOf(currentValue) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    AlertDialog(
+    CompactSettingsDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -260,7 +258,6 @@ internal fun EditTextDialog(
         },
         confirmButton = {
             TextButton(
-                modifier = Modifier.offset(y = (-2).dp),
                 onClick = {
                     if (error == null) {
                         onConfirm(text)
@@ -273,9 +270,7 @@ internal fun EditTextDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss,
-                modifier = Modifier.offset(y = (-2).dp)
-            ) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         }
@@ -292,7 +287,7 @@ internal fun PasswordEditDialog(
     var visible by remember { mutableStateOf(false) }
     var clear by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    CompactSettingsDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -333,14 +328,12 @@ internal fun PasswordEditDialog(
                     }
                     onDismiss()
                 },
-                modifier = Modifier.offset(y = (-2).dp)
             ) {
                 Text("OK",fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss,
-                modifier = Modifier.offset(y = (-2).dp)) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
         }
@@ -356,7 +349,7 @@ internal fun ListSelectionDialog(
     onDismiss: () -> Unit,
     onSelected: (Int, String) -> Unit
 ) {
-    AlertDialog(
+    CompactSettingsDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -369,7 +362,7 @@ internal fun ListSelectionDialog(
                                 onSelected(index, entryValues[index])
                                 onDismiss()
                             }
-                            .padding(vertical = 12.dp, horizontal = 4.dp),
+                            .padding(vertical = 2.dp, horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -404,7 +397,7 @@ internal fun MultiSelectDialog(
 ) {
     var selected by remember { mutableStateOf(initialSelected) }
 
-    AlertDialog(
+    CompactSettingsDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -422,7 +415,7 @@ internal fun MultiSelectDialog(
                                     selected + value
                                 }
                             }
-                            .padding(vertical = 12.dp, horizontal = 4.dp),
+                            .padding(vertical = 2.dp, horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
@@ -444,7 +437,6 @@ internal fun MultiSelectDialog(
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(selected); onDismiss() },
-                modifier = Modifier.offset(y = (-8).dp)
             ) {
                 Text("OK", fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
@@ -452,7 +444,6 @@ internal fun MultiSelectDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                modifier = Modifier.offset(y = (-8).dp)
                 ) {
                 Text(stringResource(R.string.cancel), fontSize = MaterialTheme.typography.bodyLarge.fontSize)
             }
