@@ -11,6 +11,8 @@ COMPILE_README.md
 *.log
 primitiveFTPd/release/output-metadata.json
 primitiveFTPd/debug/output-metadata.json
+primitiveFTPd/release/baselineProfiles/0/shizuku-ftp-release.dm
+primitiveFTPd/release/baselineProfiles/1/shizuku-ftp-release.dm
 
 #logs
 .kotlin
