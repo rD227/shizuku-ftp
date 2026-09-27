@@ -249,20 +249,23 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 打底背景
-        // 同时作为侧栏独立 HazeState 的 source，让侧栏滑动时不再和全屏 haze 共用同一状态
+        // Keep a real wallpaper below the capture layers. A source layer can be invalidated when
+        // an animated effect attaches; that must never expose an empty background for one frame.
+        WallpaperBase(wallpaperBitmap = wallpaperBitmap)
+        // Independent sibling captures: neither source records another Haze graphics layer.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .hazeSource(state = hazeState)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .hazeSource(state = sidebarHazeState)
-            ) {
-                WallpaperBase(wallpaperBitmap = wallpaperBitmap)
-            }
+            WallpaperBase(wallpaperBitmap = wallpaperBitmap)
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = sidebarHazeState)
+        ) {
+            WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         }
         Box(
             modifier = Modifier
