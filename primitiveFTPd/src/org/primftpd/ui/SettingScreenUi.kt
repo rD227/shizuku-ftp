@@ -56,8 +56,11 @@ internal fun UiCategory(
         ?: UiPreferences.getTopComponentPressedDown(prefs)) }
     var usrM3ToPickColors by remember { mutableStateOf(uiPreferencesViewModel?.getUsrM3ToPickColors()
         ?: UiPreferences.getUsrM3ToPickColors(prefs)) }
-    var glassSideMenuWallpaper by remember { mutableStateOf(uiPreferencesViewModel?.getGlassSideMenuWallpaper()
-        ?: UiPreferences.getGlassSideMenuWallpaper(prefs)) }
+    val previewGlassSideMenuWallpaper = remember {
+        mutableStateOf(UiPreferences.DEFAULT_GLASS_SIDE_MENU_WALLPAPER)
+    }
+    val glassSideMenuWallpaper by (uiPreferencesViewModel?.glassSideMenuWallpaper
+        ?: previewGlassSideMenuWallpaper)
     var sideMenuSpringAnimation by remember { mutableStateOf(uiPreferencesViewModel?.getSideMenuSpringAnimation()
         ?: UiPreferences.getSideMenuSpringAnimation(prefs)) }
     val changeInTimeStateBatPressDown by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(
@@ -119,8 +122,11 @@ internal fun UiCategory(
         checked = glassSideMenuWallpaper,
         colorBag = colorBag,
         onCheckedChange = {
-            glassSideMenuWallpaper = it
-            uiPreferencesViewModel?.setGlassSideMenuWallpaper(it)
+            if (uiPreferencesViewModel != null) {
+                uiPreferencesViewModel.setGlassSideMenuWallpaper(it)
+            } else {
+                previewGlassSideMenuWallpaper.value = it
+            }
         }
     )
     SwitchPrefRow(

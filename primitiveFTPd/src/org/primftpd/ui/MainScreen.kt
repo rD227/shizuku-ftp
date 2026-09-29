@@ -223,7 +223,7 @@ fun MainScreen(
 
     val sideMenuPref = SideMenuPref(
         springAnimation =  uiPreferencesViewModel?.sideMenuSpringAnimation?.collectAsState()?.value ?: true,
-        showWallpaper =  uiPreferencesViewModel?.glassSideMenuWallpaper?.collectAsState()?.value ?: true,
+        showWallpaper = uiPreferencesViewModel?.glassSideMenuWallpaper?.value ?: true,
         experimentalHaze =  uiPreferencesViewModel?.experimentalHaze?.collectAsState()?.value ?: false
     )
 

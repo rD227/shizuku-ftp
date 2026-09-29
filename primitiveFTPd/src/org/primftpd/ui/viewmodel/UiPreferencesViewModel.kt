@@ -2,6 +2,8 @@ package org.primftpd.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,16 +71,18 @@ class UiPreferencesViewModel(application: Application) : AndroidViewModel(applic
     }
     //______
     private val glassSideMenuWallpaperPrefs = application.getSharedPreferences("glass_side_menu_wallpaper", Context.MODE_PRIVATE)
-    private val _glassSideMenuWallpaper = MutableStateFlow(
+    // Both screens observe this state directly, including during navigation transitions.
+    // Persistence stays asynchronous; rendering must not wait for a Flow collector.
+    private val _glassSideMenuWallpaper = mutableStateOf(
         UiPreferences.getGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs)
     )
-    val glassSideMenuWallpaper = _glassSideMenuWallpaper.asStateFlow()
+    val glassSideMenuWallpaper: State<Boolean> = _glassSideMenuWallpaper
     fun setGlassSideMenuWallpaper(value: Boolean) {
-        UiPreferences.setGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs, value)
         _glassSideMenuWallpaper.value = value
+        UiPreferences.setGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs, value)
     }
     fun getGlassSideMenuWallpaper(): Boolean {
-        return UiPreferences.getGlassSideMenuWallpaper(glassSideMenuWallpaperPrefs)
+        return _glassSideMenuWallpaper.value
     }
     //________
     private val sideMenuSpringAnimationPrefs = application.getSharedPreferences("side_menu_spring_animation", Context.MODE_PRIVATE)
