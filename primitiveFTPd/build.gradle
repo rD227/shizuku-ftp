@@ -20,41 +20,66 @@ kotlin {
     }
 }
 
+// ---------- 版本号自增 ----------
+// 只在真正构建 release 时自增：VERSION_CODE + 1，VERSION_NAME 末位 + 1（1.2.6 -> 1.2.7）。
+// 用 provider 延迟求值的原因：defaultConfig 在配置阶段就把版本号交给了 AGP，
+// 那时再改 version.properties 只会写文件、改不到本次构建产物（旧实现就是这样漂移的）。
+def versionPropsFile = file('version.properties')
+def versionProps = new Properties()
+
+if (versionPropsFile.canRead()) {
+    versionProps.load(new FileInputStream(versionPropsFile))
+} else {
+    throw new GradleException("Could not read version.properties!")
+}
+
+def versionTaskGraph = gradle.taskGraph
+def releaseBuildTask = ~/^(assemble|bundle|package|install|publish)Release(Bundle|Apk)?$/
+def versionLock = new Object()
+def nextVersion = null
+def versionPersisted = false
+
+// 任务图就绪前（配置阶段、Android Studio sync）一律返回 false，避免误写文件
+def isReleaseBuild = {
+    try {
+        return versionTaskGraph.allTasks.any { releaseBuildTask.matcher(it.name).matches() }
+    } catch (Exception ignored) {
+        return false
+    }
+}
+
+def bumpPatch = { String name ->
+    def parts = name?.trim()?.split('\\.')
+    // 不是 x.y.z、或末位不是数字时原样返回，避免把文件写坏
+    if (parts == null || parts.length < 3 || !(parts[-1] ==~ /\d+/)) {
+        return name
+    }
+    parts[parts.length - 1] = (parts[-1].toInteger() + 1).toString()
+    return parts.join('.')
+}
+
+// 取值是纯函数（文件当前值 + 1），所以 provider 无论被求值几次、在哪个阶段求值，
+// 结果都一致；落盘只做一次，且只在 release 构建时做。
+def resolveVersion = {
+    synchronized (versionLock) {
+        if (nextVersion == null) {
+            nextVersion = [code: versionProps['VERSION_CODE'].toInteger() + 1,
+                           name: bumpPatch(versionProps['VERSION_NAME'])]
+        }
+        if (!versionPersisted && isReleaseBuild()) {
+            versionPersisted = true
+            versionProps['VERSION_CODE'] = nextVersion['code'].toString()
+            versionProps['VERSION_NAME'] = nextVersion['name']
+            versionProps.store(versionPropsFile.newWriter(), null)
+        }
+        return nextVersion
+    }
+}
+
 android {
     namespace = "org.primftpd"
     compileSdk = libs.versions.compileSdk.get().toInteger()
     buildToolsVersion = "36.0.0"
-
-    def versionPropsFile = file('version.properties')
-    def versionProps = new Properties()
-
-    if (versionPropsFile.canRead()) {
-        versionProps.load(new FileInputStream(versionPropsFile))
-    } else {
-        throw new GradleException("Could not read version.properties!")
-    }
-
-
-    defaultConfig {
-        versionCode versionProps['VERSION_CODE'].toInteger()
-        versionName versionProps['VERSION_NAME']
-    }
-
-    ext.autoIncrementVersionCode = {
-        def code = versionProps['VERSION_CODE'].toInteger() + 1
-        versionProps['VERSION_CODE'] = code.toString()
-        versionProps.store(versionPropsFile.newWriter(), null)
-        return code
-    }
-    // 仅在执行 release 相关任务时才递增
-    gradle.taskGraph.whenReady { taskGraph ->
-        if (taskGraph.hasTask(assembleRelease) || taskGraph.hasTask(bundleRelease)) {
-            def newCode = autoIncrementVersionCode()
-            // 注意：此处需要动态修改 defaultConfig 的 versionCode
-            // 但 Gradle 在配置阶段已完成，因此更稳妥的做法是：
-            // 将递增逻辑提前，或在 build 前手动执行递增任务
-        }
-    }
 
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
@@ -64,7 +89,6 @@ android {
         minSdk = libs.versions.minSdk.get().toInteger()
         targetSdk = libs.versions.targetSdk.get().toInteger()
     }
-
     buildTypes {
         debug {
             debuggable = true
@@ -133,6 +157,14 @@ android {
 
 // AGP 9
 androidComponents {
+    // release 产物用自增后的版本号（延迟到执行期求值，保证与写回文件的数值一致）；
+    // debug 仍用 version.properties 里的当前值。
+    onVariants(selector().withBuildType('release')) { variant ->
+        variant.outputs.forEach { output ->
+            output.versionCode.set(providers.provider { resolveVersion()['code'] })
+            output.versionName.set(providers.provider { resolveVersion()['name'] })
+        }
+    }
     onVariants(selector().all()) { variant ->
         variant.outputs.forEach { output ->
             output.outputFileName.set("shizuku-ftp-${variant.buildType}.apk")
