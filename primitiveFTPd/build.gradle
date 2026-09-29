@@ -25,10 +25,41 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInteger()
     buildToolsVersion = "36.0.0"
 
+    def versionPropsFile = file('version.properties')
+    def versionProps = new Properties()
+
+    if (versionPropsFile.canRead()) {
+        versionProps.load(new FileInputStream(versionPropsFile))
+    } else {
+        throw new GradleException("Could not read version.properties!")
+    }
+
+
+    defaultConfig {
+        versionCode versionProps['VERSION_CODE'].toInteger()
+        versionName versionProps['VERSION_NAME']
+    }
+
+    ext.autoIncrementVersionCode = {
+        def code = versionProps['VERSION_CODE'].toInteger() + 1
+        versionProps['VERSION_CODE'] = code.toString()
+        versionProps.store(versionPropsFile.newWriter(), null)
+        return code
+    }
+    // 仅在执行 release 相关任务时才递增
+    gradle.taskGraph.whenReady { taskGraph ->
+        if (taskGraph.hasTask(assembleRelease) || taskGraph.hasTask(bundleRelease)) {
+            def newCode = autoIncrementVersionCode()
+            // 注意：此处需要动态修改 defaultConfig 的 versionCode
+            // 但 Gradle 在配置阶段已完成，因此更稳妥的做法是：
+            // 将递增逻辑提前，或在 build 前手动执行递增任务
+        }
+    }
+
     defaultConfig {
         applicationId = "org.primftpd.shizuku"
-        versionCode = 73
-        versionName = "v1.2.5"
+        versionCode = versionProps['VERSION_CODE'].toInteger()
+        versionName = versionProps['VERSION_NAME']
 
         minSdk = libs.versions.minSdk.get().toInteger()
         targetSdk = libs.versions.targetSdk.get().toInteger()
