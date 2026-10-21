@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeState
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.SideMenuPref
 
@@ -41,8 +40,7 @@ import org.primftpd.ui.data.SideMenuPref
 internal fun SideMenuLayout(
     state: SideMenuState,
     railPadding: Dp,
-    hazeState: HazeState,
-    blurIntensity: Float?,
+    backdrop: GlassBackdrop,
     colorBag: ColorBag,
     sideMenuPref: SideMenuPref,
     onNavigate: (String) -> Unit,
@@ -125,9 +123,8 @@ internal fun SideMenuLayout(
         LinkSideMenu(
             rightMenuVisible = state.menu == SideMenu.TOOLS && showMenu,
             onMenuClick = onMenuClick,
-            hazeState = hazeState,
+            backdrop = backdrop,
             onClick = state::close,
-            blurIntensity = blurIntensity,
             colorBag = colorBag,
             sideMenuPref = sideMenuPref,
             selectedRoute = state.detailRoute,
@@ -135,9 +132,8 @@ internal fun SideMenuLayout(
         GearSideMenu(
             leftMenuVisible = state.menu == SideMenu.SETTINGS && showMenu,
             onMenuClick = onMenuClick,
-            hazeState = hazeState,
+            backdrop = backdrop,
             onClick = state::close,
-            blurIntensity = blurIntensity,
             colorBag = colorBag,
             sideMenuPref = sideMenuPref,
             selectedRoute = state.detailRoute,

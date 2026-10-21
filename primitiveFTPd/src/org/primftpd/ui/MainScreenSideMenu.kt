@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeState
 import org.primftpd.R
 import org.primftpd.ui.data.ColorBag
 import org.primftpd.ui.data.SideMenuPref
@@ -29,9 +28,8 @@ import org.primftpd.ui.data.SideMenuPref
 internal fun LinkSideMenu(
     rightMenuVisible: Boolean,
     onMenuClick: (String) -> Unit,
-    hazeState: HazeState,
+    backdrop: GlassBackdrop,
     onClick: () -> Unit,
-    blurIntensity: Float?,
     colorBag: ColorBag,
     sideMenuPref: SideMenuPref,
     selectedRoute: String? = null,
@@ -63,9 +61,7 @@ internal fun LinkSideMenu(
             modifier = Modifier.align(Alignment.TopStart)
         ) {
             GlassSidebarBox(
-                hazeState = hazeState,
-                blurIntensity = blurIntensity,
-                experimentalHaze = sideMenuPref.experimentalHaze,
+                backdrop = backdrop,
                 showWallpaper = sideMenuPref.showWallpaper,
                 onDismiss = onClick,
                 content = {
@@ -146,9 +142,8 @@ internal fun LinkSideMenu(
 internal fun GearSideMenu(
         leftMenuVisible : Boolean,
         onMenuClick: (String) -> Unit,
-        hazeState: HazeState,
+        backdrop: GlassBackdrop,
         onClick: () -> Unit,
-        blurIntensity: Float?,
         colorBag: ColorBag,
         sideMenuPref: SideMenuPref,
         selectedRoute: String? = null,
@@ -177,10 +172,8 @@ internal fun GearSideMenu(
             modifier = Modifier.align(Alignment.TopStart)
         ) {
             GlassSidebarBox(
-                hazeState = hazeState,
+                backdrop = backdrop,
                 onDismiss = onClick,
-                blurIntensity = blurIntensity,
-                experimentalHaze = sideMenuPref.experimentalHaze,
                 showWallpaper = sideMenuPref.showWallpaper,
                 content = {
 

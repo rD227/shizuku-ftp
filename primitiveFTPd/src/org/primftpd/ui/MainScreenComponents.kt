@@ -356,7 +356,7 @@ internal fun ShowCardButton(
     }
 }
 
-/** 全屏模糊 Box 与 GlassSidebarBox 共用的玻璃模糊修饰符，避免重复配置 haze 参数 */
+/** 窄栏和固定玻璃背景共用的模糊配置。 */
 @Composable
 internal fun Modifier.glassHaze(
     hazeState: HazeState,
@@ -367,9 +367,7 @@ internal fun Modifier.glassHaze(
     darkFallback: Color = Color.Black.copy(alpha = 0.62f),
     lightFallback: Color = Color.White.copy(alpha = 0.82f),
 ): Modifier {
-    //if (blurIntensity == null || blurIntensity == 0f) return this
     val isDark = isSystemInDarkTheme()
-    var contentReady by remember { mutableStateOf(false) }
     return this.hazeEffect(state = hazeState) {
         inputScale = HazeInputScale.Fixed(0.5f)
         blurEffect {

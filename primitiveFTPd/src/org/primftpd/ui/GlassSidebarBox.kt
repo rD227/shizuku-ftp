@@ -20,17 +20,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeState
 
 internal val GlassSideMenuWidth = 270.dp
 
 @Composable
 internal fun GlassSidebarBox(
-    hazeState: HazeState,
+    backdrop: GlassBackdrop,
     content: @Composable ColumnScope.() -> Unit,
-    blurIntensity: Float?,
     showWallpaper: Boolean = true,
-    experimentalHaze: Boolean,
     onDismiss: () -> Unit,
 ) {
     Box(
@@ -40,7 +37,7 @@ internal fun GlassSidebarBox(
             .clip(RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp))
             .then(
                 if (showWallpaper) {
-                    Modifier.glassHaze(hazeState, blurIntensity, weatherEnableExperimentalHazeOnLowVer = experimentalHaze)
+                    Modifier.glassBackdrop(backdrop)
                 } else {
                     Modifier.background(MaterialTheme.colorScheme.surface)
                 }

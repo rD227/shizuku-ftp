@@ -167,9 +167,7 @@ fun MainScreen(
     }
 
     val hazeState = rememberHazeState()
-    // Separate HazeState for the sliding glass sidebars, so their blur doesn't fight
-    // with the full-screen haze layer during the slide animation.
-    val sidebarHazeState = rememberHazeState()
+    val sidebarBackdrop = rememberGlassBackdrop()
     val batteryState = rememberBatteryState(context)
 
     LaunchedEffect(Unit) {
@@ -232,25 +230,12 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Keep a real wallpaper below the capture layers. A source layer can be invalidated when
-        // an animated effect attaches; that must never expose an empty background for one frame.
-        WallpaperBase(wallpaperBitmap = wallpaperBitmap)
-        // Independent sibling captures: neither source records another Haze graphics layer.
-        // Keep each capture in its own RenderNode. On tablets the main pane is resized during
-        // menu animations; a sibling redraw must not clear a layer that Haze is still sampling.
+        // 窄栏和菜单共用一份纯壁纸采样，采样中不包含控件或其他模糊层。
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer()
                 .hazeSource(state = hazeState)
-        ) {
-            WallpaperBase(wallpaperBitmap = wallpaperBitmap)
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer()
-                .hazeSource(state = sidebarHazeState)
         ) {
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         }
@@ -266,6 +251,15 @@ fun MainScreen(
                     lightFallback = Color.White.copy(alpha = 0.65f),
                 )
         )
+
+        if (sideMenuPref.showWallpaper) {
+            CaptureGlassBackdrop(
+                backdrop = sidebarBackdrop,
+                hazeState = hazeState,
+                blurIntensity = blurIntensity,
+                experimentalHaze = sideMenuPref.experimentalHaze,
+            )
+        }
 
         // YumeBox 风格左侧窄边栏
         AnimatedVisibility(
@@ -302,8 +296,7 @@ fun MainScreen(
         SideMenuLayout(
             state = sideMenuState,
             railPadding = railPadding,
-            hazeState = sidebarHazeState,
-            blurIntensity = blurIntensity,
+            backdrop = sidebarBackdrop,
             colorBag = colorBag,
             sideMenuPref = sideMenuPref,
             onNavigate = onNavigate,
