@@ -38,7 +38,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,9 +52,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,11 +72,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -110,7 +105,6 @@ import org.primftpd.ui.data.SideMenuPref
 import org.primftpd.ui.data.WallpaperColorEnum
 import org.primftpd.ui.util.WallpaperPalette
 import org.primftpd.ui.util.getRadius
-import org.primftpd.ui.util.getCarmaHeight
 import org.primftpd.ui.util.rememberWallpaperAccentColor
 import org.primftpd.ui.viewmodel.NetworkViewModel
 import org.primftpd.ui.viewmodel.PermissionViewModel
@@ -329,62 +323,41 @@ fun MainScreen(
                         .clip(RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius))
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    val stateBarHeight = if (!LocalInspectionMode.current) getCarmaHeight() else 16.dp
-
-                    val topBarWeatherPress by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
-
-                    if (topBarWeatherPress) Spacer(modifier = Modifier.height(stateBarHeight - 8.dp))
-
-                    MainImage(
+                    val topBarPressedDown by
+                        (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
+                    MainHeroLayout(
                         wallpaperBitmap = wallpaperBitmap,
-                        modifier = Modifier
-                            .weight(0.7f)
-                            .fillMaxWidth()
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onLongPress = { wallpaperPicker.launch("image/*") }
-                                )
-                            }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        topBarPressedDown = topBarPressedDown,
+                        onWallpaperLongPress = { wallpaperPicker.launch("image/*") },
                     ) {
-                        Spacer(modifier = Modifier.padding(4.dp))
-                        GlassBackgroundToggleButton(
-                            enabled = resolvedRailVisible,
-                            onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
-                            rotation = barVisibleRotation,
-                            colorBag = colorBag,
-                            useOriginColor = colorBag.useM3Color
-                        )
-                        Spacer(modifier = Modifier.weight(0.2f))
-                        ServerControlButton(
-                            isRunning = isServerRunning,
-                            onClick = {
-                                if (isServerRunning) {
-                                    onStopServer()
-                                } else {
-                                    onStartServer()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Spacer(modifier = Modifier.padding(4.dp))
+                            GlassBackgroundToggleButton(
+                                enabled = resolvedRailVisible,
+                                onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
+                                rotation = barVisibleRotation,
+                                colorBag = colorBag,
+                                useOriginColor = colorBag.useM3Color
+                            )
+                            Spacer(modifier = Modifier.weight(0.2f))
+                            ServerControlButton(
+                                isRunning = isServerRunning,
+                                onClick = {
+                                    if (isServerRunning) {
+                                        onStopServer()
+                                    } else {
+                                        onStartServer()
+                                    }
                                 }
-                            }
-                        )
-                        Spacer(modifier = Modifier.weight(0.8f))
-                    }
+                            )
+                            Spacer(modifier = Modifier.weight(0.8f))
+                        }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Row {
                             Spacer(modifier = Modifier.weight(0.9f))
                             ThreeStateSwitch(
@@ -396,28 +369,28 @@ fun MainScreen(
                             )
                             Spacer(modifier = Modifier.weight(0.1f))
                         }
-                    // 流量图表
-                    if (networkViewModel != null) {
-                        Column {
-                            NetworkTrafficChart(
-                                modelProducer = networkViewModel.modelProducer,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    //.padding(bottom = 0.dp)
-                                    .navigationBarsPadding()
-                                    .padding(top = 2.dp)
-                                    .lineChartSlide(chartMeasuringRule) { deltaSeconds ->
-                                        networkViewModel.panChartWindow(deltaSeconds)
-                                    },
-                                peakPoints = chartPeaks,
-                                measuringRule = chartMeasuringRule,
-                                animateModelChanges = !suppressVicoChartAnimation,
-                            )
+                        // 流量图表
+                        if (networkViewModel != null) {
+                            Column {
+                                NetworkTrafficChart(
+                                    modelProducer = networkViewModel.modelProducer,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        //.padding(bottom = 0.dp)
+                                        .navigationBarsPadding()
+                                        .padding(top = 2.dp)
+                                        .lineChartSlide(chartMeasuringRule) { deltaSeconds ->
+                                            networkViewModel.panChartWindow(deltaSeconds)
+                                        },
+                                    peakPoints = chartPeaks,
+                                    measuringRule = chartMeasuringRule,
+                                    animateModelChanges = !suppressVicoChartAnimation,
+                                )
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
 
@@ -468,48 +441,6 @@ private fun WallpaperBase(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.12f))
-        )
-    }
-}
-
-@Composable
-private fun MainImage(
-    wallpaperBitmap: ImageBitmap?,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier
-        .fillMaxHeight()
-        .padding(horizontal = 8.dp)) {
-        if (wallpaperBitmap != null) {
-            val cornerRadius = getRadius()
-            Image(
-                bitmap = wallpaperBitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius))
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.my_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to Color.Transparent,
-                        0.8f to Color.Transparent,
-                        1f to MaterialTheme.colorScheme.background.copy(alpha = 1f)
-                    )
-                )
         )
     }
 }
