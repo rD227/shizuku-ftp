@@ -74,6 +74,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -235,9 +236,12 @@ fun MainScreen(
         // an animated effect attaches; that must never expose an empty background for one frame.
         WallpaperBase(wallpaperBitmap = wallpaperBitmap)
         // Independent sibling captures: neither source records another Haze graphics layer.
+        // Keep each capture in its own RenderNode. On tablets the main pane is resized during
+        // menu animations; a sibling redraw must not clear a layer that Haze is still sampling.
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer()
                 .hazeSource(state = hazeState)
         ) {
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
@@ -245,6 +249,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer()
                 .hazeSource(state = sidebarHazeState)
         ) {
             WallpaperBase(wallpaperBitmap = wallpaperBitmap)
