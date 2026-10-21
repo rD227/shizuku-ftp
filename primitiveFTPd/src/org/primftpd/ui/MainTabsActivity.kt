@@ -16,9 +16,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.greenrobot.eventbus.EventBus
@@ -128,75 +126,15 @@ open class MainTabsActivity : FragmentActivity(), SharedPreferences.OnSharedPref
                             previewColorBag = null
                         )
                     }
-                    composable("about") {
-                        AboutScreen(
-                            onBack = { navController.popBackStack() },
-                            colorBag = colorBag
-                        )
-                    }
-                    composable("qr") {
-                        FragmentContainerScreen(
-                            "扫码了",
-                            { QrFragment(null) },
-                            { navController.popBackStack() }
-                        )
-                    }
-                    //我突然发现这里写得有点糟糕，因为最好把colorBag分别传到这些Screen里面，而不是传入BitMap之后在分别解析colorBag
-                    composable(
-                        route = "settings/{section}",
-                        arguments = listOf(navArgument("section") { type = NavType.StringType })
-                    ) { backStackEntry ->
-                        val sectionName = backStackEntry.arguments?.getString("section") ?: "auth"
-                        val settingsSection = when (sectionName) {
-                            "connecting" -> SettingsSection.CONNECTIVITY
-                            "ui" -> SettingsSection.UI
-                            "system" -> SettingsSection.SYSTEM
-                            else -> SettingsSection.AUTH
-                        }
-                        SettingsScreen(
-                            section = settingsSection,
-                            onBack = { navController.popBackStack() },
-                            uiPreferencesViewModel = uiPreferencesViewModel,
-                            wallpaperViewModel = wallpaperViewModel,
-                            providedColorBag = colorBag
-                        )
-                    }
-                    composable("netWorkStatus") {
-                        NetworkStatusScreen(
-                            isServerRunning = isServerRunning,
-                            onStartServer = { handleStart() },
-                            onStopServer = { handleStop() },
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable("clientStatus") {
-                        FragmentContainerScreen(
-                            "clientStatus",
-                            { ClientActionFragment() },
-                            { navController.popBackStack() }
-                        )
-                    }
-                    composable("VerificationKey") {
-                        FragmentContainerScreen(
-                            "Verification Key",
-                            { PubKeyAuthKeysFragment(true) },
-                            { navController.popBackStack() }
-                        )
-                    }
-                    composable("fingerPrint") {
-                        FragmentContainerScreen(
-                            "fingerPrint",
-                            { KeysFingerprintsFragment() },
-                            { navController.popBackStack() }
-                        )
-                    }
-                    composable("clean") {
-                        FragmentContainerScreen(
-                            "cleaner",
-                            { CleanSpaceFragment() },
-                            { navController.popBackStack() }
-                        )
-                    }
+                    sideMenuDestinations(
+                        isServerRunning = isServerRunning,
+                        onStartServer = { handleStart() },
+                        onStopServer = { handleStop() },
+                        onBack = { navController.popBackStack() },
+                        colorBag = colorBag,
+                        uiPreferencesViewModel = uiPreferencesViewModel,
+                        wallpaperViewModel = wallpaperViewModel,
+                    )
                 }
             }
         }

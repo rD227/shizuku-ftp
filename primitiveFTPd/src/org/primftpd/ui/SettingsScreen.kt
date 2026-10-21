@@ -78,6 +78,7 @@ fun SettingsScreen(
     providedColorBag: ColorBag? = null,
     uiPreferencesViewModel: UiPreferencesViewModel? = if (LocalInspectionMode.current) null else viewModel(),
     wallpaperViewModel: WallpaperViewModel? = null,
+    singleSection: Boolean = false,
 ) {
     var hasNavigatedBack by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -95,7 +96,17 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.prefs)) },
+                title = {
+                    val title = if (singleSection) {
+                        when (section) {
+                            SettingsSection.AUTH -> R.string.prefsCategoryTitleAuth
+                            SettingsSection.CONNECTIVITY -> R.string.prefsCategoryTitleConnectivity
+                            SettingsSection.UI -> R.string.prefsCategoryTitleUi
+                            SettingsSection.SYSTEM -> R.string.prefsCategoryTitleSystem
+                        }
+                    } else R.string.prefs
+                    Text(stringResource(title))
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (!hasNavigatedBack) {
@@ -114,47 +125,55 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(scrollState)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        sectionOffsets[SettingsSection.AUTH] = it.positionInParent().y.toInt()
-                    }
-            ) {
-                AuthCategory(colorBag = colorBag)
+            if (!singleSection || section == SettingsSection.AUTH) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            sectionOffsets[SettingsSection.AUTH] = it.positionInParent().y.toInt()
+                        }
+                ) {
+                    AuthCategory(colorBag = colorBag)
+                }
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        sectionOffsets[SettingsSection.CONNECTIVITY] = it.positionInParent().y.toInt()
-                    }
-            ) {
-                ConnectivityCategory(colorBag = colorBag)
+            if (!singleSection) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if (!singleSection || section == SettingsSection.CONNECTIVITY) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            sectionOffsets[SettingsSection.CONNECTIVITY] = it.positionInParent().y.toInt()
+                        }
+                ) {
+                    ConnectivityCategory(colorBag = colorBag)
+                }
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        sectionOffsets[SettingsSection.UI] = it.positionInParent().y.toInt()
-                    }
-            ) {
-                UiCategory(uiPreferencesViewModel = uiPreferencesViewModel, colorBag = colorBag)
+            if (!singleSection) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if (!singleSection || section == SettingsSection.UI) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            sectionOffsets[SettingsSection.UI] = it.positionInParent().y.toInt()
+                        }
+                ) {
+                    UiCategory(uiPreferencesViewModel = uiPreferencesViewModel, colorBag = colorBag)
+                }
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        sectionOffsets[SettingsSection.SYSTEM] = it.positionInParent().y.toInt()
-                    }
-            ) {
-                SystemCategory(
-                    colorBag = colorBag,
-                    wallpaperViewModel = wallpaperViewModel,
-                )
+            if (!singleSection) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if (!singleSection || section == SettingsSection.SYSTEM) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            sectionOffsets[SettingsSection.SYSTEM] = it.positionInParent().y.toInt()
+                        }
+                ) {
+                    SystemCategory(
+                        colorBag = colorBag,
+                        wallpaperViewModel = wallpaperViewModel,
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }

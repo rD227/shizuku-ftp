@@ -108,6 +108,9 @@ android {
         aidl = true
     }
     sourceSets {
+        test {
+            kotlin.srcDirs = ['test']
+        }
         main {
             manifest {
                 srcFile 'AndroidManifest.xml'
@@ -173,6 +176,7 @@ androidComponents {
 }
 
 dependencies {
+    testImplementation libs.junit
 
     implementation project(':pftpd-pojo-lib')
     implementation project(':sshd-core-0.14.0')

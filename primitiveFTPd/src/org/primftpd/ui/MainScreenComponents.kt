@@ -17,7 +17,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +26,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -146,15 +146,21 @@ fun RowClick(
         icon: ImageVector,
         text: String,
         onClick: () -> Unit,
-        colorBag: ColorBag
+        colorBag: ColorBag,
+        selected: Boolean = false,
     ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            }
+            .background(
+                if (selected) {
+                    if (colorBag.useM3Color) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+                    else colorBag.vibrant.copy(alpha = 0.20f)
+                }
+                else Color.Transparent
+            )
+            .selectable(selected = selected, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Box(
@@ -373,37 +379,6 @@ internal fun Modifier.glassHaze(
             colorEffects = listOf(HazeColorEffect.tint(if (isDark) darkTint else lightTint))
             fallbackTint = HazeColorEffect.tint(if (isDark) darkFallback else lightFallback)
         }
-    }
-}
-
-@Composable
-internal fun GlassSidebarBox(
-    hazeState: HazeState,
-    //modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-    blurIntensity: Float?,
-    showWallpaper: Boolean = true,
-    experimentalHaze: Boolean
-) {
-    var contentReady by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .fillMaxHeight()
-            .then(
-                if (showWallpaper) {
-                    Modifier.glassHaze(hazeState, blurIntensity, weatherEnableExperimentalHazeOnLowVer = experimentalHaze)
-                        //.drawWithContent {
-                        //if (contentReady) {
-                            //drawContent()
-                        //}
-                    //}
-                } else {
-                    Modifier.background(MaterialTheme.colorScheme.surface)
-                }
-            )
-            .width(270.dp)
-    ) {
-        Column(content = content)
     }
 }
 

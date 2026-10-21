@@ -70,7 +70,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +100,6 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import org.primftpd.R
 import org.primftpd.ui.data.BatteryState
 import org.primftpd.ui.data.ChartPeak
@@ -140,8 +138,7 @@ fun MainScreen(
     providedColorBag: ColorBag? = null
 ) {
 
-    var rightMenuVisible by remember { mutableStateOf(false) }
-    var leftMenuVisible by remember { mutableStateOf(false) }
+    val sideMenuState = rememberSideMenuState()
 
     var showPermissionsDialog by remember { mutableStateOf(false) }
 
@@ -174,7 +171,6 @@ fun MainScreen(
         prefs.edit { putBoolean("rail_visible", it) }
     }
 
-    val scope = rememberCoroutineScope()
     val hazeState = rememberHazeState()
     // Separate HazeState for the sliding glass sidebars, so their blur doesn't fight
     // with the full-screen haze layer during the slide animation.
@@ -197,16 +193,8 @@ fun MainScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val onMenuClick: (String) -> Unit = { route ->
-        rightMenuVisible = false
-        leftMenuVisible = false
-        scope.launch {
-            onNavigate(route)
-        }
-    }
-
     val gearRotation by animateFloatAsState(
-        targetValue = if (leftMenuVisible || rightMenuVisible) 180f else 0f,
+        targetValue = if (sideMenuState.isOpen) 180f else 0f,
         label = "GearRotation"
     )
     val barVisibleRotation by animateFloatAsState(
@@ -298,8 +286,8 @@ fun MainScreen(
                 currentTime = currentTime,
                 batteryState = batteryState,
                 gearRotation = gearRotation,
-                onGearClick = { leftMenuVisible = true },
-                onLinkClick = { rightMenuVisible = true },
+                onGearClick = { sideMenuState.open(SideMenu.SETTINGS) },
+                onLinkClick = { sideMenuState.open(SideMenu.TOOLS) },
                 onShowCardClick = { showPermissionsDialog = true },
                 colorBag = colorBag,
                 modifier = Modifier.fillMaxHeight(),
@@ -312,152 +300,129 @@ fun MainScreen(
         val cornerRadius = getRadius()
 
 
-        // 主内容
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = railPadding)
-                .clip(RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius))
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val stateBarHeight = if (!LocalInspectionMode.current) getCarmaHeight() else 16.dp
-
-            val topBarWeatherPress by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
-
-            if (topBarWeatherPress) Spacer(modifier = Modifier.height(stateBarHeight - 8.dp))
-
-            MainImage(
-                wallpaperBitmap = wallpaperBitmap,
-                modifier = Modifier
-                    .weight(0.7f)
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onLongPress = { wallpaperPicker.launch("image/*") }
-                        )
-                    }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Spacer(modifier = Modifier.padding(4.dp))
-                GlassBackgroundToggleButton(
-                    enabled = resolvedRailVisible,
-                    onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
-                    rotation = barVisibleRotation,
+        SideMenuLayout(
+            state = sideMenuState,
+            railPadding = railPadding,
+            hazeState = sidebarHazeState,
+            blurIntensity = blurIntensity,
+            colorBag = colorBag,
+            sideMenuPref = sideMenuPref,
+            onNavigate = onNavigate,
+            detailContent = { route, expanded, onBack ->
+                SideMenuDestinationScreen(
+                    route = route,
+                    onBack = onBack,
+                    isServerRunning = isServerRunning,
+                    onStartServer = onStartServer,
+                    onStopServer = onStopServer,
                     colorBag = colorBag,
-                    useOriginColor = colorBag.useM3Color
+                    uiPreferencesViewModel = uiPreferencesViewModel,
+                    wallpaperViewModel = wallpaperViewModel,
+                    singleSettingsSection = expanded,
                 )
-                Spacer(modifier = Modifier.weight(0.2f))
-                ServerControlButton(
-                    isRunning = isServerRunning,
-                    onClick = {
-                        if (isServerRunning) {
-                            onStopServer()
-                        } else {
-                            onStartServer()
+            },
+            mainContent = { mainStartPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = mainStartPadding)
+                        .clip(RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius))
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val stateBarHeight = if (!LocalInspectionMode.current) getCarmaHeight() else 16.dp
+
+                    val topBarWeatherPress by (uiPreferencesViewModel?.topComponentPressedDown ?: flowOf(true)).collectAsState(true)
+
+                    if (topBarWeatherPress) Spacer(modifier = Modifier.height(stateBarHeight - 8.dp))
+
+                    MainImage(
+                        wallpaperBitmap = wallpaperBitmap,
+                        modifier = Modifier
+                            .weight(0.7f)
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { wallpaperPicker.launch("image/*") }
+                                )
+                            }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Spacer(modifier = Modifier.padding(4.dp))
+                        GlassBackgroundToggleButton(
+                            enabled = resolvedRailVisible,
+                            onClick = { resolvedOnRailVisibleChange(!resolvedRailVisible) },
+                            rotation = barVisibleRotation,
+                            colorBag = colorBag,
+                            useOriginColor = colorBag.useM3Color
+                        )
+                        Spacer(modifier = Modifier.weight(0.2f))
+                        ServerControlButton(
+                            isRunning = isServerRunning,
+                            onClick = {
+                                if (isServerRunning) {
+                                    onStopServer()
+                                } else {
+                                    onStartServer()
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.weight(0.8f))
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                        Row {
+                            Spacer(modifier = Modifier.weight(0.9f))
+                            ThreeStateSwitch(
+                                state = chartMeasuringRule,
+                                onStateChange = { newState ->
+                                    uiPreferencesViewModel?.setChartMeasuringRule(newState)
+                                },
+                                colorBag = colorBag,
+                            )
+                            Spacer(modifier = Modifier.weight(0.1f))
+                        }
+                    // 流量图表
+                    if (networkViewModel != null) {
+                        Column {
+                            NetworkTrafficChart(
+                                modelProducer = networkViewModel.modelProducer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    //.padding(bottom = 0.dp)
+                                    .navigationBarsPadding()
+                                    .padding(top = 2.dp)
+                                    .lineChartSlide(chartMeasuringRule) { deltaSeconds ->
+                                        networkViewModel.panChartWindow(deltaSeconds)
+                                    },
+                                peakPoints = chartPeaks,
+                                measuringRule = chartMeasuringRule,
+                                animateModelChanges = !suppressVicoChartAnimation,
+                            )
                         }
                     }
-                )
-                Spacer(modifier = Modifier.weight(0.8f))
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    Spacer(modifier = Modifier.weight(0.9f))
-                    ThreeStateSwitch(
-                        state = chartMeasuringRule,
-                        onStateChange = { newState ->
-                            uiPreferencesViewModel?.setChartMeasuringRule(newState)
-                        },
-                        colorBag = colorBag,
-                    )
-                    Spacer(modifier = Modifier.weight(0.1f))
-                }
-            // 流量图表
-            if (networkViewModel != null) {
-                Column {
-                    NetworkTrafficChart(
-                        modelProducer = networkViewModel.modelProducer,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            //.padding(bottom = 0.dp)
-                            .navigationBarsPadding()
-                            .padding(top = 2.dp)
-                            .lineChartSlide(chartMeasuringRule) { deltaSeconds ->
-                                networkViewModel.panChartWindow(deltaSeconds)
-                            },
-                        peakPoints = chartPeaks,
-                        measuringRule = chartMeasuringRule,
-                        animateModelChanges = !suppressVicoChartAnimation,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-
-        // 背景遮罩 (Scrim)
-        AnimatedVisibility(
-            visible = rightMenuVisible || leftMenuVisible,
-            enter = fadeIn(animationSpec = tween(300)),
-            exit = fadeOut(animationSpec = tween(300))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.32f))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        rightMenuVisible = false
-                        leftMenuVisible = false
+                    Spacer(modifier = Modifier.height(16.dp))
                     }
-            )
-        }
+                }
 
-        // 右侧滑菜单
-        LinkSideMenu(
-            rightMenuVisible,
-            onMenuClick,
-            sidebarHazeState,
-            onClick = {
-                rightMenuVisible = false
             },
-            colorBag = colorBag,
-            blurIntensity = blurIntensity,
-            sideMenuPref = sideMenuPref,
         )
-
-
-        GearSideMenu(
-            leftMenuVisible,
-            onMenuClick,
-            sidebarHazeState,
-            blurIntensity = blurIntensity,
-            colorBag = colorBag,
-            onClick = {
-                leftMenuVisible = false
-            },
-            sideMenuPref = sideMenuPref,
-        )
-        // 左侧滑菜单
 
 
         // 权限卡片弹窗：黑色遮罩 + 居中卡片

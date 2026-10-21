@@ -8,10 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +34,7 @@ internal fun LinkSideMenu(
     blurIntensity: Float?,
     colorBag: ColorBag,
     sideMenuPref: SideMenuPref,
+    selectedRoute: String? = null,
     ){
 
     val iconNetwork = ImageVector.vectorResource(id = R.drawable.connectsetting)
@@ -58,7 +57,8 @@ internal fun LinkSideMenu(
                 )else tween(300)
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
-                targetOffsetX = { -it }
+                targetOffsetX = { -it },
+                animationSpec = tween(300),
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
@@ -67,7 +67,7 @@ internal fun LinkSideMenu(
                 blurIntensity = blurIntensity,
                 experimentalHaze = sideMenuPref.experimentalHaze,
                 showWallpaper = sideMenuPref.showWallpaper,
-                //modifier = Modifier.width(270.dp),
+                onDismiss = onClick,
                 content = {
 
                     Text(
@@ -91,42 +91,49 @@ internal fun LinkSideMenu(
                     RowClick(
                         icon = iconNetwork,
                         text = "Devices access",
+                        selected = selectedRoute == "netWorkStatus",
                         colorBag = colorBag,
                         onClick = { onMenuClick("netWorkStatus") }
                     )
                     RowClick(
                         icon = iconQr,
                         text = "Scan code",
+                        selected = selectedRoute == "qr",
                         colorBag = colorBag,
                         onClick = { onMenuClick("qr") }
                     )
                     RowClick(
                         icon = iconClean,
                         text = "Clean cache",
+                        selected = selectedRoute == "clean",
                         colorBag = colorBag,
                         onClick = { onMenuClick("clean") }
                     )
                     RowClick(
                         icon = iconLogs,
                         text = "Client logs",
+                        selected = selectedRoute == "clientStatus",
                         colorBag = colorBag,
                         onClick = { onMenuClick("clientStatus") }
                     )
                     RowClick(
                         icon = iconFingerprint,
                         text = "Finger print",
+                        selected = selectedRoute == "fingerPrint",
                         colorBag = colorBag,
                         onClick = { onMenuClick("fingerPrint") }
                     )
                     RowClick(
                         icon = iconKey,
                         text = "Verification Key",
+                        selected = selectedRoute == "VerificationKey",
                         colorBag = colorBag,
                         onClick = { onMenuClick("VerificationKey") }
                     )
                     RowClick(
                         icon = iconAbout,
                         text = "About",
+                        selected = selectedRoute == "about",
                         colorBag = colorBag,
                         onClick = { onMenuClick("about") }
                     )
@@ -143,7 +150,8 @@ internal fun GearSideMenu(
         onClick: () -> Unit,
         blurIntensity: Float?,
         colorBag: ColorBag,
-        sideMenuPref: SideMenuPref
+        sideMenuPref: SideMenuPref,
+        selectedRoute: String? = null,
 ){
 
     val iconAuth = ImageVector.vectorResource(id = R.drawable.authentication)
@@ -163,13 +171,14 @@ internal fun GearSideMenu(
                 )else tween(300)
             ) + fadeIn(animationSpec = tween(300)),
             exit = slideOutHorizontally(
-                targetOffsetX = { -it }
+                targetOffsetX = { -it },
+                animationSpec = tween(300),
             ) + fadeOut(animationSpec = tween(300)),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
             GlassSidebarBox(
                 hazeState = hazeState,
-                //modifier = Modifier.width(280.dp),
+                onDismiss = onClick,
                 blurIntensity = blurIntensity,
                 experimentalHaze = sideMenuPref.experimentalHaze,
                 showWallpaper = sideMenuPref.showWallpaper,
@@ -194,24 +203,28 @@ internal fun GearSideMenu(
                     RowClick(
                         icon = iconAuth,
                         text = "Authentication",
+                        selected = selectedRoute == "settings/auth",
                         colorBag = colorBag,
                         onClick = { onMenuClick("settings/auth") }
                     )
                     RowClick(
                         icon = iconPort,
                         text = "How to connect",
+                        selected = selectedRoute == "settings/connecting",
                         colorBag = colorBag,
                         onClick = { onMenuClick("settings/connecting") }
                     )
                     RowClick(
                         icon = iconUi,
                         text = "UI setting",
+                        selected = selectedRoute == "settings/ui",
                         colorBag = colorBag,
                         onClick = { onMenuClick("settings/ui") }
                     )
                     RowClick(
                         icon = iconSystem,
                         text = "System",
+                        selected = selectedRoute == "settings/system",
                         colorBag = colorBag,
                         onClick = { onMenuClick("settings/system") }
                     )
